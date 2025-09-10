@@ -2142,10 +2142,9 @@
 	{
 		"en" "⚠ True Survival Zombies"
 	}
-	
 	"Lone Health Title"
 	{
-		"en"	"You see a healthpack, alone, just sitting by the tree..."
+		"en"	"You see a healthpack, alone, just laying by the tree..."
 	}
 	"Lone Health Accept"
 	{
@@ -2159,19 +2158,17 @@
 	{
 		"en"	"Don't touch it, it seems way too suspicious."
 	}
-
-	
 	"Astra Title"
 	{
-		"en"	"You see a dragon girl, she seems to scuffle around for resources in this area."
+		"en"	"You see a dragon girl, she seems busy scuffling around for resources in this area."
 	}
 	"Astra Title Accept"
 	{
-		"en"	"Offer her some australium ingots."
+		"en"	"Offer her some Australium Ingots."
 	}
 	"Astra Title Accept Desc"
 	{
-		"en"	"{green}Obtain a grand item and umbral affinity."
+		"en"	"{green}Obtain a grand item and Umbral Affinity."
 	}
 	"Astra Title Decline"
 	{
@@ -2179,7 +2176,7 @@
 	}
 	"Astra Title Decline Desc"
 	{
-		"en"	"{green}Gain cash and Umbral Affinity."
+		"en"	"{green}Gain Cash and Umbral Affinity."
 	}
 	"Broken Crest Title"
 	{
@@ -2187,33 +2184,31 @@
 	}
 	"Broken Crest Accept"
 	{
-		"en"	"Take the crest, seems usefull."
+		"en"	"Take the crest, seems useful."
 	}
 	"Broken Crest Decline"
 	{
 		"en"	"Don't risk it, who knows whats in it."
 	}
-	
 	"Broken Crest Accept Desc"
 	{
 		"en"	"{green}Receive the crest and {crimson}lose Umbral Affinity."
 	}
 	"Broken Crest Decline Desc"
 	{
-		"en"	"{green}Gain cash and Umbral Affinity."
+		"en"	"{green}Gain Cash and Umbral Affinity."
 	}
 	"Broken Crest Accept Conlusion"
 	{
-		"en"	"You pick it up, it feels heavy...{crimson}youre being judged."
+		"en"	"You pick it up, it feels heavy...{crimson}you're being judged."
 	}
 	"Broken Crest Decline Conlusion"
 	{
-		"en"	"You disregard it... The big broken crystal blesses you with a vision, as you follow it, you find cash!"
+		"en"	"You disregarded it... The big broken crystal blesses you with a vision and as you follow it, you find cash!"
 	}
-	
 	"Lone Health Decline Desc"
 	{
-		"en"	"{green}Gain cash, raise Umbral Affinity."
+		"en"	"{green}Gain Cash and Umbral Affinity."
 	}
 	"Mantle of Stars"
 	{
@@ -2229,7 +2224,7 @@
 	}
 	"Lelouch's Broken Crest Desc"
 	{
-		"en"	"{green}Players gain an extra level of armor.\n{default}It feels very immoral to own this, if twirl saw you with it, she'd be dissapointed."
+		"en"	"{green}Players gain an extra level of armor.\n{default}It feels very immoral to own this, if Twirl saw you with it, she'd be dissapointed."
 	}
 	"Incorruptable Leaf"
 	{
@@ -2237,7 +2232,7 @@
 	}
 	"Incorruptable Leaf Desc"
 	{
-		"en"	"{green}Players gain 30％ elemental resistance, when under elemental debuffs, gain 15％ Overall Resistance.\n{default}Very soothing, very calming."
+		"en"	"{green}Players gain 30％ Elemental Resistance, when under elemental debuffs, gain 15％ Resistance.\n{default}Very soothing, very calming."
 	}
 	"Strange Visitor"
 	{
@@ -2245,7 +2240,7 @@
 	}
 	"Astra Title Accept Conlusion"
 	{
-		"en"	"{brown}Astra{default} : Oh! Thank you so much! Have this as a thanks, something experimental i made."
+		"en"	"{brown}Astra{default} : Oh! Thank you so much! Have this as a thanks, something experimental I made."
 	}
 	"Astra Title Decline Conlusion"
 	{
@@ -2253,7 +2248,7 @@
 	}
 	"Incorruptable Tree Title"
 	{
-		"en" "You find a tree, seemingly untouched by the void and umbrals."
+		"en" "You find a tree, seemingly untouched by the Void and Umbrals."
 	}
 	"Incorruptable Tree"
 	{
