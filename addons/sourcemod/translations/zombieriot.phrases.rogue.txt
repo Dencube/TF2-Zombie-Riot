@@ -1539,7 +1539,7 @@
 	}
 	"Al-Hallam's Fortress Blueprints Desc"
 	{
-		"en"	"Following the blueprints greatly increases the efficienty of your Barracks.\n{green}Barracks gain +4 units and +2 supplies."
+		"en"	"Following the blueprints greatly increases the efficiency of your Barracks.\n{green}Barracks gain +4 units and +2 supplies."
 	}
 	"Gambesons"
 	{
@@ -1592,7 +1592,7 @@
 	}
 	"Bladedance"
 	{
-		"en"	"Bladedance"
+		"en"	"''Bladedance''"
 		"ru"	"«Взбешённый клинок»"
 	}
 	"Bladedance Desc"
@@ -1601,7 +1601,7 @@
 	}
 	"Whiteflower"
 	{
-		"en"	"Whiteflower"
+		"en"	"''Whiteflower''"
 		"ru"	"«Белый цветок»"
 	}
 	"Whiteflower Desc"
