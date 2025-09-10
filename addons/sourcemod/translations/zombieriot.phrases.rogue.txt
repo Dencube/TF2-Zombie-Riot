@@ -39,7 +39,7 @@
 	"Lost Ingots"
 	{
 		"#format"	"{1:d}"
-		"en"		"{red}Lost {1} Australium Ingots!"
+		"en"		"{crimson}Lost {1} Australium Ingots!"
 	}
 	"Gained Shield"
 	{
@@ -286,7 +286,7 @@
 	"Theatrical Desc 1"
 	{
 		"en"	"{yellow}Receive an unknown artifact {crimson}but lose 10 ammo supplies"
-		"ru"	"{yellow}Получить неизвестный артефакт{red}, но потерять 10 боеприпасов"
+		"ru"	"{yellow}Получить неизвестный артефакт{crimson}, но потерять 10 боеприпасов"
 	}
 	"Theatrical Lore 1a"
 	{
@@ -319,7 +319,7 @@
 	"Eccentric Desc 1"
 	{
 		"en"	"{yellow}Receive an unknown artifact {crimson}but lose 4 Australium Ingots"
-		"ru"	"{yellow}Получить неизвестный артефакт{red}, но потерять 4 слитков австралия"
+		"ru"	"{yellow}Получить неизвестный артефакт{crimson}, но потерять 4 слитков австралия"
 	}
 	"Eccentric Lore 1a"
 	{
@@ -445,7 +445,7 @@
 	"Coffin of Evil Desc 1"
 	{
 		"en"	"{yellow}Receive an unknown artifact {crimson}but lose 30 ammo supplies"
-		"ru"	"{yellow}Получить неизвестный артефакт{red}, но потерять 30 боеприпасов"
+		"ru"	"{yellow}Получить неизвестный артефакт{crimson}, но потерять 30 боеприпасов"
 	}
 	"Coffin of Evil Lore 1"
 	{
@@ -495,7 +495,7 @@
 	"Eye for an Eye Desc 2"
 	{
 		"en"	"{green}Gain 3000 cash {crimson}but lose 20 ammo supplies"
-		"ru"	"{green}Получить 3 000 кредитов{red}, но потерять 20 боеприпасов"
+		"ru"	"{green}Получить 3 000 кредитов{crimson}, но потерять 20 боеприпасов"
 	}
 	"Eye for an Eye Lore 2"
 	{
@@ -1333,7 +1333,7 @@
 	}
 	"Grigori's Coin Purse Desc"
 	{
-		"en"	"A lot of money, yet never too much.\n- {green}Gain attack speed and heal rate for every Australium Ingot you own."
+		"en"	"A lot of money, yet never too much.\n- {green}Ally attack speed increases slightly for every Australium Ingot owned."
 		"ru"	"Много денег, но никогда не бывает слишком много.\n- Увеличивайте скорость атаки и скорость лечения тем больше, чем больше слитков австралиума вы имеете."
 	}
 	"Malfunctioning Shield"
@@ -1520,7 +1520,7 @@
 	}
 	"Spanish Specialised Gunpowder Desc"
 	{
-		"en"	"Gunpower created in Iberia, and made specifically for Iberian Inquisitors.\n- {green}Players gain +15％ ranged damage."
+		"en"	"Gunpower created in Iberia, and made specifically for Iberian Inquisitors.\n- {green}Players gain +15％ ranged and mage damage."
 		"ru"	"Оружие, созданное в Испании специально для испанских войск.\n- +15％ к урону в дальнем бою."
 	}
 	"Supply Depot"
@@ -1573,7 +1573,7 @@
 	}
 	"Blademace"
 	{
-		"en"	"''Blademace''"
+		"en"	"Blademace"
 		"ru"	"«Булава с лезвием»"
 	}
 	"Blademace Desc"
@@ -1582,17 +1582,17 @@
 	}
 	"Brokenblade"
 	{
-		"en"	"''Brokenblade''"
+		"en"	"Brokenblade"
 		"ru"	"«Сломанный клинок»"
 	}
 	"Brokenblade Desc"
 	{
 		"en"	"A broken sword. It's usable... probably...\n{green}All allies gain 2x revive speed {crimson}but gain -20％ max health."
-		"ru"	"Сломанный меч. Его можно использовать... возможно...\n{green}Скорость возрождения игроков и повстанцев удвоена{red}, но -20％ макс. запаса здоровья{yellow}."
+		"ru"	"Сломанный меч. Его можно использовать... возможно...\n{green}Скорость возрождения игроков и повстанцев удвоена{crimson}, но -20％ макс. запаса здоровья{yellow}."
 	}
 	"Bladedance"
 	{
-		"en"	"''Bladedance''"
+		"en"	"Bladedance"
 		"ru"	"«Взбешённый клинок»"
 	}
 	"Bladedance Desc"
@@ -1601,16 +1601,16 @@
 	}
 	"Whiteflower"
 	{
-		"en"	"''Whiteflower''"
+		"en"	"Whiteflower"
 		"ru"	"«Белый цветок»"
 	}
 	"Whiteflower Desc"
 	{
-		"en"	"An artifact left behind by a ''Crimson Troupe'' member.\n{green}Allies gain +25％ max health {yellow}but max health is randomly swapped between players"
+		"en"	"An artifact left behind by a Crimson Troupe member.\n{green}Allies gain +25％ max health {yellow}but max health is randomly swapped between players"
 	}
 	"Shadow"
 	{
-		"en"	"''Shadow''"
+		"en"	"Shadow"
 		"ru"	"«Тень»"
 	}
 	"Shadow Desc"
@@ -1620,27 +1620,27 @@
 	}
 	"Right Eye of the Natator"
 	{
-		"en"	"''Right Eye of the Natator''"
+		"en"	"Right Eye of the Natator"
 		"ru"	"«Правый глаз нататора»"
 	}
 	"Right Eye of the Natator Desc"
 	{
 		"en"	"One half of the Gaulish empress' crown is now housed in the Royal Museum of Londinium.\n{green}Enemies take +20％ ranged damage {crimson}but -5％ melee damage."
-		"ru"	"Одна половина короны галльской императрицы сейчас хранится в Королевском музее Лондиниума.\n{green}Враги получают на +20％ больше урона в дальнем бою{red}, но -5％ урона в ближнем бою{yellow}."
+		"ru"	"Одна половина короны галльской императрицы сейчас хранится в Королевском музее Лондиниума.\n{green}Враги получают на +20％ больше урона в дальнем бою{crimson}, но -5％ урона в ближнем бою{yellow}."
 	}
 	"Left Eye of the Natator"
 	{
-		"en"	"''Left Eye of the Natator''"
+		"en"	"Left Eye of the Natator"
 		"ru"	"«Левый глаз нататора»"
 	}
 	"Left Eye of the Natator Desc"
 	{
 		"en"	"One half of the Gaulish empress' crown is now stored housed in the Leithanien Queen Library.\n{green}Enemies take +20％ melee damage {crimson}but -5％ ranged damage."
-		"ru"	"Одна половина короны галльской императрицы сейчас хранится в библиотеке королевы Лейтаниена.\n{green}Враги получают на +20％ больше урона в ближнем бою{red}, но -5％ урона в дальнем бою{yellow}."
+		"ru"	"Одна половина короны галльской императрицы сейчас хранится в библиотеке королевы Лейтаниена.\n{green}Враги получают на +20％ больше урона в ближнем бою{crimson}, но -5％ урона в дальнем бою{yellow}."
 	}
 	"End of Times"
 	{
-		"en"	"''End of Times''"
+		"en"	"End of Times"
 		"ru"	"«Конец времён»"
 	}
 	"End of Times Desc"
@@ -1776,7 +1776,7 @@
 	}
 	"Soul of Bloons Tower Defense Desc"
 	{
-		"en"	"Better build that temple.\n{green}Bloons Tower Defense themed weapons gain +20% damage for every"
+		"en"	"Better build that temple.\n{green}Bloons Tower Defense themed weapons gain +20% damage for every person with a unique bloons weapon"
 	}
 	"Soul of Yakuza"
 	{
