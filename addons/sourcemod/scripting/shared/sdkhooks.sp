@@ -145,7 +145,7 @@ public void SDKHook_ScoreThink(int entity)
 	for(int client=1; client<=MaxClients; client++)
 	{
 	#if defined ZR
-		CashCurrentlyOwned[client] = CurrentCash-CashSpent[client];
+		CashCurrentlyOwned[client] = (CurrentCash + GlobalExtraCash)-CashSpent[client];
 		alive[client] = (TeutonType[client] == TEUTON_NONE && IsClientInGame(client) && IsPlayerAlive(client));
 	#else
 		CashCurrentlyOwned[client] = TextStore_Cash(client);
@@ -1696,7 +1696,7 @@ public void OnPostThink(int client)
 				Format(HudBuffer, sizeof(HudBuffer), "%s %t",HudBuffer, "You Wait Teuton"
 				);
 			}
-			SetEntProp(client, Prop_Send, "m_nCurrency", CurrentCash-CashSpent[client]);
+			SetEntProp(client, Prop_Send, "m_nCurrency", (CurrentCash + GlobalExtraCash)-CashSpent[client]);
 			
 			if(HudBuffer[0])
 				PrintKeyHintText(client,"%s", HudBuffer);
@@ -2624,12 +2624,12 @@ public Action SDKHook_NormalSHook(int clients[MAXPLAYERS], int &numClients, char
 				EmitSoundToClient(listener,sample,entity,SNDCHAN_STATIC,level,flags,volume,pitch,_,_,_,_,_);
 				EmitSoundToClient(listener,sample,entity,SNDCHAN_STATIC,level,flags,volume,pitch,_,_,_,_,_);
 				EmitSoundToClient(listener,sample,entity,SNDCHAN_STATIC,level,flags,volume,pitch,_,_,_,_,_);
-				EmitSoundToClient(listener,sample,entity,SNDCHAN_STATIC,level,flags,volume,pitch,_,_,_,_,_);
-				EmitSoundToClient(listener,sample,entity,SNDCHAN_STATIC,level,flags,volume,pitch,_,_,_,_,_);
 				
 				if (!raid)
 				{
 					// raids are louder by default
+					EmitSoundToClient(listener,sample,entity,SNDCHAN_STATIC,level,flags,volume,pitch,_,_,_,_,_);
+					EmitSoundToClient(listener,sample,entity,SNDCHAN_STATIC,level,flags,volume,pitch,_,_,_,_,_);
 					EmitSoundToClient(listener,sample,entity,SNDCHAN_STATIC,level,flags,volume,pitch,_,_,_,_,_);
 					EmitSoundToClient(listener,sample,entity,SNDCHAN_STATIC,level,flags,volume,pitch,_,_,_,_,_);
 					EmitSoundToClient(listener,sample,entity,SNDCHAN_STATIC,level,flags,volume,pitch,_,_,_,_,_);
@@ -2774,7 +2774,7 @@ public Action SDKHook_NormalSHook(int clients[MAXPLAYERS], int &numClients, char
 					return Plugin_Handled;
 				}
 			}
-			else if (b_IsRobot[entity] && strncmp(sample, "vo/mvm/", 7) != 0)
+			else if (b_IsRobot[entity] && channel == SNDCHAN_VOICE && strncmp(sample, "vo/mvm/", 7) != 0)
 			{
 				static int lastEntity;
 				static float lastTime;

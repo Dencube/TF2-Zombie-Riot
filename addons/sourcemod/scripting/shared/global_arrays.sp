@@ -339,6 +339,7 @@ float f_AmmoConsumeExtra[MAXPLAYERS];
 
 #if defined ZR || defined RTS
 ConVar CvarInfiniteCash;
+ConVar CvarUnlockStore;
 #endif
 
 #if defined ZR || defined RTS || defined RPG
@@ -670,6 +671,7 @@ Function EntityFuncReload4[MAXENTITIES];
 Function EntityFuncPlayerRunCmd[MAXENTITIES];
 Function EntityFuncOnKill[MAXENTITIES];
 Function EntityFuncTakeDamage[MAXENTITIES][3];
+Function EntityCustomTraceMelee[MAXENTITIES];
 //Function EntityFuncReloadSingular5[MAXENTITIES];
 
 float f_ClientMusicVolume[MAXPLAYERS];

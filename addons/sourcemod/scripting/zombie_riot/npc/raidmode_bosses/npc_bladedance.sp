@@ -70,6 +70,11 @@ methodmap RaidbossBladedance < CClotBody
 		public get()							{ return b_DuringHook[this.index]; }
 		public set(bool TempValueForProperty) 	{ b_DuringHook[this.index] = TempValueForProperty; }
 	}
+	property float m_flHurtForAbility
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
+	}
 	
 	public void PlayIdleSound()
 	{
@@ -148,6 +153,7 @@ methodmap RaidbossBladedance < CClotBody
 		func_NPCOnTakeDamage[npc.index] = RaidbossBladedance_OnTakeDamage;
 		func_NPCThink[npc.index] = RaidbossBladedance_ClotThink;
 		func_NPCSpawnForward[npc.index] = Bladedance_AllySpawn;
+		func_NPCFuncWin[npc.index] = view_as<Function>(Raidmode_Expidonsa_Sensal_Win);
 		
 		f_ExplodeDamageVulnerabilityNpc[npc.index] = 0.7;
 
@@ -477,6 +483,10 @@ public Action RaidbossBladedance_OnTakeDamage(int victim, int &attacker, int &in
 	{
 		npc.m_flHeadshotCooldown = gameTime + DEFAULT_HURTDELAY;
 		npc.m_blPlayHurtAnimation = true;
+	}
+	if(npc.m_flHurtForAbility < gameTime)
+	{
+		npc.m_flHurtForAbility = gameTime + DEFAULT_HURTDELAY;
 		if(!npc.Anger)
 			npc.m_iOverlordComboAttack++;
 	}
