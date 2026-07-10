@@ -1259,6 +1259,14 @@ void NPC_ConfigSetup()
 	KevinmeryFollower_Setup();
 
 	VScript_CacheNPCs();
+
+	SmokeCarrierOnMapStart();
+	TarakenoOnMapStart();
+	ShibuyaBouncerOnMapStart();
+	ShibuyaBoomboxOnMapStart();
+	SpiritOrbOnMapStart();
+	CherryBlossomOnMapStart();
+	OshimunoFarmerOnMapStart();
 }
 
 void NPC_MapEnd()
@@ -2775,3 +2783,11 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/construction/construction2/npc_lantean_drone_projectile.sp"
 #include "npc/construction/construction2/npc_starship_beacon.sp"
 #include "npc/construction/npc_dungeon_loot.sp"
+
+#include "npc/testnpc/npc_smoke_carrier.sp"
+#include "npc/testnpc/npc_tarakeno.sp"
+#include "npc/testnpc/npc_shibuya_bouncer.sp"
+#include "npc/testnpc/npc_shibuya_boombox.sp"
+#include "npc/testnpc/npc_spirit_orb.sp"
+#include "npc/testnpc/npc_cherry_blossom.sp"
+#include "npc/testnpc/npc_oshimuno_farmer.sp"
