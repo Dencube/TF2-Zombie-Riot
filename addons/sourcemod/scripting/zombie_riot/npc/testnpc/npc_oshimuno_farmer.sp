@@ -188,6 +188,21 @@ static void NPCTalkMessage(int iNPC, const char[] message) // temp remove later
 	PrintNPCMessageWithPrefixes(iNPC, "lightblue", message);
 }
 
+static int GetTreeCount(int entity)
+{
+	int count;
+	int a, entity1;
+	// Count trees
+	while((entity1 = FindEntityByNPC(a)) != -1)
+	{
+		if(IsValidEntity(entity1) && i_NpcInternalId[entity1] == CherryBlossom_ID() && GetTeam(entity) == GetTeam(entity1))
+		{
+			count++;
+		}
+	}
+	return count;
+}
+
 static void ClotThink(int iNPC)
 {
 	OshimunoFarmer npc = view_as<OshimunoFarmer>(iNPC);
@@ -242,9 +257,9 @@ static void ClotThink(int iNPC)
 		}
 		OshimunoFarmer_SelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-	if(count <= 5) // increase stats for every tree alive || TODO: add a way to count the trees currently alive
+	if(GetTreeCount(npc.index) <= 5)// increase stats for every tree alive || TODO: add a way to count the trees currently alive
 	{
-	switch(count)
+	switch(GetTreeCount(npc.index))
 		{
 			case 1:
 			{
@@ -268,7 +283,7 @@ static void ClotThink(int iNPC)
 			}
 		}
 	}
-	else if (count > 6) // beyond 5 trees he gets max buffs
+	else if (GetTreeCount(npc.index) >= 6) // beyond 5 trees he gets max buffs
 	{
 		NPCTalkMessage(npc.index, "{crimson} YOU FUCKED UP BIG TIME!!!"); 
 	}
@@ -313,22 +328,6 @@ void OshimunoFarmer_SelfDefense(OshimunoFarmer npc, float distance, float vecTar
 		}
 	}
 }
-static int GetTreeCount(int entity)
-{
-	int count;
-	int a, entity1;
-	// Count trees
-	while((entity1 = FindEntityByNPC(a)) != -1)
-	{
-		if(IsValidEntity(entity1) && i_NpcInternalId[entity1] == CherryBlossom_ID() && GetTeam(entity) == GetTeam(entity1))
-		{
-			count++;
-		}
-	}
-	
-	return count;
-}
-
 
 static Action FarmerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {	

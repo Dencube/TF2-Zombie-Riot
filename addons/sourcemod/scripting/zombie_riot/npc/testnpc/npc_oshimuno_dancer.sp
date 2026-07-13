@@ -51,7 +51,7 @@ void OshimunoDancerOnMapStart()
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Outlaws;
+	data.Category = Type_Dancer;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }

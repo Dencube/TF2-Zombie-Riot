@@ -8,6 +8,8 @@ static const char g_DeathSounds[][] =
 	"vo/heavy_paincrticialdeath03.mp3"
 };
 
+static int NPCID;
+
 void CherryBlossomOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
@@ -18,9 +20,9 @@ void CherryBlossomOnMapStart()
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Outlaws;
+	data.Category = Type_Oshimuno;
 	data.Func = ClotSummon;
-	NPC_Add(data);
+	NPCID = NPC_Add(data);
 }
 
 int CherryBlossom_ID()

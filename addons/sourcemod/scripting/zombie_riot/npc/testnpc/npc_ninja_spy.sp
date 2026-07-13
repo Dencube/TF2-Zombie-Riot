@@ -55,7 +55,7 @@ void NinjaSpyOnMapStart()
 	strcopy(data.Icon, sizeof(data.Icon), "spy");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Outlaws;
+	data.Category = Type_Oshimuno;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
