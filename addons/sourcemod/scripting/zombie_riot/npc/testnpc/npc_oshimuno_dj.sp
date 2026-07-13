@@ -38,17 +38,16 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/pickaxe_swing3.wav"
 };
 
-void ShibuyaBoomboxOnMapStart()
+void OshimunoDJOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
-	PrecacheModel("models/player/items/scout/boombox.mdl");
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Boombox");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_shibuya_boombox");
+	strcopy(data.Name, sizeof(data.Name), "Oshimuno DJ");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_dj");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -59,10 +58,10 @@ void ShibuyaBoomboxOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return ShibuyaBoombox(vecPos, vecAng, team);
+	return OshimunoDJ(vecPos, vecAng, team);
 }
 
-methodmap ShibuyaBoombox < CClotBody
+methodmap OshimunoDJ < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -89,14 +88,14 @@ methodmap ShibuyaBoombox < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public ShibuyaBoombox(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoDJ(float vecPos[3], float vecAng[3], int ally)
 	{
-		ShibuyaBoombox npc = view_as<ShibuyaBoombox>(CClotBody(vecPos, {-7.63202, 345.066, -44.5095}, "models/player/items/scout/boombox.mdl", "6.0", "15000", ally));
-		// yes those angles are that specific to make it even with the ground
+		OshimunoDJ npc = view_as<OshimunoDJ>(CClotBody(vecPos, vecAng, "models/player/heavy.mdl", "1.35", "15000", ally));
+		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
 		KillFeed_SetKillIcon(npc.index, "pickaxe");
-
+		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
 		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
@@ -106,7 +105,20 @@ methodmap ShibuyaBoombox < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 10.0;
+		npc.m_flSpeed = 300.0;
+
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch.mdl");
+
+		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/scout/bonk_helmet.mdl");
+
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2021_eyequarium/hwn2021_eyequarium_sniper.mdl");
+
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/sniper/dec23_rugged_rags/dec23_rugged_rags.mdl");
+
+		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
+		SetVariantInt(2);
+		AcceptEntityInput(npc.index, "SetBodyGroup");
+
 		npc.StartPathing();
 		return npc;
 	}
@@ -114,7 +126,7 @@ methodmap ShibuyaBoombox < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	ShibuyaBoombox npc = view_as<ShibuyaBoombox>(iNPC);
+	OshimunoDJ npc = view_as<OshimunoDJ>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -145,6 +157,19 @@ static void ClotThink(int iNPC)
 		npc.m_iTarget = target;
 		npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
 	}
+
+	// int entity = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]);
+	// 	if(IsValidEntity(entity))
+	// 	{
+	// 		char npc_classname[60];
+	// 		NPC_GetPluginById(i_NpcInternalId[entity], npc_classname, sizeof(npc_classname));
+
+	// 		if(entity != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_boombox") && IsEntityAlive(entity)))
+	// 		{
+	// 			npc.Anger = true;
+	// 			npc.m_iTarget = entity;
+	// 		}
+	// 	} // need to figure out how to make him only target the boombox to pick it up || temp copied broly code
 	
 	if(target > 0)
 	{
@@ -161,13 +186,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		ShibuyaBoombox_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoDJ_SelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void ShibuyaBoombox_SelfDefense(ShibuyaBoombox npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoDJ_SelfDefense(OshimunoDJ npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -206,9 +231,23 @@ void ShibuyaBoombox_SelfDefense(ShibuyaBoombox npc, float distance, float vecTar
 		}
 	}
 }
+
+// static void LiberiBuffThink(int entity)
+// {
+// 	if(GetGameTime() > LiberiBuff[entity])
+// 	{
+// 		b_NpcIsInvulnerable[entity] = false;
+// 		b_NoGravity[entity] = false;
+// 		b_DoNotUnStuck[entity] = false;
+// 		RemoveSpecificBuff(entity, "Solid Stance");
+		
+// 		SDKUnhook(entity, SDKHook_ThinkPost, LiberiBuffThink);	
+// 	}
+// }
+
 static void ClotDeath(int entity)
 {
-	ShibuyaBoombox npc = view_as<ShibuyaBoombox>(entity);
+	OshimunoDJ npc = view_as<OshimunoDJ>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

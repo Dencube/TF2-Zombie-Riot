@@ -11633,7 +11633,7 @@ float SmokeScreen_Dodge(int attacker, int victim, StatusEffect Apply_MasterStatu
 		return 1.0;
 	if(f_TimeFrozenStill[victim] > GetGameTime(victim))
 		return 1.0;
-	float HitChance = 0.7;
+	float HitChance = 0.7; //30% dodge chance
 	if(GetRandomFloat(0.0, 1.0) < HitChance)
 		return 1.0;
 	float chargerPos[3];

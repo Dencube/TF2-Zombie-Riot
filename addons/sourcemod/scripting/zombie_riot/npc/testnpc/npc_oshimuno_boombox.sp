@@ -38,21 +38,18 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/pickaxe_swing3.wav"
 };
 
-static const char g_RangedAttackSounds[][] = {
-	"weapons/cleaver_throw.wav",
-};
-
-void NinjaSpyOnMapStart()
+void OshimunoBoomboxOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
+	PrecacheModel("models/player/items/scout/boombox.mdl");
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Ninja Spy");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_ninja_spy");
-	strcopy(data.Icon, sizeof(data.Icon), "spy");
+	strcopy(data.Name, sizeof(data.Name), "Boombox");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_boombox");
+	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Outlaws;
@@ -62,10 +59,10 @@ void NinjaSpyOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return NinjaSpy(vecPos, vecAng, team);
+	return OshimunoBoombox(vecPos, vecAng, team);
 }
 
-methodmap NinjaSpy < CClotBody
+methodmap OshimunoBoombox < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -91,19 +88,15 @@ methodmap NinjaSpy < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	public void PlayRangedSound()
-	{
-		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
-	}
 	
-	public NinjaSpy(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoBoombox(float vecPos[3], float vecAng[3], int ally)
 	{
-		NinjaSpy npc = view_as<NinjaSpy>(CClotBody(vecPos, vecAng, "models/player/spy.mdl", "1.0", "15000", ally));
-		
+		OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, {-7.63202, 345.066, -44.5095}, "models/player/items/scout/boombox.mdl", "6.0", "15000", ally));
+		// yes those angles are that specific to make it even with the ground
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "kunai");
-		
+		KillFeed_SetKillIcon(npc.index, "pickaxe");
+
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
 		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
@@ -113,20 +106,7 @@ methodmap NinjaSpy < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 300.0;
-
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl");
-
-		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/heavy/cop_glasses.mdl");
-
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/heavy/sum23_hog_heels/sum23_hog_heels.mdl");
-
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/heavy/dec23_bigger_mann/dec23_bigger_mann.mdl");
-
-		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(2);
-		AcceptEntityInput(npc.index, "SetBodyGroup");
-
+		npc.m_flSpeed = 10.0;
 		npc.StartPathing();
 		return npc;
 	}
@@ -134,7 +114,7 @@ methodmap NinjaSpy < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	NinjaSpy npc = view_as<NinjaSpy>(iNPC);
+	OshimunoBoombox npc = view_as<OshimunoBoombox>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -181,13 +161,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		NinjaSpy_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoBoombox_SelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void NinjaSpy_SelfDefense(NinjaSpy npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoBoombox_SelfDefense(OshimunoBoombox npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -225,28 +205,10 @@ void NinjaSpy_SelfDefense(NinjaSpy npc, float distance, float vecTarget[3], floa
 			npc.m_flNextMeleeAttack = gameTime + 0.75;
 		}
 	}
-	else if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 1.5) && npc.m_flJumpCooldown < gameTime && distance < 650000.0)
-	{
-		vecTarget[2] += 225.0;
-		PluginBot_Jump(npc.index, vecTarget);
-		npc.m_flNextMeleeAttack = gameTime + 2.5; //prevent cheese melees
-		npc.m_flNextRangedAttack = gameTime + 0.5; //delay before kunai
-		npc.m_flJumpCooldown = gameTime + 15.0;
-	}
-	if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) && npc.m_flNextRangedAttack < gameTime && npc.m_flJumpCooldown > gameTime != npc.IsOnGround()) // this if statement is so bad i need to be shot for this || redo later or idk 
-	{
-		float EnemyPos[3]; // throw a kunai at the enemy during the jump
-		WorldSpaceCenter(npc.m_iTarget, EnemyPos);
-		npc.FaceTowards(EnemyPos, 15000.0);
-		npc.FireArrow(EnemyPos, 55.0, 1000.0, "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl", 1.5); //TODO: kunai model is facing upwards during the throw
-		npc.m_flNextRangedAttack = gameTime + 0.4;
-		npc.PlayRangedSound();
-		npc.m_flDoingAnimation = gameTime + 0.25;
-		}
-	}
+}
 static void ClotDeath(int entity)
 {
-	NinjaSpy npc = view_as<NinjaSpy>(entity);
+	OshimunoBoombox npc = view_as<OshimunoBoombox>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

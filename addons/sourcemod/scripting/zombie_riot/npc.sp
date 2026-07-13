@@ -1262,11 +1262,14 @@ void NPC_ConfigSetup()
 
 	SmokeCarrierOnMapStart();
 	TarakenoOnMapStart();
-	ShibuyaBouncerOnMapStart();
-	ShibuyaBoomboxOnMapStart();
+	OshimunoBouncerOnMapStart();
+	OshimunoBoomboxOnMapStart();
+	OshimunoDJOnMapStart();
 	SpiritOrbOnMapStart();
 	CherryBlossomOnMapStart();
 	OshimunoFarmerOnMapStart();
+	OshimunoDancerOnMapStart();
+	NinjaSpyOnMapStart();
 }
 
 void NPC_MapEnd()
@@ -2786,8 +2789,11 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 
 #include "npc/testnpc/npc_smoke_carrier.sp"
 #include "npc/testnpc/npc_tarakeno.sp"
-#include "npc/testnpc/npc_shibuya_bouncer.sp"
-#include "npc/testnpc/npc_shibuya_boombox.sp"
+#include "npc/testnpc/npc_oshimuno_bouncer.sp"
+#include "npc/testnpc/npc_oshimuno_boombox.sp"
+#include "npc/testnpc/npc_oshimuno_dj.sp"
 #include "npc/testnpc/npc_spirit_orb.sp"
 #include "npc/testnpc/npc_cherry_blossom.sp"
 #include "npc/testnpc/npc_oshimuno_farmer.sp"
+#include "npc/testnpc/npc_ninja_spy.sp"
+#include "npc/testnpc/npc_oshimuno_dancer.sp"

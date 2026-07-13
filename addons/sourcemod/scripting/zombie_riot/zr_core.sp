@@ -366,7 +366,9 @@ enum
 	Type_Mutation,
 	Type_Curtain,
 	Type_Necropolain,
-	Type_Outlaws
+	Type_Outlaws,
+	Type_Oshimuno,
+	Type_Dancer
 }
 
 //int Bob_To_Player[MAXENTITIES];

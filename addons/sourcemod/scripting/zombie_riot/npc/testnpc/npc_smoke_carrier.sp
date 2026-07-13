@@ -126,7 +126,6 @@ methodmap SmokeCarrier < CClotBody
 		
 		npc.m_flSpeed = 290.0;
 		
-	//	npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_paintrain/c_paintrain.mdl");
 		npc.m_iAttacksLeft = 3;
 		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_pickaxe/c_pickaxe.mdl");
 
@@ -244,7 +243,6 @@ void SmokeCarrier_SelfDefense(SmokeCarrier npc, float distance, float vecTarget[
 						npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_paintrain/c_paintrain.mdl");
 						npc.DispatchParticleEffect(npc.index, "mvm_pow_gold_seq_wood2", NULL_VECTOR, NULL_VECTOR, NULL_VECTOR, npc.FindAttachment("effect_hand_R"), PATTACH_ABSORIGIN, true);
 						npc.PlayMeleeBroke();
-						//break melee
 					}
 				}
 			}

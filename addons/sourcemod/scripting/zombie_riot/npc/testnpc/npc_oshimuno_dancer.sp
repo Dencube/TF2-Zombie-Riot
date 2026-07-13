@@ -38,7 +38,7 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/pickaxe_swing3.wav"
 };
 
-void ShibuyaBouncerOnMapStart()
+void OshimunoDancerOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -46,8 +46,8 @@ void ShibuyaBouncerOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Shibuya Bouncer");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_shibuya_bouncer");
+	strcopy(data.Name, sizeof(data.Name), "Oshimuno Dancer");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_dancer");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -58,10 +58,10 @@ void ShibuyaBouncerOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return ShibuyaBouncer(vecPos, vecAng, team);
+	return OshimunoDancer(vecPos, vecAng, team);
 }
 
-methodmap ShibuyaBouncer < CClotBody
+methodmap OshimunoDancer < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -88,9 +88,9 @@ methodmap ShibuyaBouncer < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public ShibuyaBouncer(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoDancer(float vecPos[3], float vecAng[3], int ally)
 	{
-		ShibuyaBouncer npc = view_as<ShibuyaBouncer>(CClotBody(vecPos, vecAng, "models/player/heavy.mdl", "1.35", "15000", ally));
+		OshimunoDancer npc = view_as<OshimunoDancer>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "15000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
@@ -105,28 +105,33 @@ methodmap ShibuyaBouncer < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 300.0;
+		npc.m_flSpeed = 720.0;
+		npc.m_bisWalking = false;
+		npc.StartPathing();
+		npc.m_iChanged_WalkCycle = 300;
+		npc.AddActivityViaSequence("taunt_conga");
+		npc.SetPlaybackRate(2.5);
+		npc.SetCycle(0.05);
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_boston_basher/c_boston_basher.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/heavy/cop_glasses.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop_partner/player/items/all_class/sd_tattoos/sd_tattoos_scout.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/heavy/sum23_hog_heels/sum23_hog_heels.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/hwn2025_buzz_kill/hwn2025_buzz_kill.mdl");
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/heavy/dec23_bigger_mann/dec23_bigger_mann.mdl");
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/scout/hwn2025_torn_terror/hwn2025_torn_terror.mdl");
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(2);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
-		npc.StartPathing();
 		return npc;
 	}
 }
 
 static void ClotThink(int iNPC)
 {
-	ShibuyaBouncer npc = view_as<ShibuyaBouncer>(iNPC);
+	OshimunoDancer npc = view_as<OshimunoDancer>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -173,13 +178,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		ShibuyaBouncer_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoDancer_SelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void ShibuyaBouncer_SelfDefense(ShibuyaBouncer npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoDancer_SelfDefense(OshimunoDancer npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -220,7 +225,7 @@ void ShibuyaBouncer_SelfDefense(ShibuyaBouncer npc, float distance, float vecTar
 }
 static void ClotDeath(int entity)
 {
-	ShibuyaBouncer npc = view_as<ShibuyaBouncer>(entity);
+	OshimunoDancer npc = view_as<OshimunoDancer>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

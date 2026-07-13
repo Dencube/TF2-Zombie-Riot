@@ -23,6 +23,11 @@ void CherryBlossomOnMapStart()
 	NPC_Add(data);
 }
 
+int CherryBlossom_ID()
+{
+	return NPCID;
+}
+
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
 	return CherryBlossom(vecPos, vecAng, team);
@@ -30,16 +35,16 @@ static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 
 methodmap CherryBlossom < CClotBody
 {
-	public void PlayDeathSound() 
-	{
-		EmitSoundToAll(g_DeathSounds[GetRandomInt(0, sizeof(g_DeathSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
-	}
 	
 	public CherryBlossom(float vecPos[3], float vecAng[3], int ally)
 	{
-		CherryBlossom npc = view_as<CherryBlossom>(CClotBody(vecPos, vecAng, "models/props_japan/sakura_tree01.mdl", "1.0", "15000", ally));
+		CherryBlossom npc = view_as<CherryBlossom>(CClotBody(vecPos, vecAng, "models/props_japan/sakura_tree01.mdl", "1.5", "15000", ally)); //TODO: tree prop doesnt go away if killed
+		SetEntityRenderColor(npc.index, 244, 182, 255, 200);
 		
-		i_NpcWeight[npc.index] = 1;
+		i_NpcWeight[npc.index] = 999; //cant move trees
+		Is_a_Medic[npc.index] = true; 
+		b_thisNpcIsABoss[npc.index] = true; // no instakills
+		i_NpcIsABuilding[npc.index] = true;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
 		KillFeed_SetKillIcon(npc.index, "pickaxe");
 		
@@ -52,9 +57,35 @@ methodmap CherryBlossom < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 10.0;
+		npc.m_iState = 0;
+		npc.m_flSpeed = 0.0;
+		npc.m_flMeleeArmor = 2.0;
 
-		npc.StartPathing();
+		int Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 1000.0, .NeedLOSPlayer = true);
+		switch(Decision)
+		{
+			case 2:
+			{
+				Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 500.0, .NeedLOSPlayer = true);
+				if(Decision == 2)
+				{
+					Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 250.0, .NeedLOSPlayer = true);
+					if(Decision == 2)
+					{
+						Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 0.0, .NeedLOSPlayer = true);
+						if(Decision == 2)
+						{
+							//damn, cant find any.... guess we'll just not care about LOS.
+							Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 0.0);
+						}
+					}
+				}
+			}
+			case 3:
+			{
+				//todo code on what to do if random teleport is disabled
+			}
+		}
 		return npc;
 	}
 }
@@ -143,9 +174,6 @@ void CherryBlossom_SelfDefense(CherryBlossom npc, float distance, float vecTarge
 static void ClotDeath(int entity)
 {
 	CherryBlossom npc = view_as<CherryBlossom>(entity);
-
-	if(!npc.m_bGib)
-		npc.PlayDeathSound();
 	
 	if(IsValidEntity(npc.m_iWearable1))
 		RemoveEntity(npc.m_iWearable1);
