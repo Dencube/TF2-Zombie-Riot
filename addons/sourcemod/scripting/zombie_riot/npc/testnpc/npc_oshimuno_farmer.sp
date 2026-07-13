@@ -38,8 +38,6 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/machete_swing.wav",
 };
 
-#define FARMER_TREE_COUNTER 0
-
 void OshimunoFarmerOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
@@ -244,9 +242,9 @@ static void ClotThink(int iNPC)
 		}
 		OshimunoFarmer_SelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-	if(FARMER_TREE_COUNTER <= 5) // increase stats for every tree alive || TODO: add a way to count the trees currently alive
+	if(count <= 5) // increase stats for every tree alive || TODO: add a way to count the trees currently alive
 	{
-	switch(FARMER_TREE_COUNTER)
+	switch(count)
 		{
 			case 1:
 			{
@@ -270,11 +268,9 @@ static void ClotThink(int iNPC)
 			}
 		}
 	}
-	else // beyond 5 trees he gets max buffs
+	else if (count > 6) // beyond 5 trees he gets max buffs
 	{
-		{
-			NPCTalkMessage(npc.index, "{crimson} YOU FUCKED UP BIG TIME!!!"); 
-		}
+		NPCTalkMessage(npc.index, "{crimson} YOU FUCKED UP BIG TIME!!!"); 
 	}
 	npc.PlayIdleSound();
 }

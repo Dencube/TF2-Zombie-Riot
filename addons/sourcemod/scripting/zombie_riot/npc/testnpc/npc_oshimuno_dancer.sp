@@ -105,7 +105,7 @@ methodmap OshimunoDancer < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 720.0;
+		npc.m_flSpeed = 600.0;
 		npc.m_bisWalking = false;
 		npc.StartPathing();
 		npc.m_iChanged_WalkCycle = 300;
