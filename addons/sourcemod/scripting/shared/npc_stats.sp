@@ -493,8 +493,8 @@ void OnMapStart_NPC_Base()
 	PrecacheSound(SOUND_DANGER_KILL_THIS_GUY_IMMEDIATELY);
 	PrecacheSound(SOUND_HHH_DEATH);
 	PrecacheModel(BONEZONE_MODEL);
-	PrecacheModel(BONEZONE_MODEL_BOSS);
-	PrecacheModel(MODEL_SSB);
+//	PrecacheModel(BONEZONE_MODEL_BOSS);
+//	PrecacheModel(MODEL_SSB);
 	PrecacheSound(SND_TRANSFORM);
 	PrecacheSound(SND_GIB_SKELETON);
 	#endif
@@ -886,7 +886,7 @@ methodmap CClotBody < CBaseCombatCharacter
 		int sound = GetRandomInt(0, sizeof(g_GibSoundMetal) - 1);
 		
 		if(attacker == -1)
-			EmitSoundToAll(g_GibSoundMetal[sound], this.index, SNDCHAN_AUTO, 80, _, 1.0, _, _);
+			EmitSoundToAll(g_GibSoundMetal[sound], this.index, SNDCHAN_AUTO, 80, _, 0.8, _, _);
 		else
 		{
 			for(int client=1; client<=MaxClients; client++)
@@ -895,11 +895,11 @@ methodmap CClotBody < CBaseCombatCharacter
 				{
 					if(attacker == client)
 					{
-						EmitSoundToClient(client, g_GibSoundMetal[sound], attacker, SNDCHAN_AUTO, 80, _, 1.0);
+						EmitSoundToClient(client, g_GibSoundMetal[sound], attacker, SNDCHAN_AUTO, 80, _, 0.8);
 					}
 					else
 					{
-						EmitSoundToClient(client, g_GibSoundMetal[sound], this.index, SNDCHAN_AUTO, 80, _, 1.0);
+						EmitSoundToClient(client, g_GibSoundMetal[sound], this.index, SNDCHAN_AUTO, 80, _, 0.8);
 					}
 				}
 			}
@@ -5346,6 +5346,11 @@ stock bool IsValidEnemy(int index, int enemy, bool camoDetection=false, bool tar
 		else if(i_IsABuilding[enemy])
 		{
 #if defined ZR
+			//buildings are entirely disabled.
+			if(ZR_Get_Modifier() == KITERS_DREAM)
+			{
+				return false;
+			}
 			if(b_NpcIgnoresbuildings[index])
 			{
 				return false;
@@ -5669,6 +5674,10 @@ stock int GetClosestTarget(int entity,
 		int entity_close = -1;
 		while((entity_close=FindEntityByClassname(entity_close, "obj_*")) != -1) //BUILDINGS!
 		{
+			if(ZR_Get_Modifier() == KITERS_DREAM)
+			{
+				break;
+			}
 			if(entity_close != entity && entity_close != ingore_client)
 			{
 				CClotBody npc = view_as<CClotBody>(entity_close);

@@ -99,6 +99,7 @@ ConVar zr_downloadconfig;
 ConVar CvarSkillPoints;
 ConVar CvarRogueSpecialLogic;
 ConVar CvarLeveling;
+ConVar CvarDisableAutoLoadouts;
 ConVar CvarAutoSelectWave;
 ConVar CvarAutoSelectDiff;
 ConVar CvarVoteLimit;
@@ -3882,6 +3883,9 @@ void FullyReviveClient(int target, int client, int extralogic = 0, bool teleport
 	ClientSaveUber(target);
 	ClientSaveRageMeterStatus(target);
 	
+	int previousActiveWeaponStoreIndex = Store_GetActiveWeaponStoreIndex(target);
+	int previousLastWeaponStoreIndex = Store_GetLastWeaponStoreIndex(target);
+	
 	SetEntPropEnt(target, Prop_Send, "m_hObserverTarget", client);
 	f_WasRecentlyRevivedViaNonWave[target] = GetGameTime() + 1.0;
 	DHook_RespawnPlayer(target);
@@ -3938,6 +3942,14 @@ void FullyReviveClient(int target, int client, int extralogic = 0, bool teleport
 			HealEntityGlobal(client, target, float(SDKCall_GetMaxHealth(target)), 0.1, 1.0, HEAL_ABSOLUTE);
 		}
 	}
+	
+	int weapon = Store_GetClientWeaponEntityFromStoreIndex(target, previousActiveWeaponStoreIndex);
+	if (weapon > MaxClients && GetEntPropEnt(target, Prop_Send, "m_hActiveWeapon") != weapon)
+		SetPlayerActiveWeapon(target, weapon);
+	
+	weapon = Store_GetClientWeaponEntityFromStoreIndex(target, previousLastWeaponStoreIndex);
+	if (weapon > MaxClients)
+		SetEntPropEnt(target, Prop_Send, "m_hLastWeapon", weapon);
 	
 	SetEntityRenderMode(target, RENDER_NORMAL);
 	SetEntityRenderColor(target, 255, 255, 255, 255);

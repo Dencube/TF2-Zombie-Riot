@@ -845,6 +845,11 @@ static bool ObjectGeneric_ClotThink(ObjectGeneric objstats)
 			}
 			
 			int r = 255 - g;
+			if(ZR_Get_Modifier() == KITERS_DREAM)
+			{
+				r = 0;
+				g = 0;
+			}
 			
 			int wearable = objstats.m_iWearable1;
 			if(wearable != -1)
@@ -1686,7 +1691,7 @@ public void ObjectGeneric_ClotTakeDamage_Post(int victim, int attacker, int infl
 		OnPostAttackUniqueWeapon(attacker, victim, weapon, i_HexCustomDamageTypes[victim]);
 #endif
 		//Do not show this event if they are attacked with DOT. Earls bleedin.
-		if(!(i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED))
+	//	if(!(i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED))
 		{
 			Event event = CreateEvent("npc_hurt");
 			if(event) 
