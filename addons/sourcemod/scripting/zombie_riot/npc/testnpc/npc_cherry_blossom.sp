@@ -176,7 +176,17 @@ void CherryBlossom_SelfDefense(CherryBlossom npc, float distance, float vecTarge
 static void ClotDeath(int entity)
 {
 	CherryBlossom npc = view_as<CherryBlossom>(entity);
-	
+
+	float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+	float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+	int spawn_index = NPC_CreateByName("npc_placed_supplies", -1, pos, ang, GetTeam(npc.index));
+	if(spawn_index > MaxClients) //TODO: make a unique npc for this instead of reusing one
+	{
+		NpcStats_CopyStats(npc.index, spawn_index);
+		CClotBody npc1 = view_as<CClotBody>(spawn_index);
+		npc1.m_flNextThinkTime = GetGameTime() + 1.0;
+		NpcAddedToZombiesLeftCurrently(spawn_index, true);
+	}
 	if(IsValidEntity(npc.m_iWearable1))
 		RemoveEntity(npc.m_iWearable1);
 	

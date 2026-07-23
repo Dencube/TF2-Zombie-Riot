@@ -1271,6 +1271,8 @@ void NPC_ConfigSetup()
 	OshimunoFarmerOnMapStart();
 	OshimunoDancerOnMapStart();
 	NinjaSpyOnMapStart();
+	OshimunoSpiritPyroOnMapStart();
+	OshimunoDemoknightOnMapStart();
 }
 
 void NPC_MapEnd()
@@ -2800,3 +2802,5 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/testnpc/npc_oshimuno_farmer.sp"
 #include "npc/testnpc/npc_ninja_spy.sp"
 #include "npc/testnpc/npc_oshimuno_dancer.sp"
+#include "npc/testnpc/npc_oshimuno_spirit_pyro.sp"
+#include "npc/testnpc/npc_oshimuno_demoknight.sp"

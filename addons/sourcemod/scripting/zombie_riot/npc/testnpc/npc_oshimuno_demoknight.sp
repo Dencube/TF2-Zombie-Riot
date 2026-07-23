@@ -3,36 +3,37 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/soldier_paincrticialdeath01.mp3",
-	"vo/soldier_paincrticialdeath02.mp3",
-	"vo/soldier_paincrticialdeath03.mp3"
+	"vo/demoman_paincrticialdeath01.mp3",
+	"vo/demoman_paincrticialdeath02.mp3",
+	"vo/demoman_paincrticialdeath03.mp3",
+	"vo/demoman_paincrticialdeath04.mp3",
+	"vo/demoman_paincrticialdeath05.mp3"
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/soldier_painsharp01.mp3",
-	"vo/soldier_painsharp02.mp3",
-	"vo/soldier_painsharp03.mp3",
-	"vo/soldier_painsharp04.mp3",
-	"vo/soldier_painsharp05.mp3",
-	"vo/soldier_painsharp06.mp3",
-	"vo/soldier_painsharp07.mp3",
-	"vo/soldier_painsharp08.mp3"
+	"vo/demoman_painsharp01.mp3",
+	"vo/demoman_painsharp02.mp3",
+	"vo/demoman_painsharp03.mp3",
+	"vo/demoman_painsharp04.mp3",
+	"vo/demoman_painsharp05.mp3",
+	"vo/demoman_painsharp06.mp3",
+	"vo/demoman_painsharp07.mp3"
 };
 
-static const char g_IdleAlertedSounds[][] =
+static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/taunts/soldier_taunts19.mp3",
-	"vo/taunts/soldier_taunts20.mp3",
-	"vo/taunts/soldier_taunts21.mp3",
-	"vo/taunts/soldier_taunts18.mp3"
+	"vo/demoman_battlecry01.mp3",
+	"vo/demoman_battlecry02.mp3",
+	"vo/demoman_battlecry03.mp3",
+	"vo/demoman_battlecry04.mp3",
 };
 
-static const char g_MeleeHitSounds[][] =
+static char g_MeleeHitSounds[][] = 
 {
-	"weapons/blade_slice_2.wav",
-	"weapons/blade_slice_3.wav",
-	"weapons/blade_slice_4.wav"
+	"weapons/samurai/tf_katana_slice_01.wav",
+	"weapons/samurai/tf_katana_slice_02.wav",
+	"weapons/samurai/tf_katana_slice_03.wav",
 };
 
 static const char g_MeleeAttackSounds[][] =
@@ -44,43 +45,32 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/samurai/tf_katana_05.wav",
 	"weapons/samurai/tf_katana_06.wav",
 };
-static const char g_MeleeBroke[][] =
-{
-	"player/taunt_sorcery_staff_break.wav",
-};
 
-
-void TarakenoOnMapStart()
+void OshimunoDemoknightOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
-	PrecacheSoundArray(g_MeleeBroke);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Tarakeno");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_tarakeno");
+	strcopy(data.Name, sizeof(data.Name), "Oshimuno Demoknight");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_demoknight");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Outlaws;
+	data.Category = Type_Oshimuno;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return Tarakeno(vecPos, vecAng, team);
+	return OshimunoDemoknight(vecPos, vecAng, team);
 }
 
-methodmap Tarakeno < CClotBody
+methodmap OshimunoDemoknight < CClotBody
 {
-	property int m_iAttacksLeft
-	{
-		public get()		{	return this.m_iOverlordComboAttack;	}
-		public set(int value) 	{	this.m_iOverlordComboAttack = value;	}
-	}
 	public void PlayIdleSound()
 	{
 		if(this.m_flNextIdleSound > GetGameTime(this.index))
@@ -101,21 +91,16 @@ methodmap Tarakeno < CClotBody
  	{
 		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
 	}
-	public void PlayMeleeBroke()
- 	{
-		EmitSoundToAll(g_MeleeBroke[GetRandomInt(0, sizeof(g_MeleeBroke) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
-	}
-
 	public void PlayMeleeHitSound()
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public Tarakeno(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoDemoknight(float vecPos[3], float vecAng[3], int ally)
 	{
-		Tarakeno npc = view_as<Tarakeno>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "1000", ally));
+		OshimunoDemoknight npc = view_as<OshimunoDemoknight>(CClotBody(vecPos, vecAng, "models/player/demo.mdl", "1.0", "15000", ally));
 		
-		i_NpcWeight[npc.index] = 5;
+		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
 		KillFeed_SetKillIcon(npc.index, "demokatana");
 		
@@ -128,20 +113,13 @@ methodmap Tarakeno < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 290.0;
+		npc.m_flSpeed = 300.0;
 
-		npc.m_iAttacksLeft = 3;
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana_soldier.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/soldier/dec15_diplomat/dec15_diplomat.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_demoman.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/soldier/jul13_gangplank_garment/jul13_gangplank_garment.mdl");
-
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/soldier/hw2013_shaolin_sash/hw2013_shaolin_sash.mdl");
-
-		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/soldier/hw2013_faux_manchu/hw2013_faux_manchu.mdl");
-
-		npc.m_iWearable6 = npc.EquipItem("head", "models/workshop/player/items/all_class/fall2013_hong_kong_cone/fall2013_hong_kong_cone_soldier.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/demo/dec24_commanding_style1/dec24_commanding_style1.mdl");
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(2);
@@ -154,7 +132,7 @@ methodmap Tarakeno < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	Tarakeno npc = view_as<Tarakeno>(iNPC);
+	OshimunoDemoknight npc = view_as<OshimunoDemoknight>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -201,13 +179,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		Tarakeno_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoDemoknight_SelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void Tarakeno_SelfDefense(Tarakeno npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoDemoknight_SelfDefense(OshimunoDemoknight npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -223,40 +201,11 @@ void Tarakeno_SelfDefense(Tarakeno npc, float distance, float vecTarget[3], floa
 				if(target > 0)
 				{
 					float damage = 60.0;
-					if(ShouldNpcDealBonusDamage(target))
-					{
-						damage *= 3.0;
-						if(npc.m_iAttacksLeft > 0)
-						{
-							damage *= 6.0;
-						}
-					}
-					else
-					{
-						if(npc.m_iAttacksLeft > 0)
-						{
-							damage *= 1.15;
-						}
-					}
-
+					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
-					
-					npc.m_iAttacksLeft--;
-					if(npc.m_iAttacksLeft == 0)
-					{
-						if(IsValidEntity(npc.m_iWearable1))
-							RemoveEntity(npc.m_iWearable1);
-
-						npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_paintrain/c_paintrain.mdl");
-						npc.DispatchParticleEffect(npc.index, "mvm_pow_gold_seq_wood2", NULL_VECTOR, NULL_VECTOR, NULL_VECTOR, npc.FindAttachment("effect_hand_R"), PATTACH_ABSORIGIN, true);
-						npc.PlayMeleeBroke();
-						//break melee
-					}
 				}
 			}
-
-			delete swingTrace;
 		}
 	}
 
@@ -277,10 +226,7 @@ void Tarakeno_SelfDefense(Tarakeno npc, float distance, float vecTarget[3], floa
 }
 static void ClotDeath(int entity)
 {
-	Tarakeno npc = view_as<Tarakeno>(entity);
-	float flPosDeath[3];
-	WorldSpaceCenter(npc.index, flPosDeath);
-	ParticleEffectAt(flPosDeath, "ping_circle", 1.0);
+	OshimunoDemoknight npc = view_as<OshimunoDemoknight>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
@@ -299,7 +245,4 @@ static void ClotDeath(int entity)
 	
 	if(IsValidEntity(npc.m_iWearable5))
 		RemoveEntity(npc.m_iWearable5);
-
-	if(IsValidEntity(npc.m_iWearable6))
-		RemoveEntity(npc.m_iWearable6);
 }

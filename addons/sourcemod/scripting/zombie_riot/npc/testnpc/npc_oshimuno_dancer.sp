@@ -87,6 +87,11 @@ methodmap OshimunoDancer < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
+	property float m_iDancing
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
+	}
 	
 	public OshimunoDancer(float vecPos[3], float vecAng[3], int ally)
 	{
@@ -94,12 +99,14 @@ methodmap OshimunoDancer < CClotBody
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "pickaxe");
+		KillFeed_SetKillIcon(npc.index, "boston_basher");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
 		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
-		
+
+		npc.m_iDancing = 3.0; //dancing time
+		npc.Anger = false;
 
 		func_NPCDeath[npc.index] = ClotDeath;
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
@@ -108,10 +115,6 @@ methodmap OshimunoDancer < CClotBody
 		npc.m_flSpeed = 600.0;
 		npc.m_bisWalking = false;
 		npc.StartPathing();
-		npc.m_iChanged_WalkCycle = 300;
-		npc.AddActivityViaSequence("taunt_conga");
-		npc.SetPlaybackRate(2.5);
-		npc.SetCycle(0.05);
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_boston_basher/c_boston_basher.mdl");
 
@@ -121,10 +124,6 @@ methodmap OshimunoDancer < CClotBody
 
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/scout/hwn2025_torn_terror/hwn2025_torn_terror.mdl");
 
-		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(2);
-		AcceptEntityInput(npc.index, "SetBodyGroup");
-
 		return npc;
 	}
 }
@@ -132,6 +131,17 @@ methodmap OshimunoDancer < CClotBody
 static void ClotThink(int iNPC)
 {
 	OshimunoDancer npc = view_as<OshimunoDancer>(iNPC);
+	//TODO: this shit does not work properly || remake later
+	if(npc.m_iDancing > 0 && !npc.Anger) // during dancing time we conga
+	{
+		npc.AddActivityViaSequence("taunt_conga");
+		npc.SetPlaybackRate(2.75);
+		npc.SetCycle(0.0);
+	}
+	else if (npc.m_iDancing < 0 && !npc.Anger) // reset dancing if we're out of range
+	{
+		npc.m_iDancing = 3.0;
+	}
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -167,7 +177,12 @@ static void ClotThink(int iNPC)
 	{
 		float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
 		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
-		float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);	
+		float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);
+
+		if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 8.0)) // we get pissed if we're semi close
+		{
+			npc.Anger = true;
+		}
 		
 		if(distance < npc.GetLeadRadius())
 		{
