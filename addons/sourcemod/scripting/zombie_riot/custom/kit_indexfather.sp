@@ -396,7 +396,7 @@ public void IndexFather_WeaponLoad(int client, int weapon)
 	SDKHook(client, SDKHook_PreThink, IndexFather_DodgeLogic);
 
 	DataPack pack;
-	Handle_Timer[client] = CreateDataTimer(0.1, Timer_Base, pack, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+	Handle_Timer[client] = CreateDataTimer(0.1, Timer_Base, pack, TIMER_REPEAT);
 	pack.WriteCell(client);
 	pack.WriteCell(EntIndexToEntRef(client));
 	pack.WriteCell(EntIndexToEntRef(weapon));
@@ -1606,8 +1606,13 @@ stock float IndexFather_DamageDealTreshhold()
 		MinCashMaxGain = 1000;
 
 	MinCashMaxGain -= 250;
-
-	if(MinCashMaxGain >= 100000)
+	
+	if (MinCashMaxGain <= 0)
+	{
+		// Can never happen but might as well
+		MinCashMaxGain = 1;
+	}
+	else if(MinCashMaxGain >= 100000)
 	{
 		MinCashMaxGain = 100000;
 	}
@@ -1624,8 +1629,13 @@ stock float IndexFather_DamageTakeTreshhold()
 	int MinCashMaxGain = CurrentCash;
 
 	MinCashMaxGain -= 750;
-
-	if(MinCashMaxGain >= 100000)
+	
+	if (MinCashMaxGain <= 0)
+	{
+		// CAN happen if you get it immediately after a game starts
+		MinCashMaxGain = 1;
+	}
+	else if(MinCashMaxGain >= 100000)
 	{
 		MinCashMaxGain = 100000;
 	}

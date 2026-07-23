@@ -639,11 +639,10 @@ stock bool Damage_NPCVictim(int victim, int &attacker, int &inflictor, float &da
 
 		if(attacker <= MaxClients && attacker > 0)
 		{
+			if(!CheckInHud())
+				DoClientHitmarker(attacker);
 			if(!(i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED))
 			{
-				if(!CheckInHud())
-					DoClientHitmarker(attacker);
-
 				if(IsValidEntity(weapon))
 				{
 					damage = NPC_OnTakeDamage_Equipped_Weapon_Logic(victim, attacker, inflictor, damage, damagetype, weapon, damageForce, damagePosition, i_HexCustomDamageTypes[victim]);
@@ -2344,11 +2343,11 @@ void EntityBuffHudShow(int victim, int attacker, char[] Debuff_Adder_left, char[
 	{
 		if(GetTeam(victim) != TFTeam_Red)
 		{
-			Format(Debuff_Adder_right, SizeOfChar, "%c%s", BufferAdd,Debuff_Adder_right);
+			Format(Debuff_Adder_right, SizeOfChar, "%s%s", BufferAdd,Debuff_Adder_right);
 		}
 		else
 		{
-			Format(Debuff_Adder_left, SizeOfChar, "%c%s", BufferAdd,Debuff_Adder_left);
+			Format(Debuff_Adder_left, SizeOfChar, "%s%s", BufferAdd,Debuff_Adder_left);
 		}
 	}
 }
