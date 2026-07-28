@@ -1273,6 +1273,9 @@ void NPC_ConfigSetup()
 	NinjaSpyOnMapStart();
 	OshimunoSpiritPyroOnMapStart();
 	OshimunoDemoknightOnMapStart();
+	OshimunoDrunkardOnMapStart();
+	OshimunoChefOnMapStart();
+	OshimunoSpiritualistOnMapStart();
 }
 
 void NPC_MapEnd()
@@ -2804,3 +2807,6 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/testnpc/npc_oshimuno_dancer.sp"
 #include "npc/testnpc/npc_oshimuno_spirit_pyro.sp"
 #include "npc/testnpc/npc_oshimuno_demoknight.sp"
+#include "npc/testnpc/npc_oshimuno_chef.sp"
+#include "npc/testnpc/npc_oshimuno_drunkard.sp"
+#include "npc/testnpc/npc_oshimuno_spiritualist.sp"

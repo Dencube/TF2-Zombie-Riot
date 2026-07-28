@@ -14,7 +14,8 @@ enum				// Types
 	Element_Plasma,		// 8
 	Element_Warped,		// 9
 	Element_ManaOverflow,		// 10
-	Element_Stagger,	// 11
+	Element_Stagger,
+	// Element_SpiritFire,	// 11
 
 	Element_MAX
 }
@@ -32,7 +33,8 @@ static const char ElementName[][] =
 	"PL",
 	"WW",
 	"MO",
-	"ST"
+	"ST",
+	// "SF"
 };
 
 static float LastTime[MAXENTITIES];

@@ -333,6 +333,7 @@ static Action FarmerOnTakeDamage(int victim, int &attacker, int &inflictor, floa
 {	
 	if(!b_thisNpcIsARaid[victim])
 		return;
+		
 	OshimunoFarmer npc = view_as<OshimunoFarmer>(victim);
 	if((ReturnEntityMaxHealth(npc.index)/3) >= GetEntProp(npc.index, Prop_Data, "m_iHealth") && !npc.Anger) //enrage below 33% hp
 	{
