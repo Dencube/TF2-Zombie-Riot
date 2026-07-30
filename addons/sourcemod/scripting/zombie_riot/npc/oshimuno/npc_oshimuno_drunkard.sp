@@ -31,9 +31,9 @@ static const char g_IdleAlertedSounds[][] =
 
 static char g_MeleeHitSounds[][] = 
 {
-	"weapons/samurai/tf_katana_slice_01.wav",
-	"weapons/samurai/tf_katana_slice_02.wav",
-	"weapons/samurai/tf_katana_slice_03.wav",
+	"mvm/melee_impacts/bottle_hit_robo01.wav",
+	"mvm/melee_impacts/bottle_hit_robo02.wav",
+	"mvm/melee_impacts/bottle_hit_robo03.wav",
 };
 
 static const char g_MeleeAttackSounds[][] =
@@ -46,7 +46,7 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/samurai/tf_katana_06.wav",
 };
 
-void OshimunoSpiritualistOnMapStart()
+void OshimunoDrunkardOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -54,8 +54,8 @@ void OshimunoSpiritualistOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Spiritualist");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spiritualist");
+	strcopy(data.Name, sizeof(data.Name), "Drunkard");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_drunkard");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -66,10 +66,10 @@ void OshimunoSpiritualistOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoSpiritualist(vecPos, vecAng, team);
+	return OshimunoDrunkard(vecPos, vecAng, team);
 }
 
-methodmap OshimunoSpiritualist < CClotBody
+methodmap OshimunoDrunkard < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -96,13 +96,13 @@ methodmap OshimunoSpiritualist < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public OshimunoSpiritualist(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoDrunkard(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoSpiritualist npc = view_as<OshimunoSpiritualist>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "1000", ally));
+		OshimunoDrunkard npc = view_as<OshimunoDrunkard>(CClotBody(vecPos, vecAng, "models/player/demo.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "demokatana");
+		KillFeed_SetKillIcon(npc.index, "bottle");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -115,18 +115,23 @@ methodmap OshimunoSpiritualist < CClotBody
 		
 		npc.m_flSpeed = 300.0;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_rift_fire_mace/c_rift_fire_mace.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_bottle/c_bottle.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/all_class/hw2013_stiff_buddy/hw2013_stiff_buddy_scout.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/demo/demo_beardpipe/demo_beardpipe.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/sbox2014_ticket_boy/sbox2014_ticket_boy.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/demo/vampire_shades/vampire_shades.mdl");
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/scout/dec15_hot_heels/dec15_hot_heels.mdl");
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/demo/sum19_dynamite_abs/sum19_dynamite_abs.mdl");
+		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(2);
+		SetVariantInt(12);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
+		npc.AddActivityViaSequence("taunt_scotsmans_stagger");
+		npc.SetPlaybackRate(1.75);
+		npc.SetCycle(0.05);
+		npc.m_bisWalking = false;
 		npc.StartPathing();
 		return npc;
 	}
@@ -134,7 +139,7 @@ methodmap OshimunoSpiritualist < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoSpiritualist npc = view_as<OshimunoSpiritualist>(iNPC);
+	OshimunoDrunkard npc = view_as<OshimunoDrunkard>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -181,13 +186,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoSpiritualist_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoDrunkard_SelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoSpiritualist_SelfDefense(OshimunoSpiritualist npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoDrunkard_SelfDefense(OshimunoDrunkard npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -228,19 +233,7 @@ void OshimunoSpiritualist_SelfDefense(OshimunoSpiritualist npc, float distance, 
 }
 static void ClotDeath(int entity)
 {
-	OshimunoSpiritualist npc = view_as<OshimunoSpiritualist>(entity);
-
-	float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-	float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-	int entity = NPC_CreateByName("npc_spirit_orb", -1, pos, ang, GetTeam(npc.index));
-
-	if(entity > MaxClients)
-	{
-				
-		if(GetTeam(npc.index) != TFTeam_Red)
-		NpcAddedToZombiesLeftCurrently(entity, true);
-		view_as<CClotBody>(entity).m_flSpeed = npc.m_flSpeed;
-	}
+	OshimunoDrunkard npc = view_as<OshimunoDrunkard>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

@@ -302,7 +302,7 @@ public void OshimunoSpiritPyro_Rocket_Particle_StartTouch(int entity, int target
 
 		SDKHooks_TakeDamage(owner, target, inflictor, DamageDeal, DMG_BULLET|DMG_PREVENT_PHYSICS_FORCE, -1);	//acts like a kinetic rocket	
 
-		Elemental_AddChaosDamage(owner, target, 20, true, true); //TODO: replace with spirit fire once its made ALSO ALSO fix this code because on this version it literally doesnt work
+		Elemental_AddChaosDamage(owner, target, 20, true, true); //TODO: replace with spirit fire once its made ALSO fix this code as it applies chaos to itself LMAO
 
 		NPC_Ignite(owner, target, 12.0, -1, 8.0);
 

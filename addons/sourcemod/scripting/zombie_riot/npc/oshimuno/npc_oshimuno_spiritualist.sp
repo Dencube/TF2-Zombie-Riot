@@ -3,66 +3,73 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/heavy_paincrticialdeath01.mp3",
-	"vo/heavy_paincrticialdeath02.mp3",
-	"vo/heavy_paincrticialdeath03.mp3"
+	"vo/demoman_paincrticialdeath01.mp3",
+	"vo/demoman_paincrticialdeath02.mp3",
+	"vo/demoman_paincrticialdeath03.mp3",
+	"vo/demoman_paincrticialdeath04.mp3",
+	"vo/demoman_paincrticialdeath05.mp3"
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/heavy_painsharp01.mp3",
-	"vo/heavy_painsharp02.mp3",
-	"vo/heavy_painsharp03.mp3",
-	"vo/heavy_painsharp04.mp3",
-	"vo/heavy_painsharp05.mp3",
+	"vo/demoman_painsharp01.mp3",
+	"vo/demoman_painsharp02.mp3",
+	"vo/demoman_painsharp03.mp3",
+	"vo/demoman_painsharp04.mp3",
+	"vo/demoman_painsharp05.mp3",
+	"vo/demoman_painsharp06.mp3",
+	"vo/demoman_painsharp07.mp3"
 };
 
-static const char g_IdleAlertedSounds[][] =
+static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/taunts/soldier_taunts19.mp3",
-	"vo/taunts/soldier_taunts20.mp3",
-	"vo/taunts/soldier_taunts21.mp3",
-	"vo/taunts/soldier_taunts18.mp3"
+	"vo/demoman_battlecry01.mp3",
+	"vo/demoman_battlecry02.mp3",
+	"vo/demoman_battlecry03.mp3",
+	"vo/demoman_battlecry04.mp3",
 };
 
-static const char g_MeleeHitSounds[][] =
+static char g_MeleeHitSounds[][] = 
 {
-	"weapons/cbar_hit1.wav",
-	"weapons/cbar_hit2.wav"
+	"weapons/samurai/tf_katana_slice_01.wav",
+	"weapons/samurai/tf_katana_slice_02.wav",
+	"weapons/samurai/tf_katana_slice_03.wav",
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/pickaxe_swing1.wav",
-	"weapons/pickaxe_swing2.wav",
-	"weapons/pickaxe_swing3.wav"
+	"weapons/samurai/tf_katana_01.wav",
+	"weapons/samurai/tf_katana_02.wav",
+	"weapons/samurai/tf_katana_03.wav",
+	"weapons/samurai/tf_katana_04.wav",
+	"weapons/samurai/tf_katana_05.wav",
+	"weapons/samurai/tf_katana_06.wav",
 };
 
-void OshimunoBoomboxOnMapStart()
+void OshimunoSpiritualistOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
-	PrecacheModel("models/player/items/scout/boombox.mdl");
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Boombox");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_boombox");
+	strcopy(data.Name, sizeof(data.Name), "Spiritualist");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spiritualist");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Outlaws;
+	data.Category = Type_Oshimuno;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoBoombox(vecPos, vecAng, team);
+	return OshimunoSpiritualist(vecPos, vecAng, team);
 }
 
-methodmap OshimunoBoombox < CClotBody
+methodmap OshimunoSpiritualist < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -89,14 +96,14 @@ methodmap OshimunoBoombox < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public OshimunoBoombox(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoSpiritualist(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, {-7.63202, 345.066, -44.5095}, "models/player/items/scout/boombox.mdl", "6.0", "15000", ally));
-		// yes those angles are that specific to make it even with the ground
+		OshimunoSpiritualist npc = view_as<OshimunoSpiritualist>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "1000", ally));
+		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "pickaxe");
-
+		KillFeed_SetKillIcon(npc.index, "demokatana");
+		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
 		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
@@ -106,7 +113,21 @@ methodmap OshimunoBoombox < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 10.0;
+		npc.m_flSpeed = 300.0;
+
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_rift_fire_mace/c_rift_fire_mace.mdl");
+
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/all_class/hw2013_stiff_buddy/hw2013_stiff_buddy_scout.mdl");
+
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/sbox2014_ticket_boy/sbox2014_ticket_boy.mdl");
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
+
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/scout/dec15_hot_heels/dec15_hot_heels.mdl");
+
+		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
+		SetVariantInt(2);
+		AcceptEntityInput(npc.index, "SetBodyGroup");
+
 		npc.StartPathing();
 		return npc;
 	}
@@ -114,7 +135,7 @@ methodmap OshimunoBoombox < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoBoombox npc = view_as<OshimunoBoombox>(iNPC);
+	OshimunoSpiritualist npc = view_as<OshimunoSpiritualist>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -161,13 +182,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoBoombox_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoSpiritualist_SelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoBoombox_SelfDefense(OshimunoBoombox npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoSpiritualist_SelfDefense(OshimunoSpiritualist npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -208,7 +229,19 @@ void OshimunoBoombox_SelfDefense(OshimunoBoombox npc, float distance, float vecT
 }
 static void ClotDeath(int entity)
 {
-	OshimunoBoombox npc = view_as<OshimunoBoombox>(entity);
+	OshimunoSpiritualist npc = view_as<OshimunoSpiritualist>(entity);
+
+	float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+	float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+	int ent = NPC_CreateByName("npc_spirit_orb", -1, pos, ang, GetTeam(npc.index));
+
+	if(ent > MaxClients)
+	{
+				
+		if(GetTeam(npc.index) != TFTeam_Red)
+		NpcAddedToZombiesLeftCurrently(ent, true);
+		view_as<CClotBody>(ent).m_flSpeed = npc.m_flSpeed;
+	}
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

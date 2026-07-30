@@ -169,10 +169,12 @@ methodmap OshimunoFarmer < CClotBody
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_back_scratcher/c_back_scratcher.mdl");
 		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/engineer/sum26_standing_offer/sum26_standing_offer.mdl");
+		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/sum26_beachcombers/sum26_beachcombers_engineer.mdl");
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/engineer/dec18_wise_whiskers/dec18_wise_whiskers.mdl");
 		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/engineer/all_work_and_no_plaid/all_work_and_no_plaid.mdl");
 		npc.m_iWearable6 = npc.EquipItem("head", "models/workshop/player/items/all_class/sum24_botler_2000_style1/sum24_botler_2000_style1_engineer.mdl");
+		SetEntProp(npc.m_iWearable6, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(2);
@@ -353,6 +355,7 @@ static Action FarmerOnTakeDamage(int victim, int &attacker, int &inflictor, floa
 			}
 		}
 	}
+	return;
 }
 static void ClotDeath(int entity)
 {

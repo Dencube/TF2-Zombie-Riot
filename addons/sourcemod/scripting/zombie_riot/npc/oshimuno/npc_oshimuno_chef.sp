@@ -3,50 +3,42 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/demoman_paincrticialdeath01.mp3",
-	"vo/demoman_paincrticialdeath02.mp3",
-	"vo/demoman_paincrticialdeath03.mp3",
-	"vo/demoman_paincrticialdeath04.mp3",
-	"vo/demoman_paincrticialdeath05.mp3"
+	"vo/pyro_paincrticialdeath01.mp3",
+	"vo/pyro_paincrticialdeath02.mp3",
+	"vo/pyro_paincrticialdeath03.mp3",
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/demoman_painsharp01.mp3",
-	"vo/demoman_painsharp02.mp3",
-	"vo/demoman_painsharp03.mp3",
-	"vo/demoman_painsharp04.mp3",
-	"vo/demoman_painsharp05.mp3",
-	"vo/demoman_painsharp06.mp3",
-	"vo/demoman_painsharp07.mp3"
+	"vo/pyro_painsharp01.mp3",
+	"vo/pyro_painsharp02.mp3",
+	"vo/pyro_painsharp03.mp3",
+	"vo/pyro_painsharp04.mp3",
+	"vo/pyro_painsharp05.mp3",
 };
 
 static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/demoman_battlecry01.mp3",
-	"vo/demoman_battlecry02.mp3",
-	"vo/demoman_battlecry03.mp3",
-	"vo/demoman_battlecry04.mp3",
+	"vo/taunts/pyro_taunts01.mp3",
+	"vo/taunts/pyro_taunts02.mp3",
+	"vo/taunts/pyro_taunts03.mp3",
 };
 
 static char g_MeleeHitSounds[][] = 
 {
-	"weapons/samurai/tf_katana_slice_01.wav",
-	"weapons/samurai/tf_katana_slice_02.wav",
-	"weapons/samurai/tf_katana_slice_03.wav",
+	"weapons/cleaver_hit_02.wav",
+	"weapons/cleaver_hit_03.wav",
+	"weapons/cleaver_hit_05.wav",
+	"weapons/cleaver_hit_06.wav",
+	"weapons/cleaver_hit_07.wav",
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/samurai/tf_katana_01.wav",
-	"weapons/samurai/tf_katana_02.wav",
-	"weapons/samurai/tf_katana_03.wav",
-	"weapons/samurai/tf_katana_04.wav",
-	"weapons/samurai/tf_katana_05.wav",
-	"weapons/samurai/tf_katana_06.wav",
+	"weapons/machete_swing.wav",
 };
 
-void OshimunoDemoknightOnMapStart()
+void OshimunoChefOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -54,8 +46,8 @@ void OshimunoDemoknightOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Oshimuno Demoknight");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_demoknight");
+	strcopy(data.Name, sizeof(data.Name), "Street Chef");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_chef");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -66,10 +58,10 @@ void OshimunoDemoknightOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoDemoknight(vecPos, vecAng, team);
+	return OshimunoChef(vecPos, vecAng, team);
 }
 
-methodmap OshimunoDemoknight < CClotBody
+methodmap OshimunoChef < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -96,13 +88,13 @@ methodmap OshimunoDemoknight < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public OshimunoDemoknight(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoChef(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoDemoknight npc = view_as<OshimunoDemoknight>(CClotBody(vecPos, vecAng, "models/player/demo.mdl", "1.0", "1000", ally));
+		OshimunoChef npc = view_as<OshimunoChef>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "demokatana");
+		KillFeed_SetKillIcon(npc.index, "guillotine");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -115,13 +107,18 @@ methodmap OshimunoDemoknight < CClotBody
 		
 		npc.m_flSpeed = 300.0;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_sd_cleaver/c_sd_cleaver.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_demo.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/pyro/pyro_chef_hat.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/demo/dec24_commanding_style1/dec24_commanding_style1.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/player/items/pyro/japan_hachimaki.mdl");
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
-		SetVariantInt(12);
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/pyro/hw2013_scorched_skirt/hw2013_scorched_skirt.mdl");
+		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
+
+		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
+		SetVariantInt(2);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -131,7 +128,7 @@ methodmap OshimunoDemoknight < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoDemoknight npc = view_as<OshimunoDemoknight>(iNPC);
+	OshimunoChef npc = view_as<OshimunoChef>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -178,13 +175,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoDemoknight_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoChef_SelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoDemoknight_SelfDefense(OshimunoDemoknight npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoChef_SelfDefense(OshimunoChef npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -225,7 +222,7 @@ void OshimunoDemoknight_SelfDefense(OshimunoDemoknight npc, float distance, floa
 }
 static void ClotDeath(int entity)
 {
-	OshimunoDemoknight npc = view_as<OshimunoDemoknight>(entity);
+	OshimunoChef npc = view_as<OshimunoChef>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

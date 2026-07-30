@@ -1262,7 +1262,7 @@ void NPC_ConfigSetup()
 	VScript_CacheNPCs();
 
 	SmokeCarrierOnMapStart();
-	TarakenoOnMapStart();
+	HarukichiOnMapStart();
 	OshimunoBouncerOnMapStart();
 	OshimunoBoomboxOnMapStart();
 	OshimunoDJOnMapStart();
@@ -2795,18 +2795,18 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/construction/construction2/npc_starship_beacon.sp"
 #include "npc/construction/npc_dungeon_loot.sp"
 
-#include "npc/testnpc/npc_smoke_carrier.sp"
-#include "npc/testnpc/npc_tarakeno.sp"
-#include "npc/testnpc/npc_oshimuno_bouncer.sp"
-#include "npc/testnpc/npc_oshimuno_boombox.sp"
-#include "npc/testnpc/npc_oshimuno_dj.sp"
-#include "npc/testnpc/npc_spirit_orb.sp"
-#include "npc/testnpc/npc_cherry_blossom.sp"
-#include "npc/testnpc/npc_oshimuno_farmer.sp"
-#include "npc/testnpc/npc_ninja_spy.sp"
-#include "npc/testnpc/npc_oshimuno_dancer.sp"
-#include "npc/testnpc/npc_oshimuno_spirit_pyro.sp"
-#include "npc/testnpc/npc_oshimuno_demoknight.sp"
-#include "npc/testnpc/npc_oshimuno_chef.sp"
-#include "npc/testnpc/npc_oshimuno_drunkard.sp"
-#include "npc/testnpc/npc_oshimuno_spiritualist.sp"
+#include "npc/oshimuno/npc_smoke_carrier.sp"
+#include "npc/oshimuno/npc_harukichi.sp"
+#include "npc/oshimuno/npc_oshimuno_bouncer.sp"
+#include "npc/oshimuno/npc_oshimuno_boombox.sp"
+#include "npc/oshimuno/npc_oshimuno_dj.sp"
+#include "npc/oshimuno/npc_spirit_orb.sp"
+#include "npc/oshimuno/npc_cherry_blossom.sp"
+#include "npc/oshimuno/npc_oshimuno_farmer.sp"
+#include "npc/oshimuno/npc_ninja_spy.sp"
+#include "npc/oshimuno/npc_oshimuno_dancer.sp"
+#include "npc/oshimuno/npc_oshimuno_spirit_pyro.sp"
+#include "npc/oshimuno/npc_oshimuno_demoknight.sp"
+#include "npc/oshimuno/npc_oshimuno_chef.sp"
+#include "npc/oshimuno/npc_oshimuno_drunkard.sp"
+#include "npc/oshimuno/npc_oshimuno_spiritualist.sp"

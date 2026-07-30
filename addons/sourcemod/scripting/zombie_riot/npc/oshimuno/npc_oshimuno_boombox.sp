@@ -3,73 +3,66 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/demoman_paincrticialdeath01.mp3",
-	"vo/demoman_paincrticialdeath02.mp3",
-	"vo/demoman_paincrticialdeath03.mp3",
-	"vo/demoman_paincrticialdeath04.mp3",
-	"vo/demoman_paincrticialdeath05.mp3"
+	"vo/heavy_paincrticialdeath01.mp3",
+	"vo/heavy_paincrticialdeath02.mp3",
+	"vo/heavy_paincrticialdeath03.mp3"
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/demoman_painsharp01.mp3",
-	"vo/demoman_painsharp02.mp3",
-	"vo/demoman_painsharp03.mp3",
-	"vo/demoman_painsharp04.mp3",
-	"vo/demoman_painsharp05.mp3",
-	"vo/demoman_painsharp06.mp3",
-	"vo/demoman_painsharp07.mp3"
+	"vo/heavy_painsharp01.mp3",
+	"vo/heavy_painsharp02.mp3",
+	"vo/heavy_painsharp03.mp3",
+	"vo/heavy_painsharp04.mp3",
+	"vo/heavy_painsharp05.mp3",
 };
 
-static const char g_IdleAlertedSounds[][] = 
+static const char g_IdleAlertedSounds[][] =
 {
-	"vo/demoman_battlecry01.mp3",
-	"vo/demoman_battlecry02.mp3",
-	"vo/demoman_battlecry03.mp3",
-	"vo/demoman_battlecry04.mp3",
+	"vo/taunts/soldier_taunts19.mp3",
+	"vo/taunts/soldier_taunts20.mp3",
+	"vo/taunts/soldier_taunts21.mp3",
+	"vo/taunts/soldier_taunts18.mp3"
 };
 
-static char g_MeleeHitSounds[][] = 
+static const char g_MeleeHitSounds[][] =
 {
-	"weapons/samurai/tf_katana_slice_01.wav",
-	"weapons/samurai/tf_katana_slice_02.wav",
-	"weapons/samurai/tf_katana_slice_03.wav",
+	"weapons/cbar_hit1.wav",
+	"weapons/cbar_hit2.wav"
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/samurai/tf_katana_01.wav",
-	"weapons/samurai/tf_katana_02.wav",
-	"weapons/samurai/tf_katana_03.wav",
-	"weapons/samurai/tf_katana_04.wav",
-	"weapons/samurai/tf_katana_05.wav",
-	"weapons/samurai/tf_katana_06.wav",
+	"weapons/pickaxe_swing1.wav",
+	"weapons/pickaxe_swing2.wav",
+	"weapons/pickaxe_swing3.wav"
 };
 
-void OshimunoChefOnMapStart()
+void OshimunoBoomboxOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
+	PrecacheModel("models/player/items/scout/boombox.mdl");
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Street Chef");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_chef");
+	strcopy(data.Name, sizeof(data.Name), "Boombox");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_boombox");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Oshimuno;
+	data.Category = Type_Outlaws;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoChef(vecPos, vecAng, team);
+	return OshimunoBoombox(vecPos, vecAng, team);
 }
 
-methodmap OshimunoChef < CClotBody
+methodmap OshimunoBoombox < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -96,14 +89,15 @@ methodmap OshimunoChef < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public OshimunoChef(float vecPos[3], float vecAng[3], int ally)
-	{
-		OshimunoChef npc = view_as<OshimunoChef>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.0", "1000", ally));
-		
+	public OshimunoBoombox(float vecPos[3], float vecAng[3], int ally)
+	{	
+		OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.35", "15000", ally));
+		// OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, {-7.63202, 345.066, -44.5095}, "models/player/items/scout/boombox.mdl", "6.0", "15000", ally));
+		// boombox model use if the offset can be somehow fixed
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "guillotine");
-		
+		KillFeed_SetKillIcon(npc.index, "pickaxe");
+
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
 		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
@@ -113,20 +107,7 @@ methodmap OshimunoChef < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 300.0;
-
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_sd_cleaver/c_sd_cleaver.mdl");
-
-		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/pyro/pyro_chef_hat.mdl");
-
-		npc.m_iWearable3 = npc.EquipItem("head", "models/player/items/pyro/japan_hachimaki.mdl");
-
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/pyro/hw2013_scorched_skirt/hw2013_scorched_skirt.mdl");
-
-		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(2);
-		AcceptEntityInput(npc.index, "SetBodyGroup");
-
+		npc.m_flSpeed = 10.0;
 		npc.StartPathing();
 		return npc;
 	}
@@ -134,7 +115,7 @@ methodmap OshimunoChef < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoChef npc = view_as<OshimunoChef>(iNPC);
+	OshimunoBoombox npc = view_as<OshimunoBoombox>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -181,13 +162,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoChef_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoBoombox_SelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoChef_SelfDefense(OshimunoChef npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoBoombox_SelfDefense(OshimunoBoombox npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -228,7 +209,7 @@ void OshimunoChef_SelfDefense(OshimunoChef npc, float distance, float vecTarget[
 }
 static void ClotDeath(int entity)
 {
-	OshimunoChef npc = view_as<OshimunoChef>(entity);
+	OshimunoBoombox npc = view_as<OshimunoBoombox>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

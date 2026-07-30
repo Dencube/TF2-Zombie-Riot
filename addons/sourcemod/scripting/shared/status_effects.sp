@@ -243,6 +243,7 @@ void InitStatusEffects()
 	StatusEffects_CasinoDebuff();
 #if defined ZR
 	StatusEffects_Aperture();
+	StatusEffects_SmokeScreen(); //combine all new effects into one like aperture and put them here
 	StatusEffects_Ruiania();
 	StatusEffects_BrickWeapon();
 #endif
