@@ -185,10 +185,10 @@ methodmap OshimunoFarmer < CClotBody
 	}
 }
 
-static void NPCTalkMessage(int iNPC, const char[] message) // temp remove later
-{
-	PrintNPCMessageWithPrefixes(iNPC, "lightblue", message);
-}
+// static void NPCTalkMessage(int iNPC, const char[] message) // temp remove later
+// {
+// 	PrintNPCMessageWithPrefixes(iNPC, "lightblue", message);
+// }
 
 static int GetTreeCount(int entity)
 {
@@ -265,29 +265,33 @@ static void ClotThink(int iNPC)
 		{
 			case 1:
 			{
-				NPCTalkMessage(npc.index, "{purple}VOID{default}, GRANT ME STRENGTH!");
+				fl_TotalArmor[npc.index] = 0.95;
 			}
 			case 2:
 			{
-				NPCTalkMessage(npc.index, "You think you won? I'M JUST GETTING STARTED.");
+				fl_TotalArmor[npc.index] = 0.875;
 			}
 			case 3:
 			{
-				NPCTalkMessage(npc.index, "Remember those cats? {crimson} You're about to get it worse.");
+				fl_TotalArmor[npc.index] = 0.75;
+				npc.m_flSpeed = 305.0;
 			}
 			case 4:
 			{
-				NPCTalkMessage(npc.index, "{crimson} DEATH TO MY ENEMIES!!!.");
+				fl_TotalArmor[npc.index] = 0.60;
+				npc.m_flSpeed = 310.0;
 			}
 			case 5:
 			{
-				NPCTalkMessage(npc.index, "{crimson} DIE ALREADY!!!");
+				fl_TotalArmor[npc.index] = 0.45;
+				npc.m_flSpeed = 315.0;
 			}
 		}
 	}
 	else if (GetTreeCount(npc.index) >= 6) // beyond 5 trees he gets max buffs
 	{
-		NPCTalkMessage(npc.index, "{crimson} YOU FUCKED UP BIG TIME!!!"); 
+		fl_TotalArmor[npc.index] = 0.33;
+		npc.m_flSpeed = 330.0;
 	}
 	npc.PlayIdleSound();
 }
@@ -312,6 +316,7 @@ void OshimunoFarmer_SelfDefense(OshimunoFarmer npc, float distance, float vecTar
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
 			}
+			delete swingTrace;
 		}
 	}
 
@@ -334,7 +339,7 @@ void OshimunoFarmer_SelfDefense(OshimunoFarmer npc, float distance, float vecTar
 static Action FarmerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {	
 	if(!b_thisNpcIsARaid[victim])
-		return;
+		return Plugin_Changed;
 		
 	OshimunoFarmer npc = view_as<OshimunoFarmer>(victim);
 	if((ReturnEntityMaxHealth(npc.index)/3) >= GetEntProp(npc.index, Prop_Data, "m_iHealth") && !npc.Anger) //enrage below 33% hp
@@ -344,7 +349,7 @@ static Action FarmerOnTakeDamage(int victim, int &attacker, int &inflictor, floa
 		{
 			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 			float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-			int entity = NPC_CreateByName("npc_cherry_blossom", -1, pos, ang, GetTeam(npc.index));
+			int entity = NPC_CreateByName("npc_oshimuno_tree", -1, pos, ang, GetTeam(npc.index));
 
 			if(entity > MaxClients)
 			{
@@ -355,7 +360,8 @@ static Action FarmerOnTakeDamage(int victim, int &attacker, int &inflictor, floa
 			}
 		}
 	}
-	return;
+
+	return Plugin_Changed;
 }
 static void ClotDeath(int entity)
 {

@@ -188,6 +188,7 @@ void SpiritOrb_SelfDefense(SpiritOrb npc, float distance, float vecTarget[3], fl
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
 			}
+			delete swingTrace;
 		}
 	}
 

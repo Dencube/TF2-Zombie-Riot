@@ -51,7 +51,7 @@ void NinjaSpyOnMapStart()
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Ninja Spy");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_ninja_spy");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_mafia_ninja");
 	strcopy(data.Icon, sizeof(data.Icon), "spy");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -208,6 +208,7 @@ void NinjaSpy_SelfDefense(NinjaSpy npc, float distance, float vecTarget[3], floa
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
 			}
+			delete swingTrace;
 		}
 	}
 

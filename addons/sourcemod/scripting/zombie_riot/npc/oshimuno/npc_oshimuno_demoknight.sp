@@ -208,6 +208,7 @@ void OshimunoDemoknight_SelfDefense(OshimunoDemoknight npc, float distance, floa
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
 			}
+			delete swingTrace;
 		}
 	}
 

@@ -209,6 +209,7 @@ void OshimunoSpiritualist_SelfDefense(OshimunoSpiritualist npc, float distance, 
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
 			}
+			delete swingTrace;
 		}
 	}
 

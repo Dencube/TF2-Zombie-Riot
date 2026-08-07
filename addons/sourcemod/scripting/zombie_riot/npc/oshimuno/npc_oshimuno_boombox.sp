@@ -17,14 +17,6 @@ static const char g_HurtSounds[][] =
 	"vo/heavy_painsharp05.mp3",
 };
 
-static const char g_IdleAlertedSounds[][] =
-{
-	"vo/taunts/soldier_taunts19.mp3",
-	"vo/taunts/soldier_taunts20.mp3",
-	"vo/taunts/soldier_taunts21.mp3",
-	"vo/taunts/soldier_taunts18.mp3"
-};
-
 static const char g_MeleeHitSounds[][] =
 {
 	"weapons/cbar_hit1.wav",
@@ -38,14 +30,15 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/pickaxe_swing3.wav"
 };
 
+#define BOOMBOX_RANGE 200.0
+#define BOOMBOX_RANGE_TRACE 205.0
 void OshimunoBoomboxOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
-	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
-	PrecacheModel("models/player/items/scout/boombox.mdl");
+	PrecacheModel("models/buildables/dispenser_light.mdl");
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Boombox");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_boombox");
@@ -64,14 +57,6 @@ static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 
 methodmap OshimunoBoombox < CClotBody
 {
-	public void PlayIdleSound()
-	{
-		if(this.m_flNextIdleSound > GetGameTime(this.index))
-			return;
-		
-		EmitSoundToAll(g_IdleAlertedSounds[GetRandomInt(0, sizeof(g_IdleAlertedSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
-		this.m_flNextIdleSound = GetGameTime(this.index) + GetRandomFloat(12.0, 24.0);
-	}
 	public void PlayHurtSound()
 	{
 		EmitSoundToAll(g_HurtSounds[GetRandomInt(0, sizeof(g_HurtSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
@@ -91,7 +76,7 @@ methodmap OshimunoBoombox < CClotBody
 	
 	public OshimunoBoombox(float vecPos[3], float vecAng[3], int ally)
 	{	
-		OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.35", "15000", ally));
+		OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, vecAng, "models/buildables/dispenser_light.mdl", "1.35", "1000", ally));
 		// OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, {-7.63202, 345.066, -44.5095}, "models/player/items/scout/boombox.mdl", "6.0", "15000", ally));
 		// boombox model use if the offset can be somehow fixed
 		i_NpcWeight[npc.index] = 1;
@@ -107,8 +92,9 @@ methodmap OshimunoBoombox < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 10.0;
-		npc.StartPathing();
+		npc.m_flSpeed = 0.0; // doesnt move
+		npc.m_bDissapearOnDeath = true;
+		npc.StopPathing();
 		return npc;
 	}
 }
@@ -164,8 +150,9 @@ static void ClotThink(int iNPC)
 		}
 		OshimunoBoombox_SelfDefense(npc, distance, vecTarget, gameTime); 
 	}
+	float VecSelfNpcabs[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", VecSelfNpcabs);
+	spawnRing_Vectors(VecSelfNpcabs, BOOMBOX_RANGE_TRACE * 2.0, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 75, 75, 255, 200, 1, /*duration*/ 0.11, 5.0, 2.0, 1);
 
-	npc.PlayIdleSound();
 }
 
 void OshimunoBoombox_SelfDefense(OshimunoBoombox npc, float distance, float vecTarget[3], float gameTime)
@@ -217,15 +204,4 @@ static void ClotDeath(int entity)
 	if(IsValidEntity(npc.m_iWearable1))
 		RemoveEntity(npc.m_iWearable1);
 	
-	if(IsValidEntity(npc.m_iWearable2))
-		RemoveEntity(npc.m_iWearable2);
-	
-	if(IsValidEntity(npc.m_iWearable3))
-		RemoveEntity(npc.m_iWearable3);
-	
-	if(IsValidEntity(npc.m_iWearable4))
-		RemoveEntity(npc.m_iWearable4);
-	
-	if(IsValidEntity(npc.m_iWearable5))
-		RemoveEntity(npc.m_iWearable5);
 }

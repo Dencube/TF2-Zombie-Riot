@@ -33,17 +33,12 @@ static char g_MeleeHitSounds[][] =
 {
 	"mvm/melee_impacts/bottle_hit_robo01.wav",
 	"mvm/melee_impacts/bottle_hit_robo02.wav",
-	"mvm/melee_impacts/bottle_hit_robo03.wav",
+	"mvm/melee_impacts/bottle_hit_robo03.wav"
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/samurai/tf_katana_01.wav",
-	"weapons/samurai/tf_katana_02.wav",
-	"weapons/samurai/tf_katana_03.wav",
-	"weapons/samurai/tf_katana_04.wav",
-	"weapons/samurai/tf_katana_05.wav",
-	"weapons/samurai/tf_katana_06.wav",
+	"weapons/shovel_swing.wav",
 };
 
 void OshimunoDrunkardOnMapStart()
@@ -128,10 +123,10 @@ methodmap OshimunoDrunkard < CClotBody
 		SetVariantInt(12);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
+		npc.m_bisWalking = false;
 		npc.AddActivityViaSequence("taunt_scotsmans_stagger");
 		npc.SetPlaybackRate(1.75);
 		npc.SetCycle(0.05);
-		npc.m_bisWalking = false;
 		npc.StartPathing();
 		return npc;
 	}
@@ -213,6 +208,7 @@ void OshimunoDrunkard_SelfDefense(OshimunoDrunkard npc, float distance, float ve
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
 			}
+			delete swingTrace;
 		}
 	}
 

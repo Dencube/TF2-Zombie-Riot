@@ -1276,6 +1276,10 @@ void NPC_ConfigSetup()
 	OshimunoDrunkardOnMapStart();
 	OshimunoChefOnMapStart();
 	OshimunoSpiritualistOnMapStart();
+	OshimunoMafiaGruntOnMapStart();
+	OshimunoMafiaExecutorOnMapStart();
+	OshimunoMafiaMobsterOnMapStart();
+	OshimunoBartenderOnMapStart();
 }
 
 void NPC_MapEnd()
@@ -2801,12 +2805,16 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_boombox.sp"
 #include "npc/oshimuno/npc_oshimuno_dj.sp"
 #include "npc/oshimuno/npc_spirit_orb.sp"
-#include "npc/oshimuno/npc_cherry_blossom.sp"
+#include "npc/oshimuno/npc_oshimuno_tree.sp"
 #include "npc/oshimuno/npc_oshimuno_farmer.sp"
-#include "npc/oshimuno/npc_ninja_spy.sp"
+#include "npc/oshimuno/npc_oshimuno_mafia_ninja.sp"
 #include "npc/oshimuno/npc_oshimuno_dancer.sp"
 #include "npc/oshimuno/npc_oshimuno_spirit_pyro.sp"
 #include "npc/oshimuno/npc_oshimuno_demoknight.sp"
 #include "npc/oshimuno/npc_oshimuno_chef.sp"
 #include "npc/oshimuno/npc_oshimuno_drunkard.sp"
 #include "npc/oshimuno/npc_oshimuno_spiritualist.sp"
+#include "npc/oshimuno/npc_oshimuno_mafia_grunt.sp"
+#include "npc/oshimuno/npc_oshimuno_mafia_executor.sp"
+#include "npc/oshimuno/npc_oshimuno_bartender.sp"
+#include "npc/oshimuno/npc_oshimuno_mafia_mobster.sp"

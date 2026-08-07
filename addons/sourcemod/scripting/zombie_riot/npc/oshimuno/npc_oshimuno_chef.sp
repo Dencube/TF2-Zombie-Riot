@@ -194,14 +194,18 @@ void OshimunoChef_SelfDefense(OshimunoChef npc, float distance, float vecTarget[
 			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
 			{
 				int target = TR_GetEntityIndex(swingTrace);
+				int health = GetClientHealth(target);
+				int maxhealth = SDKCall_GetMaxHealth(target);
+				int extradamage = ((maxhealth) - (health)) / 10; //deals extra damage equal to 10% of the targets missing hp
 				if(target > 0)
 				{
-					float damage = 60.0;
+					float damage = 50.0 + extradamage;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
 			}
+			delete swingTrace;
 		}
 	}
 
@@ -216,7 +220,7 @@ void OshimunoChef_SelfDefense(OshimunoChef npc, float distance, float vecTarget[
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_flNextMeleeAttack = gameTime + 1.3;
 		}
 	}
 }

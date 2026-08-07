@@ -201,6 +201,7 @@ void OshimunoBouncer_SelfDefense(OshimunoBouncer npc, float distance, float vecT
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
 			}
+			delete swingTrace;
 		}
 	}
 
