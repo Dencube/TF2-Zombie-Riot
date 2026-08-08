@@ -90,7 +90,11 @@ methodmap OshimunoDrunkard < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	
+	property float m_flTauntLoop
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][2]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][2] = TempValueForProperty; }
+	}
 	public OshimunoDrunkard(float vecPos[3], float vecAng[3], int ally)
 	{
 		OshimunoDrunkard npc = view_as<OshimunoDrunkard>(CClotBody(vecPos, vecAng, "models/player/demo.mdl", "1.0", "1000", ally));
@@ -109,6 +113,7 @@ methodmap OshimunoDrunkard < CClotBody
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
+		npc.m_flTauntLoop = 3.0; //loop taunt animation every 3s
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_bottle/c_bottle.mdl");
 
@@ -182,6 +187,12 @@ static void ClotThink(int iNPC)
 			npc.SetGoalEntity(target);
 		}
 		OshimunoDrunkard_SelfDefense(npc, distance, vecTarget, gameTime); 
+	}
+	if(npc.m_flTauntLoop > 0) //set a 2 different taunts on the same frame to "loop" the animation
+	{
+		npc.AddActivityViaSequence("taunt_conga");
+		npc.AddActivityViaSequence("taunt_scotsmans_stagger");
+		npc.m_flTauntLoop = gameTime + 3.0; 
 	}
 
 	npc.PlayIdleSound();
