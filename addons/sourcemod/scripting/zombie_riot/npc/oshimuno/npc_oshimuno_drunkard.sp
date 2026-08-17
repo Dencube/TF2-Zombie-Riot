@@ -113,7 +113,8 @@ methodmap OshimunoDrunkard < CClotBody
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
-		npc.m_flTauntLoop = 3.0; //loop taunt animation every 3s
+		npc.m_flTauntLoop = 0.0;
+		npc.m_bisWalking = false;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_bottle/c_bottle.mdl");
 
@@ -128,10 +129,6 @@ methodmap OshimunoDrunkard < CClotBody
 		SetVariantInt(12);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
-		npc.m_bisWalking = false;
-		npc.AddActivityViaSequence("taunt_scotsmans_stagger");
-		npc.SetPlaybackRate(1.75);
-		npc.SetCycle(0.05);
 		npc.StartPathing();
 		return npc;
 	}
@@ -186,19 +183,20 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoDrunkard_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoDrunkardSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-	if(npc.m_flTauntLoop > 0) //set a 2 different taunts on the same frame to "loop" the animation
+	if(npc.m_flTauntLoop < gameTime) // loops the taunt
 	{
-		npc.AddActivityViaSequence("taunt_conga");
 		npc.AddActivityViaSequence("taunt_scotsmans_stagger");
+		npc.SetPlaybackRate(1.5);
+		npc.SetCycle(0.0);
 		npc.m_flTauntLoop = gameTime + 3.0; 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoDrunkard_SelfDefense(OshimunoDrunkard npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{

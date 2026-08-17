@@ -182,13 +182,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoSpiritualist_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoSpiritualistSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoSpiritualist_SelfDefense(OshimunoSpiritualist npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoSpiritualistSelfDefense(OshimunoSpiritualist npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{

@@ -175,13 +175,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoChef_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoChefSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoChef_SelfDefense(OshimunoChef npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoChefSelfDefense(OshimunoChef npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{

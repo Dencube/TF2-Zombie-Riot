@@ -50,7 +50,7 @@ static const char g_MeleeBroke[][] =
 };
 
 
-void HarukichiOnMapStart()
+void OshimunoHarukichiOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -201,13 +201,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		Harukichi_SelfDefense(npc, distance, vecTarget, gameTime); 
+		HarukichiSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void Harukichi_SelfDefense(Harukichi npc, float distance, float vecTarget[3], float gameTime)
+void HarukichiSelfDefense(Harukichi npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{

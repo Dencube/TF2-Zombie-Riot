@@ -44,7 +44,7 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/pickaxe_swing3.wav",
 };
 
-void OshimunoMafiaMobsterOnMapStart()
+void OshimunoMobsterOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -53,7 +53,7 @@ void OshimunoMafiaMobsterOnMapStart()
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Tarakeno Mobster");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_mafia_mobster");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_mobster");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -64,10 +64,10 @@ void OshimunoMafiaMobsterOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoMafiaMobster(vecPos, vecAng, team);
+	return OshimunoMobster(vecPos, vecAng, team);
 }
 
-methodmap OshimunoMafiaMobster < CClotBody
+methodmap OshimunoMobster < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -94,9 +94,9 @@ methodmap OshimunoMafiaMobster < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public OshimunoMafiaMobster(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoMobster(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoMafiaMobster npc = view_as<OshimunoMafiaMobster>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "1000", ally));
+		OshimunoMobster npc = view_as<OshimunoMobster>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
@@ -121,7 +121,7 @@ methodmap OshimunoMafiaMobster < CClotBody
 		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_minja_vest/short2014_minja_vest.mdl");
 		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_scout.mdl");
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_soldier.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
@@ -135,7 +135,7 @@ methodmap OshimunoMafiaMobster < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoMafiaMobster npc = view_as<OshimunoMafiaMobster>(iNPC);
+	OshimunoMobster npc = view_as<OshimunoMobster>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -182,13 +182,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoMafiaMobster_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoMobsterSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoMafiaMobster_SelfDefense(OshimunoMafiaMobster npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoMobsterSelfDefense(OshimunoMobster npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -230,7 +230,7 @@ void OshimunoMafiaMobster_SelfDefense(OshimunoMafiaMobster npc, float distance, 
 }
 static void ClotDeath(int entity) 
 {
-	OshimunoMafiaMobster npc = view_as<OshimunoMafiaMobster>(entity);
+	OshimunoMobster npc = view_as<OshimunoMobster>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

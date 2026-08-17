@@ -1261,25 +1261,29 @@ void NPC_ConfigSetup()
 
 	VScript_CacheNPCs();
 
-	SmokeCarrierOnMapStart();
-	HarukichiOnMapStart();
+	OshimunoSmokeCarrierOnMapStart();
+	OshimunoHarukichiOnMapStart();
 	OshimunoBouncerOnMapStart();
 	OshimunoBoomboxOnMapStart();
 	OshimunoDJOnMapStart();
-	SpiritOrbOnMapStart();
-	CherryBlossomOnMapStart();
+	OshimunoSpiritOrbOnMapStart();
+	OshimunoCherryBlossomOnMapStart();
 	OshimunoFarmerOnMapStart();
 	OshimunoDancerOnMapStart();
-	NinjaSpyOnMapStart();
+	OshimunoNinjaSpyOnMapStart();
 	OshimunoSpiritPyroOnMapStart();
 	OshimunoDemoknightOnMapStart();
 	OshimunoDrunkardOnMapStart();
 	OshimunoChefOnMapStart();
 	OshimunoSpiritualistOnMapStart();
-	OshimunoMafiaGruntOnMapStart();
-	OshimunoMafiaExecutorOnMapStart();
-	OshimunoMafiaMobsterOnMapStart();
+	OshimunoGruntOnMapStart();
+	OshimunoExecutorOnMapStart();
+	OshimunoMobsterOnMapStart();
 	OshimunoBartenderOnMapStart();
+	OshimunoTrashManOnMapStart();
+	OshimunoSpiritKamikazeOnMapStart();
+	OshimunoSpiritCallerOnMapStart();
+	OshimunoAvengerOnMapStart();
 }
 
 void NPC_MapEnd()
@@ -2799,22 +2803,27 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/construction/construction2/npc_starship_beacon.sp"
 #include "npc/construction/npc_dungeon_loot.sp"
 
-#include "npc/oshimuno/npc_smoke_carrier.sp"
 #include "npc/oshimuno/npc_harukichi.sp"
+#include "npc/oshimuno/npc_oshimuno_smoke_carrier.sp"
 #include "npc/oshimuno/npc_oshimuno_bouncer.sp"
 #include "npc/oshimuno/npc_oshimuno_boombox.sp"
 #include "npc/oshimuno/npc_oshimuno_dj.sp"
-#include "npc/oshimuno/npc_spirit_orb.sp"
+#include "npc/oshimuno/npc_oshimuno_spirit_orb.sp"
 #include "npc/oshimuno/npc_oshimuno_tree.sp"
 #include "npc/oshimuno/npc_oshimuno_farmer.sp"
-#include "npc/oshimuno/npc_oshimuno_mafia_ninja.sp"
+#include "npc/oshimuno/npc_oshimuno_ninja.sp"
 #include "npc/oshimuno/npc_oshimuno_dancer.sp"
 #include "npc/oshimuno/npc_oshimuno_spirit_pyro.sp"
 #include "npc/oshimuno/npc_oshimuno_demoknight.sp"
 #include "npc/oshimuno/npc_oshimuno_chef.sp"
 #include "npc/oshimuno/npc_oshimuno_drunkard.sp"
 #include "npc/oshimuno/npc_oshimuno_spiritualist.sp"
-#include "npc/oshimuno/npc_oshimuno_mafia_grunt.sp"
-#include "npc/oshimuno/npc_oshimuno_mafia_executor.sp"
+#include "npc/oshimuno/npc_oshimuno_grunt.sp"
+#include "npc/oshimuno/npc_oshimuno_executor.sp"
 #include "npc/oshimuno/npc_oshimuno_bartender.sp"
-#include "npc/oshimuno/npc_oshimuno_mafia_mobster.sp"
+#include "npc/oshimuno/npc_oshimuno_mobster.sp"
+#include "npc/oshimuno/npc_oshimuno_trash_man.sp"
+#include "npc/oshimuno/npc_oshimuno_spirit_kamikaze.sp"
+#include "npc/oshimuno/npc_oshimuno_spiritcaller.sp"
+#include "npc/oshimuno/npc_oshimuno_avenger.sp"
+

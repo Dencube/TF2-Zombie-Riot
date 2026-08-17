@@ -17,28 +17,16 @@ static const char g_HurtSounds[][] =
 	"vo/heavy_painsharp05.mp3",
 };
 
-static const char g_MeleeHitSounds[][] =
-{
-	"weapons/cbar_hit1.wav",
-	"weapons/cbar_hit2.wav"
-};
+static const char g_ExplosionSounds[] = "weapons/explode1.wav";
 
-static const char g_MeleeAttackSounds[][] =
-{
-	"weapons/pickaxe_swing1.wav",
-	"weapons/pickaxe_swing2.wav",
-	"weapons/pickaxe_swing3.wav"
-};
-
-#define BOOMBOX_RANGE 200.0
-#define BOOMBOX_RANGE_TRACE 205.0
+#define BOOMBOX_RANGE 250.0
+#define BOOMBOX_RANGE_TRACE 275.0
 void OshimunoBoomboxOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
-	PrecacheSoundArray(g_MeleeHitSounds);
-	PrecacheSoundArray(g_MeleeAttackSounds);
 	PrecacheModel("models/buildables/dispenser_light.mdl");
+	PrecacheSound(g_ExplosionSounds);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Boombox");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_boombox");
@@ -65,15 +53,10 @@ methodmap OshimunoBoombox < CClotBody
 	{
 		EmitSoundToAll(g_DeathSounds[GetRandomInt(0, sizeof(g_DeathSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
-	public void PlayMeleeSound()
- 	{
-		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
-	}
-	public void PlayMeleeHitSound()
+	public void PlayExplosionSound() 
 	{
-		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
+		EmitSoundToAll(g_ExplosionSounds, this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, GetRandomInt(80,125));
 	}
-	
 	public OshimunoBoombox(float vecPos[3], float vecAng[3], int ally)
 	{	
 		OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, vecAng, "models/buildables/dispenser_light.mdl", "1.35", "1000", ally));
@@ -148,51 +131,20 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoBoombox_SelfDefense(npc, distance, vecTarget, gameTime); 
+
+		if(npc.m_flNextMeleeAttack < gameTime)
+		{
+			npc.m_flNextMeleeAttack = gameTime + 5.0;
+
+			spawnRing_Vectors(VecSelfNpc, BOOMBOX_RANGE, 0.0, 0.0, 25.0, "materials/sprites/laserbeam.vmt", 50, 225, 225, 175, 1, 0.5, 6.0, 0.1, 1, 640.0);
+			Explode_Logic_Custom(150.0, -1, npc.index, -1, VecSelfNpc, BOOMBOX_RANGE, _, 0.75, false, _, false, _, _);
+			npc.PlayExplosionSound();
+		}
 	}
+	
 	float VecSelfNpcabs[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", VecSelfNpcabs);
-	spawnRing_Vectors(VecSelfNpcabs, BOOMBOX_RANGE_TRACE * 2.0, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 75, 75, 255, 200, 1, /*duration*/ 0.11, 5.0, 2.0, 1);
+	spawnRing_Vectors(VecSelfNpcabs, BOOMBOX_RANGE_TRACE * 2.0, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 15, 15, 225, 200, 1, /*duration*/ 0.11, 5.0, 2.0, 1);
 
-}
-
-void OshimunoBoombox_SelfDefense(OshimunoBoombox npc, float distance, float vecTarget[3], float gameTime)
-{
-	if(npc.m_flAttackHappens)
-	{
-		if(npc.m_flAttackHappens < gameTime)
-		{
-			npc.m_flAttackHappens = 0.0;
-			
-			Handle swingTrace;
-			npc.FaceTowards(vecTarget, 15000.0);
-			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
-			{
-				int target = TR_GetEntityIndex(swingTrace);
-				if(target > 0)
-				{
-					float damage = 60.0;
-					
-					npc.PlayMeleeHitSound();
-					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
-				}
-			}
-		}
-	}
-
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) && npc.m_flNextMeleeAttack < gameTime)
-	{
-		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
-		if(IsValidEnemy(npc.index, target, false, true))
-		{
-			npc.m_iTarget = target;
-
-			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
-			npc.PlayMeleeSound();
-			
-			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
-		}
-	}
 }
 static void ClotDeath(int entity)
 {

@@ -161,13 +161,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoBartender_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoBartenderSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-static int OshimunoBartender_SelfDefense(OshimunoBartender npc, float distance, float vecTarget[3], float gameTime) 
+static int OshimunoBartenderSelfDefense(OshimunoBartender npc, float distance, float vecTarget[3], float gameTime) 
 {
 	//Direct mode
 	if(gameTime > npc.m_flNextMeleeAttack)

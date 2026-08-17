@@ -1,61 +1,43 @@
-#pragma semicolon 1
+#pragma semicolon 1 //TODO: add a mafia wrath system on death to all attackers/last attacker
 #pragma newdecls required
 
 static const char g_DeathSounds[][] =
 {
-	"vo/demoman_paincrticialdeath01.mp3",
-	"vo/demoman_paincrticialdeath02.mp3",
-	"vo/demoman_paincrticialdeath03.mp3",
-	"vo/demoman_paincrticialdeath04.mp3",
-	"vo/demoman_paincrticialdeath05.mp3"
+	"vo/spy_paincrticialdeath01.mp3",
+	"vo/spy_paincrticialdeath02.mp3",
+	"vo/spy_paincrticialdeath03.mp3",
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/demoman_painsharp01.mp3",
-	"vo/demoman_painsharp02.mp3",
-	"vo/demoman_painsharp03.mp3",
-	"vo/demoman_painsharp04.mp3",
-	"vo/demoman_painsharp05.mp3",
-	"vo/demoman_painsharp06.mp3",
-	"vo/demoman_painsharp07.mp3"
+	"vo/spy_painsharp01.mp3",
+	"vo/spy_painsharp02.mp3",
+	"vo/spy_painsharp03.mp3",
+	"vo/spy_painsharp04.mp3",
 };
 
 static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/demoman_battlecry01.mp3",
-	"vo/demoman_battlecry02.mp3",
-	"vo/demoman_battlecry03.mp3",
-	"vo/demoman_battlecry04.mp3",
-};
-
-static char g_MeleeHitSounds[][] = 
-{
-	"weapons/samurai/tf_katana_slice_01.wav",
-	"weapons/samurai/tf_katana_slice_02.wav",
-	"weapons/samurai/tf_katana_slice_03.wav",
+	"vo/spy_battlecry01.mp3",
+	"vo/spy_battlecry02.mp3",
+	"vo/spy_battlecry03.mp3",
+	"vo/spy_battlecry04.mp3",
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/samurai/tf_katana_01.wav",
-	"weapons/samurai/tf_katana_02.wav",
-	"weapons/samurai/tf_katana_03.wav",
-	"weapons/samurai/tf_katana_04.wav",
-	"weapons/samurai/tf_katana_05.wav",
-	"weapons/samurai/tf_katana_06.wav",
+	"weapons/ambassador_shoot.wav",
 };
 
-void OshimunoDemoknightOnMapStart()
+void OshimunoExecutorOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
-	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Oshimuno Demoknight");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_demoknight");
+	strcopy(data.Name, sizeof(data.Name), "Tarakeno Executor");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_executor");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -66,10 +48,10 @@ void OshimunoDemoknightOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoDemoknight(vecPos, vecAng, team);
+	return OshimunoExecutor(vecPos, vecAng, team);
 }
 
-methodmap OshimunoDemoknight < CClotBody
+methodmap OshimunoExecutor < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -91,18 +73,14 @@ methodmap OshimunoDemoknight < CClotBody
  	{
 		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
 	}
-	public void PlayMeleeHitSound()
-	{
-		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
-	}
 	
-	public OshimunoDemoknight(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoExecutor(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoDemoknight npc = view_as<OshimunoDemoknight>(CClotBody(vecPos, vecAng, "models/player/demo.mdl", "1.0", "1000", ally));
+		OshimunoExecutor npc = view_as<OshimunoExecutor>(CClotBody(vecPos, vecAng, "models/player/spy.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
-		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "demokatana");
+		npc.SetActivity("ACT_MP_RUN_SECONDARY");
+		KillFeed_SetKillIcon(npc.index, "samrevolver");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -113,28 +91,30 @@ methodmap OshimunoDemoknight < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 300.0;
+		npc.m_flSpeed = 100.0;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_ttg_sam_gun/c_ttg_sam_gun.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_demo.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/spy/spr18_assassins_attire/spr18_assassins_attire.mdl");
 		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/demo/dec24_commanding_style1/dec24_commanding_style1.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2024_spider_sights/hwn2024_spider_sights_spy.mdl");
 		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_spy.mdl");
+		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
+
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(12);
-		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
+		TeleportDiversioToRandLocation(npc.index);
 		return npc;
 	}
 }
 
 static void ClotThink(int iNPC)
 {
-	OshimunoDemoknight npc = view_as<OshimunoDemoknight>(iNPC);
+	OshimunoExecutor npc = view_as<OshimunoExecutor>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -181,13 +161,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoDemoknightSelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoExecutorSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoDemoknightSelfDefense(OshimunoDemoknight npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoExecutorSelfDefense(OshimunoExecutor npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -202,10 +182,9 @@ void OshimunoDemoknightSelfDefense(OshimunoDemoknight npc, float distance, float
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
+					float damage = 100.0;
 					
-					npc.PlayMeleeHitSound();
-					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
+					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_TRUEDAMAGE);
 				}
 			}
 			delete swingTrace;
@@ -219,17 +198,17 @@ void OshimunoDemoknightSelfDefense(OshimunoDemoknight npc, float distance, float
 		{
 			npc.m_iTarget = target;
 
-			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
+			npc.AddGesture("ACT_MP_ATTACK_STAND_SECONDARY",_,_,_, 2.0);
 			npc.PlayMeleeSound();
 			
-			npc.m_flAttackHappens = gameTime + 0.25;
+			npc.m_flAttackHappens = gameTime + 0.05;
 			npc.m_flNextMeleeAttack = gameTime + 0.75;
 		}
 	}
 }
-static void ClotDeath(int entity)
+static void ClotDeath(int entity) 
 {
-	OshimunoDemoknight npc = view_as<OshimunoDemoknight>(entity);
+	OshimunoExecutor npc = view_as<OshimunoExecutor>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

@@ -3,26 +3,29 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/heavy_paincrticialdeath01.mp3",
-	"vo/heavy_paincrticialdeath02.mp3",
-	"vo/heavy_paincrticialdeath03.mp3"
+	"vo/scout_paincrticialdeath01.mp3",
+	"vo/scout_paincrticialdeath02.mp3",
+	"vo/scout_paincrticialdeath03.mp3",
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/heavy_painsharp01.mp3",
-	"vo/heavy_painsharp02.mp3",
-	"vo/heavy_painsharp03.mp3",
-	"vo/heavy_painsharp04.mp3",
-	"vo/heavy_painsharp05.mp3",
+	"vo/scout_painsharp01.mp3",
+	"vo/scout_painsharp02.mp3",
+	"vo/scout_painsharp03.mp3",
+	"vo/scout_painsharp04.mp3",
+	"vo/scout_painsharp05.mp3",
+	"vo/scout_painsharp06.mp3",
+	"vo/scout_painsharp07.mp3",
+	"vo/scout_painsharp08.mp3",
 };
 
-static const char g_IdleAlertedSounds[][] =
+static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/taunts/soldier_taunts19.mp3",
-	"vo/taunts/soldier_taunts20.mp3",
-	"vo/taunts/soldier_taunts21.mp3",
-	"vo/taunts/soldier_taunts18.mp3"
+	"vo/scout_battlecry01.mp3",
+	"vo/scout_battlecry03.mp3",
+	"vo/scout_battlecry04.mp3",
+	"vo/scout_battlecry05.mp3",
 };
 
 static const char g_MeleeHitSounds[][] =
@@ -37,6 +40,15 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/pickaxe_swing2.wav",
 	"weapons/pickaxe_swing3.wav"
 };
+static const char MissSound[][] =
+{
+	"weapons/fx/nearmiss/bulletltor08.wav",
+	"weapons/fx/nearmiss/bulletltor09.wav",
+	"weapons/fx/nearmiss/bulletltor10.wav",
+	"weapons/fx/nearmiss/bulletltor11.wav",
+	"weapons/fx/nearmiss/bulletltor13.wav",
+	"weapons/fx/nearmiss/bulletltor14.wav",
+};
 
 void OshimunoDancerOnMapStart()
 {
@@ -45,6 +57,7 @@ void OshimunoDancerOnMapStart()
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
+	PrecacheSoundArray(MissSound);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Oshimuno Dancer");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_dancer");
@@ -87,10 +100,10 @@ methodmap OshimunoDancer < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	property float m_iDancing
+	property float m_flTauntLoop
 	{
-		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
+		public get()							{ return fl_AbilityOrAttack[this.index][2]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][2] = TempValueForProperty; }
 	}
 	
 	public OshimunoDancer(float vecPos[3], float vecAng[3], int ally)
@@ -105,16 +118,17 @@ methodmap OshimunoDancer < CClotBody
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
 		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
 
-		npc.m_iDancing = 3.0; //dancing time
-		npc.Anger = false;
+		
 
 		func_NPCDeath[npc.index] = ClotDeath;
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 600.0;
+		npc.m_flSpeed = 550.0;
+		npc.m_flTauntLoop = 0.0;
 		npc.m_bisWalking = false;
-		npc.StartPathing();
+		npc.m_iState = 2; // 0 is for normally walking || 1 is for flipping || 2 is for dancing
+		
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_boston_basher/c_boston_basher.mdl");
 
@@ -123,7 +137,9 @@ methodmap OshimunoDancer < CClotBody
 		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/hwn2025_buzz_kill/hwn2025_buzz_kill.mdl");
 
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/scout/hwn2025_torn_terror/hwn2025_torn_terror.mdl");
+		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
+		npc.StartPathing();
 		return npc;
 	}
 }
@@ -131,18 +147,6 @@ methodmap OshimunoDancer < CClotBody
 static void ClotThink(int iNPC)
 {
 	OshimunoDancer npc = view_as<OshimunoDancer>(iNPC);
-	//TODO: this shit does not work properly || remake later
-	if(npc.m_iDancing > 0 && !npc.Anger) // during dancing time we conga
-	{
-		npc.AddActivityViaSequence("taunt_conga");
-		npc.SetPlaybackRate(2.75);
-		npc.SetCycle(0.0);
-	}
-	else if (npc.m_iDancing < 0 && !npc.Anger) // reset dancing if we're out of range
-	{
-		npc.m_iDancing = 3.0;
-	}
-
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
 		return;
@@ -178,11 +182,6 @@ static void ClotThink(int iNPC)
 		float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
 		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
 		float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);
-
-		if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 8.0)) // we get pissed if we're semi close
-		{
-			npc.Anger = true;
-		}
 		
 		if(distance < npc.GetLeadRadius())
 		{
@@ -193,13 +192,20 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoDancer_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoDancerSelfDefense(npc, distance, vecTarget, gameTime);
+		OshimunoDancerSpeed(npc, distance, gameTime);
 	}
-
+	if(npc.m_flTauntLoop < gameTime && npc.m_iState == 2) // loops the taunt if dancing
+	{
+		npc.AddActivityViaSequence("taunt_conga");
+		npc.SetPlaybackRate(1.2);
+		npc.SetCycle(0.0);
+		npc.m_flTauntLoop = gameTime + 3.0;
+	}
 	npc.PlayIdleSound();
 }
 
-void OshimunoDancer_SelfDefense(OshimunoDancer npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoDancerSelfDefense(OshimunoDancer npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -238,7 +244,61 @@ void OshimunoDancer_SelfDefense(OshimunoDancer npc, float distance, float vecTar
 			npc.m_flNextMeleeAttack = gameTime + 0.75;
 		}
 	}
+	
 }
+void OshimunoDancerSpeed(OshimunoDancer npc, float distance, float gameTime)
+{
+	if(npc.m_iState == 2) // while dancing
+	{
+		if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 8.0) // flip once we get close enough
+		{
+			npc.SetActivity("ACT_MP_RUN_MELEE"); // prevent animation bug
+			npc.m_iState = 1;
+			npc.m_flSpeed = 300.0;
+			npc.m_flDoingAnimation = gameTime + 1.0;
+		}
+	}
+	if(npc.m_iState != 2) // while not dancing....
+	{
+		if(npc.m_flDoingAnimation > gameTime && npc.m_iState == 1) // during flip
+		{
+			npc.SetPlaybackRate(1.0);	
+			npc.SetCycle(0.1);
+			npc.StopPathing();
+			npc.m_iState = 0;
+			npc.AddActivityViaSequence("taunt_the_trackmans_touchdown");
+		}
+		if(npc.m_flDoingAnimation < gameTime && npc.m_iState == 0) // after the flip
+		{
+			npc.m_bisWalking = true;
+			npc.SetActivity("ACT_MP_RUN_MELEE");
+			npc.StartPathing();
+			npc.m_iState = -1; // setting to -1 so this doesnt run anymore cuz its not needed
+		}
+	}
+}
+/*
+public Action DancerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{	
+	OshimunoDancer npc = view_as<OshimunoDancer>(victim); // something is broken here and it doesnt work properly || TODO: fix later
+	if(CheckInHud())
+		return Plugin_Changed;
+	if(f_TimeFrozenStill[victim] > GetGameTime(victim))
+		return Plugin_Changed;
+	float HitChance = 0.3; //70% dodge chance while dancing
+	if(GetRandomFloat(0.0, 1.0) < HitChance && npc.m_iState != 0) // dont do dodge chance if not dancing
+		return Plugin_Changed;
+	float chargerPos[3];
+	GetEntPropVector(victim, Prop_Data, "m_vecAbsOrigin", chargerPos);
+	chargerPos[2] += 90.0;
+	TE_ParticleInt(g_particleMissText, chargerPos);
+	TE_SendToAll();
+	int Rand = GetRandomInt(0, sizeof(MissSound) - 1);
+	EmitSoundToAll(MissSound[Rand], victim, _, 80);
+	damage = 0.0;
+	return Plugin_Changed;
+}
+*/
 static void ClotDeath(int entity)
 {
 	OshimunoDancer npc = view_as<OshimunoDancer>(entity);

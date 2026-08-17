@@ -1,58 +1,72 @@
-#pragma semicolon 1 //TODO: add a mafia wrath system on death to all attackers/last attacker
+#pragma semicolon 1
 #pragma newdecls required
 
 static const char g_DeathSounds[][] =
 {
-	"vo/spy_paincrticialdeath01.mp3",
-	"vo/spy_paincrticialdeath02.mp3",
-	"vo/spy_paincrticialdeath03.mp3",
+	"vo/scout_paincrticialdeath01.mp3",
+	"vo/scout_paincrticialdeath02.mp3",
+	"vo/scout_paincrticialdeath03.mp3",
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/spy_painsharp01.mp3",
-	"vo/spy_painsharp02.mp3",
-	"vo/spy_painsharp03.mp3",
-	"vo/spy_painsharp04.mp3",
+	"vo/scout_painsharp01.mp3",
+	"vo/scout_painsharp02.mp3",
+	"vo/scout_painsharp03.mp3",
+	"vo/scout_painsharp04.mp3",
+	"vo/scout_painsharp05.mp3",
+	"vo/scout_painsharp06.mp3",
+	"vo/scout_painsharp07.mp3",
+	"vo/scout_painsharp08.mp3",
 };
 
-static const char g_IdleAlertedSounds[][] = 
+static const char g_IdleAlertedSounds[][] =
 {
-	"vo/spy_battlecry01.mp3",
-	"vo/spy_battlecry02.mp3",
-	"vo/spy_battlecry03.mp3",
-	"vo/spy_battlecry04.mp3",
+	"vo/scout_battlecry01.mp3",
+	"vo/scout_battlecry03.mp3",
+	"vo/scout_battlecry04.mp3",
+	"vo/scout_battlecry05.mp3",
+};
+
+static const char g_MeleeHitSounds[][] =
+{
+	"weapons/cbar_hit1.wav",
+	"weapons/cbar_hit2.wav"
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/ambassador_shoot.wav",
+	"weapons/pickaxe_swing1.wav",
+	"weapons/pickaxe_swing2.wav",
+	"weapons/pickaxe_swing3.wav"
 };
 
-void OshimunoMafiaExecutorOnMapStart()
+void OshimunoSmokeCarrierOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
+	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Tarakeno Executor");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_mafia_executor");
+	strcopy(data.Name, sizeof(data.Name), "Smoke Carrier");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_smoke_carrier");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Oshimuno;
+	data.Category = Type_Outlaws;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoMafiaExecutor(vecPos, vecAng, team);
+	return OshimunoSmokeCarrier(vecPos, vecAng, team);
 }
 
-methodmap OshimunoMafiaExecutor < CClotBody
+methodmap OshimunoSmokeCarrier < CClotBody
 {
+
 	public void PlayIdleSound()
 	{
 		if(this.m_flNextIdleSound > GetGameTime(this.index))
@@ -73,14 +87,18 @@ methodmap OshimunoMafiaExecutor < CClotBody
  	{
 		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
 	}
-	
-	public OshimunoMafiaExecutor(float vecPos[3], float vecAng[3], int ally)
+	public void PlayMeleeHitSound()
 	{
-		OshimunoMafiaExecutor npc = view_as<OshimunoMafiaExecutor>(CClotBody(vecPos, vecAng, "models/player/spy.mdl", "1.0", "1000", ally));
+		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
+	}
+	
+	public OshimunoSmokeCarrier(float vecPos[3], float vecAng[3], int ally)
+	{
+		OshimunoSmokeCarrier npc = view_as<OshimunoSmokeCarrier>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
-		npc.SetActivity("ACT_MP_RUN_SECONDARY");
-		KillFeed_SetKillIcon(npc.index, "samrevolver");
+		npc.SetActivity("ACT_MP_RUN_MELEE");
+		KillFeed_SetKillIcon(npc.index, "wrap_assassin");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -91,30 +109,30 @@ methodmap OshimunoMafiaExecutor < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 100.0;
+		npc.m_flSpeed = 290.0;
+		
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_xms_giftwrap/c_xms_giftwrap.mdl");
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_ttg_sam_gun/c_ttg_sam_gun.mdl");
-
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/spy/spr18_assassins_attire/spr18_assassins_attire.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_minja_vest/short2014_minja_vest.mdl");
 		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2024_spider_sights/hwn2024_spider_sights_spy.mdl");
-		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/spy/skullmask/skullmask.mdl");
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_spy.mdl");
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2015_dino_hoodie/hwn2015_dino_hoodie_scout.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
+		SetVariantInt(3);
+		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
-		TeleportDiversioToRandLocation(npc.index);
 		return npc;
 	}
 }
 
 static void ClotThink(int iNPC)
 {
-	OshimunoMafiaExecutor npc = view_as<OshimunoMafiaExecutor>(iNPC);
+	OshimunoSmokeCarrier npc = view_as<OshimunoSmokeCarrier>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -161,13 +179,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoMafiaExecutor_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoSmokeCarrierSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoMafiaExecutor_SelfDefense(OshimunoMafiaExecutor npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoSmokeCarrierSelfDefense(OshimunoSmokeCarrier npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -182,9 +200,10 @@ void OshimunoMafiaExecutor_SelfDefense(OshimunoMafiaExecutor npc, float distance
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 100.0;
+					float damage = 60.0;
 					
-					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_TRUEDAMAGE);
+					npc.PlayMeleeHitSound();
+					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
 			}
 			delete swingTrace;
@@ -198,18 +217,17 @@ void OshimunoMafiaExecutor_SelfDefense(OshimunoMafiaExecutor npc, float distance
 		{
 			npc.m_iTarget = target;
 
-			npc.AddGesture("ACT_MP_ATTACK_STAND_SECONDARY",_,_,_, 2.0);
+			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
 			npc.PlayMeleeSound();
 			
-			npc.m_flAttackHappens = gameTime + 0.05;
+			npc.m_flAttackHappens = gameTime + 0.25;
 			npc.m_flNextMeleeAttack = gameTime + 0.75;
 		}
 	}
 }
-static void ClotDeath(int entity) 
+static void ClotDeath(int entity)
 {
-	OshimunoMafiaExecutor npc = view_as<OshimunoMafiaExecutor>(entity);
-
+	OshimunoSmokeCarrier npc = view_as<OshimunoSmokeCarrier>(entity);
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
 	
@@ -227,4 +245,25 @@ static void ClotDeath(int entity)
 	
 	if(IsValidEntity(npc.m_iWearable5))
 		RemoveEntity(npc.m_iWearable5);
+	
+	float flPosDeath[3];
+	WorldSpaceCenter(npc.index, flPosDeath);
+	ParticleEffectAt(flPosDeath, "ping_circle", 1.0);
+
+	for(int entitycount; entitycount<MAXENTITIES; entitycount++) //Check for npcs
+	{
+		if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount))
+		{
+			float pos1[3];
+			GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);
+			static float pos2[3];
+			GetEntPropVector(entitycount, Prop_Data, "m_vecAbsOrigin", pos2);
+			if(GetVectorDistance(pos1, pos2, true) < (500 * 500))
+			{
+				if(!Can_I_See_Ally(npc.index, entitycount))
+					continue;
+				ApplyStatusEffect(npc.index, entitycount, "Smoke Screen", 10.0);
+			}
+		}
+	}	
 }

@@ -1,50 +1,53 @@
-#pragma semicolon 1 //TODO: add a mafia wrath system on death to all attackers/last attacker
+#pragma semicolon 1
 #pragma newdecls required
 
 static const char g_DeathSounds[][] =
 {
-	"vo/scout_paincrticialdeath01.mp3",
-	"vo/scout_paincrticialdeath02.mp3",
-	"vo/scout_paincrticialdeath03.mp3",
+	"vo/heavy_paincrticialdeath01.mp3",
+	"vo/heavy_paincrticialdeath02.mp3",
+	"vo/heavy_paincrticialdeath03.mp3"
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/scout_painsharp01.mp3",
-	"vo/scout_painsharp02.mp3",
-	"vo/scout_painsharp03.mp3",
-	"vo/scout_painsharp04.mp3",
-	"vo/scout_painsharp05.mp3",
-	"vo/scout_painsharp06.mp3",
-	"vo/scout_painsharp07.mp3",
-	"vo/scout_painsharp08.mp3",
+	"vo/heavy_painsharp01.mp3",
+	"vo/heavy_painsharp02.mp3",
+	"vo/heavy_painsharp03.mp3",
+	"vo/heavy_painsharp04.mp3",
+	"vo/heavy_painsharp05.mp3",
 };
 
-static const char g_IdleAlertedSounds[][] = 
+static const char g_IdleAlertedSounds[][] =
 {
-	"vo/scout_battlecry01.mp3",
-	"vo/scout_battlecry03.mp3",
-	"vo/scout_battlecry04.mp3",
-	"vo/scout_battlecry05.mp3",
+	"vo/taunts/soldier_taunts19.mp3",
+	"vo/taunts/soldier_taunts20.mp3",
+	"vo/taunts/soldier_taunts21.mp3",
+	"vo/taunts/soldier_taunts18.mp3"
 };
 
-static char g_MeleeHitSounds[][] = 
+static const char g_MeleeHitSounds[][] =
 {
-	"weapons/cleaver_hit_02.wav",
-	"weapons/cleaver_hit_03.wav",
-	"weapons/cleaver_hit_05.wav",
-	"weapons/cleaver_hit_06.wav",
-	"weapons/cleaver_hit_07.wav",
+	"weapons/cbar_hit1.wav",
+	"weapons/cbar_hit2.wav"
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
 	"weapons/pickaxe_swing1.wav",
 	"weapons/pickaxe_swing2.wav",
-	"weapons/pickaxe_swing3.wav",
+	"weapons/pickaxe_swing3.wav"
 };
 
-void OshimunoMafiaGruntOnMapStart()
+static const char g_RangedAttackSounds[][] = {
+	"weapons/cleaver_throw.wav",
+};
+
+#define JUMP_COOLDOWN 12.0
+#define THROW_STATE_DURATION 3.0
+#define INITIAL_THROW 0.3
+#define KUNAI_THROW_COOLDOWN 0.4
+
+void OshimunoNinjaSpyOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -52,9 +55,9 @@ void OshimunoMafiaGruntOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Tarakeno Grunt");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_mafia_grunt");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Name, sizeof(data.Name), "Ninja Spy");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_ninja");
+	strcopy(data.Icon, sizeof(data.Icon), "spy");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -64,11 +67,16 @@ void OshimunoMafiaGruntOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoMafiaGrunt(vecPos, vecAng, team);
+	return NinjaSpy(vecPos, vecAng, team);
 }
 
-methodmap OshimunoMafiaGrunt < CClotBody
+methodmap NinjaSpy < CClotBody
 {
+	property float m_flJumpKunaiThrow
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
+	}
 	public void PlayIdleSound()
 	{
 		if(this.m_flNextIdleSound > GetGameTime(this.index))
@@ -93,14 +101,18 @@ methodmap OshimunoMafiaGrunt < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	
-	public OshimunoMafiaGrunt(float vecPos[3], float vecAng[3], int ally)
+	public void PlayRangedSound()
 	{
-		OshimunoMafiaGrunt npc = view_as<OshimunoMafiaGrunt>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "1000", ally));
+		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
+	}
+	
+	public NinjaSpy(float vecPos[3], float vecAng[3], int ally)
+	{
+		NinjaSpy npc = view_as<NinjaSpy>(CClotBody(vecPos, vecAng, "models/player/spy.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "bottle");
+		KillFeed_SetKillIcon(npc.index, "kunai");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -112,20 +124,18 @@ methodmap OshimunoMafiaGrunt < CClotBody
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
+		npc.m_flJumpKunaiThrow = 0.0;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_boston_basher/c_boston_basher.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_scout_ninja_mask/short2014_scout_ninja_mask.mdl");
-		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/heavy/cop_glasses.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_minja_vest/short2014_minja_vest.mdl");
-		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/heavy/sum23_hog_heels/sum23_hog_heels.mdl");
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_scout.mdl");
-		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/heavy/dec23_bigger_mann/dec23_bigger_mann.mdl");
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(3);
+		SetVariantInt(2);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -135,7 +145,7 @@ methodmap OshimunoMafiaGrunt < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoMafiaGrunt npc = view_as<OshimunoMafiaGrunt>(iNPC);
+	NinjaSpy npc = view_as<NinjaSpy>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -182,13 +192,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoMafiaGrunt_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoNinjaSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoMafiaGrunt_SelfDefense(OshimunoMafiaGrunt npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoNinjaSelfDefense(NinjaSpy npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -203,7 +213,7 @@ void OshimunoMafiaGrunt_SelfDefense(OshimunoMafiaGrunt npc, float distance, floa
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 20.0;
+					float damage = 60.0;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -224,13 +234,31 @@ void OshimunoMafiaGrunt_SelfDefense(OshimunoMafiaGrunt npc, float distance, floa
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.55;
+			npc.m_flNextMeleeAttack = gameTime + 0.75;
 		}
 	}
+	else if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 1.5) && distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 7) && npc.m_flJumpCooldown < gameTime)
+	{
+		vecTarget[2] += 275.0;
+		PluginBot_Jump(npc.index, vecTarget);
+		npc.m_flNextMeleeAttack = gameTime + THROW_STATE_DURATION; //prevent cheese melees
+		npc.m_flJumpKunaiThrow = gameTime + THROW_STATE_DURATION;
+		npc.m_flNextRangedAttack = gameTime + INITIAL_THROW;
+		npc.m_flJumpCooldown = gameTime + JUMP_COOLDOWN;
+	}
+	if(npc.m_flJumpKunaiThrow > gameTime && npc.m_flNextRangedAttack < gameTime && distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 9)) // distance check to prevent throwing cross map
+	{
+		float EnemyPos[3]; // throw a kunai at the enemy during the jump
+		WorldSpaceCenter(npc.m_iTarget, EnemyPos);
+		npc.FaceTowards(EnemyPos, 15000.0);
+		npc.FireArrow(EnemyPos, 55.0, 1000.0, "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl", 1.5); //TODO: kunai model is facing upwards during the throw
+		npc.m_flNextRangedAttack = gameTime + KUNAI_THROW_COOLDOWN;
+		npc.PlayRangedSound();
+	}
 }
-static void ClotDeath(int entity) 
+static void ClotDeath(int entity)
 {
-	OshimunoMafiaGrunt npc = view_as<OshimunoMafiaGrunt>(entity);
+	NinjaSpy npc = view_as<NinjaSpy>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

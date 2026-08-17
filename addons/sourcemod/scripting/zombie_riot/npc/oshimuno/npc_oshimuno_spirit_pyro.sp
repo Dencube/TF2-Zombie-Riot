@@ -16,12 +16,11 @@ static const char g_HurtSounds[][] =
 	"vo/pyro_painsharp04.mp3",
 	"vo/pyro_painsharp05.mp3",
 };
-static const char g_IdleAlertedSounds[][] =
+static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/taunts/soldier_taunts19.mp3",
-	"vo/taunts/soldier_taunts20.mp3",
-	"vo/taunts/soldier_taunts21.mp3",
-	"vo/taunts/soldier_taunts18.mp3"
+	"vo/taunts/pyro_taunts01.mp3",
+	"vo/taunts/pyro_taunts02.mp3",
+	"vo/taunts/pyro_taunts03.mp3",
 };
 
 
@@ -30,6 +29,8 @@ void OshimunoSpiritPyroOnMapStart()
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
+	PrecacheSound("weapons/flame_thrower_loop.wav");
+	PrecacheSound("weapons/flame_thrower_pilot.wav");
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Spirit Pyro");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spirit_pyro");
@@ -111,14 +112,19 @@ methodmap OshimunoSpiritPyro < CClotBody
 		npc.m_flSpeed = 300.0;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_drg_phlogistinator/c_drg_phlogistinator.mdl");
+		SetEntProp(npc.m_iWearable1, Prop_Send, "m_nSkin", 1);
 
 		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/pyro/hwn_pyro_misc1.mdl");
+		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 
 		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/pyro/sum22_kazan_karategi/sum22_kazan_karategi.mdl");
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/pyro/sum24_scorched_stompers_style1/sum24_scorched_stompers_style1.mdl");
+		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/pyro/hwn2024_sear_seer_style4/hwn2024_sear_seer_style4.mdl");
+		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(2);
@@ -171,7 +177,7 @@ static void ClotThink(int iNPC)
 		
 		bool SpinSound = true;
 		int SetGoalVectorIndex = 0;
-		SetGoalVectorIndex = OshimunoSpiritPyro_SelfDefense(npc,SpinSound); 
+		SetGoalVectorIndex = OshimunoSpiritPyroSelfDefense(npc,SpinSound); 
 		
 		if(SpinSound)
 			npc.PlayMinigunSound(false);
@@ -210,7 +216,7 @@ static void ClotThink(int iNPC)
 	}
 	npc.PlayIdleSound();
 }
-int OshimunoSpiritPyro_SelfDefense(OshimunoSpiritPyro npc, bool &SpinSound)
+int OshimunoSpiritPyroSelfDefense(OshimunoSpiritPyro npc, bool &SpinSound)
 {
 	int target;
 	target = npc.m_iTarget;
@@ -238,7 +244,7 @@ int OshimunoSpiritPyro_SelfDefense(OshimunoSpiritPyro npc, bool &SpinSound)
 			CreateTimer(0.5, Timer_RemoveEntity, EntIndexToEntRef(projectile), TIMER_FLAG_NO_MAPCHANGE);
 			CreateTimer(0.5, Timer_RemoveEntity, EntIndexToEntRef(particle), TIMER_FLAG_NO_MAPCHANGE);
 			
-			WandProjectile_ApplyFunctionToEntity(projectile, OshimunoSpiritPyro_Rocket_Particle_StartTouch);
+			WandProjectile_ApplyFunctionToEntity(projectile, AnarchyAbomination_Rocket_Particle_StartTouch);
 		}
 		if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 3.5))
 		{
@@ -293,18 +299,13 @@ public void OshimunoSpiritPyro_Rocket_Particle_StartTouch(int entity, int target
 			
 		float ProjectileLoc[3];
 		GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", ProjectileLoc);
-		float DamageDeal = fl_rocket_particle_dmg[entity];
-		if(ShouldNpcDealBonusDamage(target))
-			DamageDeal *= h_BonusDmgToSpecialArrow[entity];
+		float damage = 15.0;
 
-		if(ShouldNpcDealBonusDamage(target))
-			DamageDeal *= 17.5;
+		SDKHooks_TakeDamage(owner, target, inflictor, damage, DMG_BULLET|DMG_PREVENT_PHYSICS_FORCE, -1);	//acts like a kinetic rocket	
 
-		SDKHooks_TakeDamage(owner, target, inflictor, DamageDeal, DMG_BULLET|DMG_PREVENT_PHYSICS_FORCE, -1);	//acts like a kinetic rocket	
+		Elemental_AddChaosDamage(owner, target, 20, true, true); // TODO: replace with spirit fire once finished
 
-		Elemental_AddChaosDamage(owner, target, 20, true, true); //TODO: replace with spirit fire once its made ALSO fix this code as it applies chaos to itself LMAO
-
-		NPC_Ignite(owner, target, 12.0, -1, 8.0);
+		NPC_Ignite(owner, target, 6.0, -1, 8.0);
 
 		int particle = EntRefToEntIndex(i_WandParticle[entity]);
 		if(IsValidEntity(particle))

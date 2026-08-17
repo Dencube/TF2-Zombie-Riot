@@ -38,7 +38,7 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/pickaxe_swing3.wav"
 };
 
-void SpiritOrbOnMapStart()
+void OshimunoSpiritOrbOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -48,7 +48,7 @@ void SpiritOrbOnMapStart()
 	PrecacheModel("models/weapons/w_models/w_baseball.mdl");
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Spirit Orb");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_spirit_orb");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spirit_orb");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -59,10 +59,10 @@ void SpiritOrbOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return SpiritOrb(vecPos, vecAng, team);
+	return OshimunoSpiritOrb(vecPos, vecAng, team);
 }
 
-methodmap SpiritOrb < CClotBody
+methodmap OshimunoSpiritOrb < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -89,9 +89,9 @@ methodmap SpiritOrb < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public SpiritOrb(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoSpiritOrb(float vecPos[3], float vecAng[3], int ally)
 	{
-		SpiritOrb npc = view_as<SpiritOrb>(CClotBody(vecPos, vecAng, "models/weapons/w_models/w_baseball.mdl", "1.75", "15000", ally));
+		OshimunoSpiritOrb npc = view_as<OshimunoSpiritOrb>(CClotBody(vecPos, vecAng, "models/weapons/w_models/w_baseball.mdl", "1.75", "15000", ally));
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
 		KillFeed_SetKillIcon(npc.index, "pickaxe");
@@ -114,7 +114,7 @@ methodmap SpiritOrb < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	SpiritOrb npc = view_as<SpiritOrb>(iNPC);
+	OshimunoSpiritOrb npc = view_as<OshimunoSpiritOrb>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -161,13 +161,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		SpiritOrb_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoSpiritOrbSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void SpiritOrb_SelfDefense(SpiritOrb npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoSpiritOrbSelfDefense(OshimunoSpiritOrb npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -209,7 +209,7 @@ void SpiritOrb_SelfDefense(SpiritOrb npc, float distance, float vecTarget[3], fl
 }
 static void ClotDeath(int entity)
 {
-	SpiritOrb npc = view_as<SpiritOrb>(entity);
+	OshimunoSpiritOrb npc = view_as<OshimunoSpiritOrb>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

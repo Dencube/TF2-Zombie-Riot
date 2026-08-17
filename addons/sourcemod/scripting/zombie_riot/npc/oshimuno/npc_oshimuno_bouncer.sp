@@ -19,23 +19,24 @@ static const char g_HurtSounds[][] =
 
 static const char g_IdleAlertedSounds[][] =
 {
-	"vo/taunts/soldier_taunts19.mp3",
-	"vo/taunts/soldier_taunts20.mp3",
-	"vo/taunts/soldier_taunts21.mp3",
-	"vo/taunts/soldier_taunts18.mp3"
+	"vo/heavy_meleedare13.mp3",
+	"vo/heavy_meleedare12.mp3",
+	"vo/heavy_meleedare07.mp3",
+	"vo/heavy_meleedare06.mp3",
+	"vo/heavy_meleedare05.mp3",
 };
 
 static const char g_MeleeHitSounds[][] =
 {
-	"weapons/cbar_hit1.wav",
-	"weapons/cbar_hit2.wav"
+	"weapons/fist_hit_world1.wav",
+	"weapons/fist_hit_world2.wav",
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/pickaxe_swing1.wav",
-	"weapons/pickaxe_swing2.wav",
-	"weapons/pickaxe_swing3.wav"
+	"weapons/boxing_gloves_swing1.wav",
+	"weapons/boxing_gloves_swing2.wav",
+	"weapons/boxing_gloves_swing4.wav"
 };
 
 void OshimunoBouncerOnMapStart()
@@ -94,7 +95,7 @@ methodmap OshimunoBouncer < CClotBody
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "pickaxe");
+		KillFeed_SetKillIcon(npc.index, "fists");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -106,12 +107,14 @@ methodmap OshimunoBouncer < CClotBody
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
+		npc.m_iOverlordComboAttack = 0;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch.mdl");
 
 		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/heavy/cop_glasses.mdl");
 
 		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/heavy/sum23_hog_heels/sum23_hog_heels.mdl");
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/heavy/dec23_bigger_mann/dec23_bigger_mann.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
@@ -174,20 +177,20 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoBouncer_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoBouncerSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-
+	
 	npc.PlayIdleSound();
 }
 
-void OshimunoBouncer_SelfDefense(OshimunoBouncer npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoBouncerSelfDefense(OshimunoBouncer npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
 		if(npc.m_flAttackHappens < gameTime)
 		{
 			npc.m_flAttackHappens = 0.0;
-			
+
 			Handle swingTrace;
 			npc.FaceTowards(vecTarget, 15000.0);
 			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
@@ -195,8 +198,28 @@ void OshimunoBouncer_SelfDefense(OshimunoBouncer npc, float distance, float vecT
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
-					
+					float damage;
+					npc.m_iOverlordComboAttack++;
+					if(npc.m_iOverlordComboAttack == 4) // get unusual right before stronger hit
+					{
+						float flPos[3], flAng[3];
+
+						npc.GetAttachment("eyes", flPos, flAng);
+						npc.m_iWearable9 = ParticleEffectAt_Parent(flPos, "unusual_icrown_plasma_blue", npc.index, "eyes", {0.0,0.0,0.0}); // using wearable9 for unusuals
+					}
+					if(npc.m_iOverlordComboAttack == 5) // after 5 hits do a stronger hit
+					{
+						damage = 300.0;
+						Custom_Knockback(npc.index, target, 1000.0, true, true);
+						if(!HasSpecificBuff(target, "Solid Stance"))
+							ApplyStatusEffect(npc.index, target, "Solid Stance", 2.0);
+						CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable9, TIMER_FLAG_NO_MAPCHANGE);
+						npc.m_iOverlordComboAttack = 0;
+					}
+					else // normal hit
+					{
+						damage = 100.0;
+					}
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
@@ -214,9 +237,9 @@ void OshimunoBouncer_SelfDefense(OshimunoBouncer npc, float distance, float vecT
 
 			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
 			npc.PlayMeleeSound();
-			
+
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_flNextMeleeAttack = gameTime + 1.5;
 		}
 	}
 }
@@ -239,6 +262,6 @@ static void ClotDeath(int entity)
 	if(IsValidEntity(npc.m_iWearable4))
 		RemoveEntity(npc.m_iWearable4);
 	
-	if(IsValidEntity(npc.m_iWearable5))
-		RemoveEntity(npc.m_iWearable5);
+	if(IsValidEntity(npc.m_iWearable9))
+		RemoveEntity(npc.m_iWearable9);
 }

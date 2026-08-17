@@ -38,8 +38,6 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/pickaxe_swing3.wav"
 };
 
-static float LiberiBuff[MAXENTITIES];
-
 void OshimunoDJOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
@@ -107,8 +105,9 @@ methodmap OshimunoDJ < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 300.0;
-		npc.m_iOverlordComboAttack = 0;
+		npc.m_flSpeed = 270.0;
+		npc.Anger = false;
+		npc.m_iOverlordComboAttack = 0; 
 		Is_a_Medic[npc.index] = true;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/player/items/engineer/hwn2022_cabinet_mann/hwn2022_cabinet_mann.mdl");
@@ -116,7 +115,7 @@ methodmap OshimunoDJ < CClotBody
 		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/engineer/hwn2025_technicians_tunic/hwn2025_technicians_tunic.mdl");
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(2);
+		SetVariantInt(3);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -127,9 +126,10 @@ methodmap OshimunoDJ < CClotBody
 static void ClotThink(int iNPC)
 {
 	OshimunoDJ npc = view_as<OshimunoDJ>(iNPC);
-	if(npc.m_iOverlordComboAttack == 2 && IsValidAlly(npc.index, npc.m_iTargetAlly))
+	float gameTime = GetGameTime(npc.index);
+	if(npc.m_iOverlordComboAttack == 5 && IsValidAlly(npc.index, npc.m_iTargetAlly))
 	{
-		fl_TotalArmor[iNPC] = 0.45;
+		fl_TotalArmor[iNPC] = 0.5;
 		//stun target
 		float Injured[3];
 		GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", Injured); 
@@ -139,21 +139,16 @@ static void ClotThink(int iNPC)
 		ApplyStatusEffect(npc.m_iTargetAlly, npc.m_iTargetAlly, "Solid Stance", 999999.0);	
 		
 		SDKCall_SetLocalOrigin(npc.m_iTargetAlly, Injured); //keep teleporting just incase.
-		LiberiBuff[npc.m_iTargetAlly] = GetGameTime() + 0.09;
-		FreezeNpcInTime(npc.m_iTargetAlly, 0.09);
-		b_NpcIsInvulnerable[npc.m_iTargetAlly] = true;
-		SDKUnhook(npc.m_iTargetAlly, SDKHook_ThinkPost, LiberiBuffThink);
-		SDKHook(npc.m_iTargetAlly, SDKHook_ThinkPost, LiberiBuffThink);
 	}
 	else
 	{
 		fl_TotalArmor[iNPC] = 1.0;
 	}
-	if(npc.m_flNextDelayTime > GetGameTime(npc.index))
+	if(npc.m_flNextDelayTime > gameTime)
 	{
 		return;
 	}
-	npc.m_flNextDelayTime = GetGameTime(npc.index) + DEFAULT_UPDATE_DELAY_FLOAT;
+	npc.m_flNextDelayTime = gameTime + DEFAULT_UPDATE_DELAY_FLOAT;
 	npc.Update();
 
 	if(npc.m_blPlayHurtAnimation)
@@ -163,42 +158,47 @@ static void ClotThink(int iNPC)
 		npc.PlayHurtSound();
 	}
 	
-	if(npc.m_flNextThinkTime > GetGameTime(npc.index))
+	if(npc.m_flNextThinkTime > gameTime)
 	{
 		return;
 	}
-	npc.m_flNextThinkTime = GetGameTime(npc.index) + 0.1;
+	npc.m_flNextThinkTime = gameTime + 0.1;
 
-	if(npc.m_iOverlordComboAttack == 0 || npc.m_iOverlordComboAttack == 1)
+	if(!npc.Anger)
 	{
-		npc.m_iTargetAlly = GetClosestAlly(npc.index);
-		if(IsValidAlly(npc.index, npc.m_iTargetAlly))
+		for(int i; i < i_MaxcountNpcTotal; i++)
 		{
-			npc.m_iOverlordComboAttack = 1;
-		}
-		else
-		{
-			npc.m_iOverlordComboAttack = -1;
+			int entity = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
+			if(IsValidEntity(entity))
+			{
+				char npc_classname[60];
+				NPC_GetPluginById(i_NpcInternalId[entity], npc_classname, sizeof(npc_classname));
+
+				if(entity != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_boombox") && IsEntityAlive(entity))) // look for a boombox alive then grab it
+				{
+					npc.m_iOverlordComboAttack = 1;
+					npc.m_iTargetAlly = entity; //set boombox as target
+					npc.Anger = true;
+				}
+			}
 		}
 	}
-
 	if(npc.m_iOverlordComboAttack == 1)
 	{
 		if(IsValidAlly(npc.index, npc.m_iTargetAlly))
 		{
-			float vecTarget[3]; WorldSpaceCenter(npc.m_iTargetAlly, vecTarget );
-		
+			float vecTarget[3]; WorldSpaceCenter(npc.m_iTargetAlly, vecTarget);
 			float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
-			float flDistanceToTarget = GetVectorDistance(vecTarget, VecSelfNpc, true);
+			float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);
 
-			if(flDistanceToTarget < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED))
+			if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED))
 			{
 				//mounted ally, do logic!
-				npc.m_iOverlordComboAttack = 2;
+				npc.m_iOverlordComboAttack = 5;
 			}
 			else 
 			{
-				npc.m_flSpeed = 400.0;
+				npc.m_flSpeed = 420.0;
 				npc.SetGoalEntity(npc.m_iTargetAlly);
 			}
 		}
@@ -210,57 +210,54 @@ static void ClotThink(int iNPC)
 	}
 	else
 	{
-		npc.m_flSpeed = 200.0;
-		if(npc.m_flGetClosestTargetTime < GetGameTime(npc.index))
+		npc.m_flSpeed = 270.0;
+		int target = npc.m_iTarget;
+		if(i_Target[npc.index] != -1 && !IsValidEnemy(npc.index, target))
+		 i_Target[npc.index] = -1;
+	
+		if(i_Target[npc.index] == -1 || npc.m_flGetClosestTargetTime < gameTime)
 		{
-			npc.m_iTarget = GetClosestTarget(npc.index);
-			npc.m_flGetClosestTargetTime = GetGameTime(npc.index) + GetRandomRetargetTime();
+			target = GetClosestTarget(npc.index);
+			npc.m_iTarget = target;
+			npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
 		}
-		
-		if(IsValidEnemy(npc.index, npc.m_iTarget))
+	
+		if(target > 0)
 		{
-			float vecTarget[3]; WorldSpaceCenter(npc.m_iTarget, vecTarget );
-		
+			float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
 			float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
-			float flDistanceToTarget = GetVectorDistance(vecTarget, VecSelfNpc, true);
-			if(flDistanceToTarget < npc.GetLeadRadius()) 
+			float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);	
+		
+			if(distance < npc.GetLeadRadius())
 			{
-				float vPredictedPos[3];
-				PredictSubjectPosition(npc, npc.m_iTarget,_,_, vPredictedPos);
+				float vPredictedPos[3]; PredictSubjectPosition(npc, target,_,_, vPredictedPos); 
 				npc.SetGoalVector(vPredictedPos);
-				//Throw valid ally
-				if(npc.m_iOverlordComboAttack == 2)
+
+				if(npc.m_iOverlordComboAttack == 5) //throw the boombox we're holding
 				{
 					if(IsValidAlly(npc.index, npc.m_iTargetAlly))
 					{
-						LiberiBuff[npc.m_iTargetAlly] = 0.0;
 						npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE_SECONDARY",_,_,_,0.75);
 						npc.FaceTowards(vPredictedPos, 20000.0);
 						PluginBot_Jump(npc.m_iTargetAlly, vecTarget);
+						b_NoGravity[npc.m_iTargetAlly] = false;
+						b_DoNotUnStuck[npc.m_iTargetAlly] = false;
+						RemoveSpecificBuff(npc.m_iTargetAlly, "Solid Stance");
 						npc.m_iTargetAlly = 0;
 					}
-					else
-					{
-
-					}
 				}
-				npc.m_iOverlordComboAttack = -1;
 			}
 			else 
 			{
-				npc.SetGoalEntity(npc.m_iTarget);
+				npc.SetGoalEntity(target);
 			}
-			OshimunoDJ_SelfDefense(npc, GetGameTime(npc.index), vecTarget, flDistanceToTarget);
-		}
-		else
-		{
-			npc.m_flGetClosestTargetTime = 0.0;
-			npc.m_iTarget = GetClosestTarget(npc.index);
+			OshimunoDJSelfDefense(npc, distance, vecTarget, gameTime); 
 		}
 	}
+	npc.PlayIdleSound();
 }
 
-void OshimunoDJ_SelfDefense(OshimunoDJ npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoDJSelfDefense(OshimunoDJ npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -313,17 +310,4 @@ static void ClotDeath(int entity)
 	
 	if(IsValidEntity(npc.m_iWearable2))
 		RemoveEntity(npc.m_iWearable2);
-}
-
-static void LiberiBuffThink(int entity)
-{
-	if(GetGameTime() > LiberiBuff[entity])
-	{
-		b_NpcIsInvulnerable[entity] = false;
-		b_NoGravity[entity] = false;
-		b_DoNotUnStuck[entity] = false;
-		RemoveSpecificBuff(entity, "Solid Stance");
-		
-		SDKUnhook(entity, SDKHook_ThinkPost, LiberiBuffThink);	
-	}
 }

@@ -12,7 +12,7 @@ static int NPCID;
 static char gExplosive1;
 static char gLaser1;
 
-void CherryBlossomOnMapStart()
+void OshimunoCherryBlossomOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheModel("models/props_japan/sakura_tree01.mdl");
@@ -155,11 +155,11 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		CherryBlossom_SelfDefense(npc, distance, vecTarget, gameTime); 
+		CherryBlossomSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 }
 
-void CherryBlossom_SelfDefense(CherryBlossom npc, float distance, float vecTarget[3], float gameTime)
+void CherryBlossomSelfDefense(CherryBlossom npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{

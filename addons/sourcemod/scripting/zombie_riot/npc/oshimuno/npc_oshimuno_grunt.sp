@@ -1,47 +1,50 @@
-#pragma semicolon 1
+#pragma semicolon 1 //TODO: add a mafia wrath system on death to all attackers/last attacker
 #pragma newdecls required
 
 static const char g_DeathSounds[][] =
 {
-	"vo/soldier_paincrticialdeath01.mp3",
-	"vo/soldier_paincrticialdeath02.mp3",
-	"vo/soldier_paincrticialdeath03.mp3"
+	"vo/scout_paincrticialdeath01.mp3",
+	"vo/scout_paincrticialdeath02.mp3",
+	"vo/scout_paincrticialdeath03.mp3",
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/soldier_painsharp01.mp3",
-	"vo/soldier_painsharp02.mp3",
-	"vo/soldier_painsharp03.mp3",
-	"vo/soldier_painsharp04.mp3",
-	"vo/soldier_painsharp05.mp3",
-	"vo/soldier_painsharp06.mp3",
-	"vo/soldier_painsharp07.mp3",
-	"vo/soldier_painsharp08.mp3"
+	"vo/scout_painsharp01.mp3",
+	"vo/scout_painsharp02.mp3",
+	"vo/scout_painsharp03.mp3",
+	"vo/scout_painsharp04.mp3",
+	"vo/scout_painsharp05.mp3",
+	"vo/scout_painsharp06.mp3",
+	"vo/scout_painsharp07.mp3",
+	"vo/scout_painsharp08.mp3",
 };
 
-static const char g_IdleAlertedSounds[][] =
+static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/taunts/soldier_taunts19.mp3",
-	"vo/taunts/soldier_taunts20.mp3",
-	"vo/taunts/soldier_taunts21.mp3",
-	"vo/taunts/soldier_taunts18.mp3"
+	"vo/scout_battlecry01.mp3",
+	"vo/scout_battlecry03.mp3",
+	"vo/scout_battlecry04.mp3",
+	"vo/scout_battlecry05.mp3",
 };
 
 static const char g_MeleeHitSounds[][] =
 {
-	"weapons/cbar_hit1.wav",
-	"weapons/cbar_hit2.wav"
+	"weapons/cleaver_hit_02.wav",
+	"weapons/cleaver_hit_03.wav",
+	"weapons/cleaver_hit_05.wav",
+	"weapons/cleaver_hit_06.wav",
+	"weapons/cleaver_hit_07.wav",
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
 	"weapons/pickaxe_swing1.wav",
 	"weapons/pickaxe_swing2.wav",
-	"weapons/pickaxe_swing3.wav"
+	"weapons/pickaxe_swing3.wav",
 };
 
-void SmokeCarrierOnMapStart()
+void OshimunoGruntOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -49,28 +52,23 @@ void SmokeCarrierOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Smoke Carrier");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_smoke_carrier");
+	strcopy(data.Name, sizeof(data.Name), "Tarakeno Grunt");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_grunt");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Outlaws;
+	data.Category = Type_Oshimuno;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return SmokeCarrier(vecPos, vecAng, team);
+	return OshimunoGrunt(vecPos, vecAng, team);
 }
 
-methodmap SmokeCarrier < CClotBody
+methodmap OshimunoGrunt < CClotBody
 {
-	property int m_iAttacksLeft
-	{
-		public get()		{	return this.m_iOverlordComboAttack;	}
-		public set(int value) 	{	this.m_iOverlordComboAttack = value;	}
-	}
 	public void PlayIdleSound()
 	{
 		if(this.m_flNextIdleSound > GetGameTime(this.index))
@@ -96,13 +94,13 @@ methodmap SmokeCarrier < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public SmokeCarrier(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoGrunt(float vecPos[3], float vecAng[3], int ally)
 	{
-		SmokeCarrier npc = view_as<SmokeCarrier>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "1000", ally));
+		OshimunoGrunt npc = view_as<OshimunoGrunt>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "pickaxe");
+		KillFeed_SetKillIcon(npc.index, "bottle");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -113,18 +111,21 @@ methodmap SmokeCarrier < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 290.0;
-		
-		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_pickaxe/c_pickaxe.mdl");
+		npc.m_flSpeed = 300.0;
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/all_class/tuxxy_soldier.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_boston_basher/c_boston_basher.mdl");
+
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_scout_ninja_mask/short2014_scout_ninja_mask.mdl");
 		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2025_face_lift/hwn2025_face_lift_soldier.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_minja_vest/short2014_minja_vest.mdl");
 		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_scout.mdl");
+		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
+
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(2);
+		SetVariantInt(3);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -134,7 +135,7 @@ methodmap SmokeCarrier < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	SmokeCarrier npc = view_as<SmokeCarrier>(iNPC);
+	OshimunoGrunt npc = view_as<OshimunoGrunt>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -181,13 +182,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		SmokeCarrier_SelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoGruntSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void SmokeCarrier_SelfDefense(SmokeCarrier npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoGruntSelfDefense(OshimunoGrunt npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -202,7 +203,7 @@ void SmokeCarrier_SelfDefense(SmokeCarrier npc, float distance, float vecTarget[
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
+					float damage = 20.0;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -223,33 +224,14 @@ void SmokeCarrier_SelfDefense(SmokeCarrier npc, float distance, float vecTarget[
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_flNextMeleeAttack = gameTime + 0.55;
 		}
 	}
 }
-static void ClotDeath(int entity)
+static void ClotDeath(int entity) 
 {
-	SmokeCarrier npc = view_as<SmokeCarrier>(entity);
-	float flPosDeath[3];
-	WorldSpaceCenter(npc.index, flPosDeath);
-	ParticleEffectAt(flPosDeath, "ping_circle", 1.0);
+	OshimunoGrunt npc = view_as<OshimunoGrunt>(entity);
 
-	for(int entitycount; entitycount<MAXENTITIES; entitycount++) //Check for npcs
-	{
-		if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount))
-		{
-			float pos1[3];
-			GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);
-			static float pos2[3];
-			GetEntPropVector(entitycount, Prop_Data, "m_vecAbsOrigin", pos2);
-			if(GetVectorDistance(pos1, pos2, true) < (500 * 500))
-			{
-				if(!Can_I_See_Ally(npc.index, entitycount))
-					continue;
-				ApplyStatusEffect(npc.index, entitycount, "Smoke Screen", 10.0);
-			}
-		}
-	}
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
 	
