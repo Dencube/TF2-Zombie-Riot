@@ -218,6 +218,7 @@ void OshimunoKaijuSelfDefense(OshimunoKaiju npc, float distance, float vecTarget
 
 			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.5);
 			npc.PlayMeleeSound();
+			
 			npc.m_flAttackHappens = gameTime + 0.5;
 			npc.m_flNextMeleeAttack = gameTime + 1.5;
 		}
