@@ -243,6 +243,7 @@ void InitStatusEffects()
 	StatusEffects_CasinoDebuff();
 #if defined ZR
 	StatusEffects_Aperture();
+	StatusEffects_SmokeScreen(); //combine all new effects into one like aperture and put them here
 	StatusEffects_Ruiania();
 	StatusEffects_BrickWeapon();
 #endif
@@ -11696,6 +11697,7 @@ static void FridgeFoodTimer(int entity, StatusEffect Apply_MasterStatusEffect, E
 	MaxHealthPerc *= 0.015;
 	HealEntityGlobal(entity, entity, MaxHealthPerc, _, 0.0, _);
 }
+
 int PoiseIndex;
 int FragileIndex;
 void StatusEffects_IndexNurseFather()
@@ -12125,4 +12127,41 @@ static void BlackFlames_Timer(int entity, StatusEffect Apply_MasterStatusEffect,
 	E_AL_StatusEffects[entity].SetArray(ArrayPosition, Apply_StatusEffect);
 
 	//spray particles
+}
+void StatusEffects_SmokeScreen()
+{
+	StatusEffect data;
+
+	strcopy(data.BuffName, sizeof(data.BuffName), "Smoke Screen");
+	strcopy(data.HudDisplay, sizeof(data.HudDisplay), "Ⲷ");
+	strcopy(data.AboveEnemyDisplay, sizeof(data.AboveEnemyDisplay), ""); //dont display above head, so empty
+
+	data.DamageTakenMulti 			=  1.0;
+	data.DamageDealMulti			= -1.0;
+	data.MovementspeedModif			=  1.2;
+	data.Positive 					= true;
+	data.ShouldScaleWithPlayerCount = false;
+	data.Slot						= 0; //0 means ignored
+	data.SlotPriority				= 0; //if its higher, then the lower version is entirely ignored.
+	data.OnTakeDamage_TakenFunc 	= SmokeScreen_Dodge;
+	StatusEffect_AddGlobal(data);
+}
+
+float SmokeScreen_Dodge(int attacker, int victim, StatusEffect Apply_MasterStatusEffect, E_StatusEffect Apply_StatusEffect, int damagetype)
+{
+	if(CheckInHud())
+		return 1.0;
+	if(f_TimeFrozenStill[victim] > GetGameTime(victim))
+		return 1.0;
+	float HitChance = 0.7; //30% dodge chance
+	if(GetRandomFloat(0.0, 1.0) < HitChance)
+		return 1.0;
+	float chargerPos[3];
+	GetEntPropVector(victim, Prop_Data, "m_vecAbsOrigin", chargerPos);
+	chargerPos[2] += 90.0;
+	TE_ParticleInt(g_particleMissText, chargerPos);
+	TE_SendToAll();
+	int Rand = GetRandomInt(0, sizeof(MissSound) - 1);
+	EmitSoundToAll(MissSound[Rand], victim, _, 80);
+	return 0.0;
 }
