@@ -36,11 +36,6 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/boxing_gloves_swing4.wav"
 };
 
-static float JR_LINE_LENGTH = 1000.0;
-static float JR_LINE_HALFWIDTH = 50.0;
-static float JR_LINE_CASTTIME = 8.0;
-static float JR_LINE_DAMAGE = 900.0;
-
 void OshimunoKaijuOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
@@ -223,7 +218,6 @@ void OshimunoKaijuSelfDefense(OshimunoKaiju npc, float distance, float vecTarget
 
 			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.5);
 			npc.PlayMeleeSound();
-			TrackingLineSlot_Create(npc.index, target, JR_LINE_LENGTH, JR_LINE_HALFWIDTH, castTime, JR_LINE_DAMAGE);
 			npc.m_flAttackHappens = gameTime + 0.5;
 			npc.m_flNextMeleeAttack = gameTime + 1.5;
 		}
