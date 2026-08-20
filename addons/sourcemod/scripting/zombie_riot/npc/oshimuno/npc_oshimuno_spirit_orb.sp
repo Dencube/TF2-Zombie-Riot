@@ -17,13 +17,6 @@ static const char g_HurtSounds[][] =
 	"vo/heavy_painsharp05.mp3",
 };
 
-static const char g_IdleAlertedSounds[][] =
-{
-	"vo/taunts/soldier_taunts19.mp3",
-	"vo/taunts/soldier_taunts20.mp3",
-	"vo/taunts/soldier_taunts21.mp3",
-	"vo/taunts/soldier_taunts18.mp3"
-};
 
 static const char g_MeleeHitSounds[][] =
 {
@@ -42,7 +35,6 @@ void OshimunoSpiritOrbOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
-	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	PrecacheModel("models/weapons/w_models/w_baseball.mdl");
@@ -64,14 +56,6 @@ static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 
 methodmap OshimunoSpiritOrb < CClotBody
 {
-	public void PlayIdleSound()
-	{
-		if(this.m_flNextIdleSound > GetGameTime(this.index))
-			return;
-		
-		EmitSoundToAll(g_IdleAlertedSounds[GetRandomInt(0, sizeof(g_IdleAlertedSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
-		this.m_flNextIdleSound = GetGameTime(this.index) + GetRandomFloat(12.0, 24.0);
-	}
 	public void PlayHurtSound()
 	{
 		EmitSoundToAll(g_HurtSounds[GetRandomInt(0, sizeof(g_HurtSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
@@ -91,7 +75,8 @@ methodmap OshimunoSpiritOrb < CClotBody
 	
 	public OshimunoSpiritOrb(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoSpiritOrb npc = view_as<OshimunoSpiritOrb>(CClotBody(vecPos, vecAng, "models/weapons/w_models/w_baseball.mdl", "1.75", "15000", ally));
+		OshimunoSpiritOrb npc = view_as<OshimunoSpiritOrb>(CClotBody(vecPos, vecAng, "models/bots/demo/bot_sentry_buster.mdl", "0.6", "1000", ally));
+		SetEntityRenderMode(npc.index, RENDER_NONE); //make buster model invisible
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
 		KillFeed_SetKillIcon(npc.index, "pickaxe");
@@ -105,8 +90,11 @@ methodmap OshimunoSpiritOrb < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 10.0;
-		SetEntityRenderColor(npc.index, 12, 237, 34, 255); //lime colored
+		npc.m_flSpeed = 200.0;
+		npc.m_bDissapearOnDeath = true;
+		npc.m_iWearable1 = npc.EquipItemSeperate("models/weapons/w_models/w_baseball.mdl" ,_,_, 1.75, 30.0, false);
+		SetEntityRenderColor(npc.m_iWearable1, 0, 255, 255); // orange
+
 		npc.StartPathing();
 		return npc;
 	}
@@ -163,8 +151,6 @@ static void ClotThink(int iNPC)
 		}
 		OshimunoSpiritOrbSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-
-	npc.PlayIdleSound();
 }
 
 void OshimunoSpiritOrbSelfDefense(OshimunoSpiritOrb npc, float distance, float vecTarget[3], float gameTime)
@@ -182,10 +168,11 @@ void OshimunoSpiritOrbSelfDefense(OshimunoSpiritOrb npc, float distance, float v
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
-					
+					float damage = 15.0;
+				
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
+					Elemental_AddChaosDamage(target, npc.index, 5, true); // TODO: replace with spirit fire once made
 				}
 			}
 			delete swingTrace;

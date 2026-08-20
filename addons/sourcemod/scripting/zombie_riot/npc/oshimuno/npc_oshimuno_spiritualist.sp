@@ -234,7 +234,7 @@ static void ClotDeath(int entity)
 
 	float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 	float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-	int ent = NPC_CreateByName("npc_spirit_orb", -1, pos, ang, GetTeam(npc.index));
+	int ent = NPC_CreateByName("npc_oshimuno_spirit_orb", -1, pos, ang, GetTeam(npc.index));
 
 	if(ent > MaxClients)
 	{

@@ -1267,7 +1267,9 @@ void NPC_ConfigSetup()
 	OshimunoBoomboxOnMapStart();
 	OshimunoDJOnMapStart();
 	OshimunoSpiritOrbOnMapStart();
-	OshimunoCherryBlossomOnMapStart();
+	OshimunoTreeOnMapStart();
+	OshimunoSpiritTreeOnMapStart();
+	OshimunoTreeHealingOnMapStart();
 	OshimunoFarmerOnMapStart();
 	OshimunoDancerOnMapStart();
 	OshimunoNinjaSpyOnMapStart();
@@ -1284,6 +1286,7 @@ void NPC_ConfigSetup()
 	OshimunoSpiritKamikazeOnMapStart();
 	OshimunoSpiritCallerOnMapStart();
 	OshimunoAvengerOnMapStart();
+	OshimunoKaijuOnMapStart();
 }
 
 void NPC_MapEnd()
@@ -2826,4 +2829,6 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_spirit_kamikaze.sp"
 #include "npc/oshimuno/npc_oshimuno_spiritcaller.sp"
 #include "npc/oshimuno/npc_oshimuno_avenger.sp"
-
+#include "npc/oshimuno/npc_oshimuno_tree_healing.sp"
+#include "npc/oshimuno/npc_oshimuno_spirit_tree.sp"
+#include "npc/oshimuno/npc_oshimuno_kaiju.sp"

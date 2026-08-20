@@ -46,6 +46,9 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/samurai/tf_katana_06.wav",
 };
 
+#define INITIAL_DELAY 15.0
+#define CALLING_DELAY 20.0
+
 void OshimunoSpiritCallerOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
@@ -95,14 +98,19 @@ methodmap OshimunoSpiritCaller < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	
+	property float m_flSpiritCalling
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
+	}
 	public OshimunoSpiritCaller(float vecPos[3], float vecAng[3], int ally)
 	{
 		OshimunoSpiritCaller npc = view_as<OshimunoSpiritCaller>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.0", "1000", ally));
+		float gameTime = GetGameTime(npc.index);
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "demokatana");
+		KillFeed_SetKillIcon(npc.index, "freedom_staff");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -114,12 +122,15 @@ methodmap OshimunoSpiritCaller < CClotBody
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
+		npc.m_flSpiritCalling = gameTime + INITIAL_DELAY; // timer for when we switch states
+		npc.m_iState = 1;	//1 is normal behavior  || 2 is for hunting spirit orbs to respawn as enemies
+		npc.Anger = false;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_tw_eagle/c_tw_eagle.mdl");
 
 		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/medic/dec18_misers_muttonchops/dec18_misers_muttonchops.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/medic/sbox2014_ticket_boy/sbox2014_ticket_boy.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/sbox2014_ticket_boy/sbox2014_ticket_boy.mdl");
 		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/medic/dec15_medic_winter_jacket2_emblem2/dec15_medic_winter_jacket2_emblem2.mdl");
@@ -156,7 +167,12 @@ static void ClotThink(int iNPC)
 	
 	npc.m_flNextThinkTime = gameTime + 0.1;
 
-	if(!npc.Anger)
+	if(npc.m_flSpiritCalling < gameTime)
+	{
+		npc.m_iState = 2;
+		npc.m_flSpiritCalling = gameTime + FAR_FUTURE;
+	}
+	if(npc.m_iState == 2)
 	{
 		for(int i; i < i_MaxcountNpcTotal; i++)
 		{
@@ -166,45 +182,68 @@ static void ClotThink(int iNPC)
 				char npc_classname[60];
 				NPC_GetPluginById(i_NpcInternalId[entity], npc_classname, sizeof(npc_classname));
 
-				if(entity != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_spirit_orb") && IsEntityAlive(entity))) // look for a boombox alive then grab it
+				if(entity != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_spirit_orb") && IsEntityAlive(entity))) // look for a spirit orb alive
 				{
-					npc.m_iOverlordComboAttack = 1;
-					npc.m_iTargetAlly = entity; //set boombox as target
-					npc.Anger = true;
+					npc.m_iTargetAlly = entity; //set spirit orb as target
 				}
 			}
 		}
-	}
+		if(IsValidAlly(npc.index, npc.m_iTargetAlly))
+		{
+			float vecTarget[3]; WorldSpaceCenter(npc.m_iTargetAlly, vecTarget);
+			float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
+			float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);
 
-	int target = npc.m_iTarget;
-	if(i_Target[npc.index] != -1 && !IsValidEnemy(npc.index, target))
-		i_Target[npc.index] = -1;
-	
-	if(i_Target[npc.index] == -1 || npc.m_flGetClosestTargetTime < gameTime)
-	{
-		target = GetClosestTarget(npc.index);
-		npc.m_iTarget = target;
-		npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
+			if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED))
+			{
+				//touched the spirit orb
+				npc.m_iState = 1;
+				npc.m_flSpiritCalling = gameTime + CALLING_DELAY;
+			}
+			else 
+			{
+				npc.m_flSpeed = 420.0;
+				npc.SetGoalEntity(npc.m_iTargetAlly);
+			}
+		}
+		else // ally is somehow invalid -> return to normal
+		{
+			npc.m_iState = 1;
+			npc.m_flSpiritCalling = gameTime + CALLING_DELAY;
+		}
 	}
+	if(npc.m_iState == 1)
+	{	
+		npc.m_flSpeed = 300.0;
+		int target = npc.m_iTarget;
+		if(i_Target[npc.index] != -1 && !IsValidEnemy(npc.index, target))
+			i_Target[npc.index] = -1;
 	
-	if(target > 0)
-	{
-		float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
-		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
-		float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);	
+		if(i_Target[npc.index] == -1 || npc.m_flGetClosestTargetTime < gameTime)
+		{
+			target = GetClosestTarget(npc.index);
+			npc.m_iTarget = target;
+			npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
+		}
+		if(target > 0)
+		{
+			float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
+			float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
+			float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);	
 		
-		if(distance < npc.GetLeadRadius())
-		{
-			float vPredictedPos[3]; PredictSubjectPosition(npc, target,_,_, vPredictedPos);
-			npc.SetGoalVector(vPredictedPos);
+			if(distance < npc.GetLeadRadius())
+			{
+				float vPredictedPos[3]; PredictSubjectPosition(npc, target,_,_, vPredictedPos);
+				npc.SetGoalVector(vPredictedPos);
+			}
+			else 
+			{
+				npc.SetGoalEntity(target);
+			}
+			OshimunoSpiritCallerSelfDefense(npc, distance, vecTarget, gameTime); 
 		}
-		else 
-		{
-			npc.SetGoalEntity(target);
-		}
-		OshimunoSpiritCallerSelfDefense(npc, distance, vecTarget, gameTime); 
-	}
 
+	}
 	npc.PlayIdleSound();
 }
 

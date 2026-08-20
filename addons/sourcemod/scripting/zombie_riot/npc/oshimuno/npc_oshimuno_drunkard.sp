@@ -190,7 +190,9 @@ static void ClotThink(int iNPC)
 		npc.AddActivityViaSequence("taunt_scotsmans_stagger");
 		npc.SetPlaybackRate(1.5);
 		npc.SetCycle(0.0);
-		npc.m_flTauntLoop = gameTime + 3.0; 
+		npc.m_flTauntLoop = gameTime + 3.0;
+		npc.m_flSpeed = GetRandomFloat(270.0, 350.0);
+		CPrintToChatAll("speed: %f", npc.m_flSpeed); // debug
 	}
 
 	npc.PlayIdleSound();

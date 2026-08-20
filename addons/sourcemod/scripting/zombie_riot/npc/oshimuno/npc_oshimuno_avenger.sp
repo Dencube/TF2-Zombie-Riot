@@ -25,18 +25,18 @@ static const char g_IdleAlertedSounds[][] =
 	"vo/taunts/heavy_taunts19.mp3"
 };
 
-static const char g_RangeAttackSounds[] =
-{
-	"weapons/family_business_shoot.wav"
-};
+static const char g_RangeAttackSounds[] = "weapons/family_business_shoot.wav";
+
+#define STACK_COOLDOWN 3.0
 
 void OshimunoAvengerOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
+	PrecacheSound(g_RangeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Tarakeno Avneger");
+	strcopy(data.Name, sizeof(data.Name), "Tarakeno Avenger");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_avenger");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
@@ -71,9 +71,18 @@ methodmap OshimunoAvenger < CClotBody
 	}
 	public void PlayRangeSound() 
 	{
-		EmitSoundToAll(g_RangeAttackSounds[GetRandomInt(0, sizeof(g_RangeAttackSounds) - 1)], this.index, SNDCHAN_STATIC, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, 85);
+		EmitSoundToAll(g_RangeAttackSounds, this.index, SNDCHAN_STATIC, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, 85);
 	}
-
+	property float m_flStackCooldown
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][9]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][9] = TempValueForProperty; }
+	}
+	property int m_iStack
+	{
+		public get()							{ return i_TimesSummoned[this.index]; }
+		public set(int TempValueForProperty) 	{ i_TimesSummoned[this.index] = TempValueForProperty; }
+	}
 	public OshimunoAvenger(float vecPos[3], float vecAng[3], int ally)
 	{
 		OshimunoAvenger npc = view_as<OshimunoAvenger>(CClotBody(vecPos, vecAng, "models/player/heavy.mdl", "1.0", "1000", ally));
@@ -96,10 +105,10 @@ methodmap OshimunoAvenger < CClotBody
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_russian_riot/c_russian_riot.mdl");
 
 		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/heavy/sum19_kapitans_kaftan/sum19_kapitans_kaftan.mdl");
-		/*SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1); */
+		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 
 		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/heavy/sum25_hardcore/sum25_hardcore.mdl");
-		/*SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1); */
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_heavy.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
@@ -153,57 +162,42 @@ static void ClotThink(int iNPC)
 		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
 		float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);	
 		
-		if(distance < npc.GetLeadRadius())
+		if(IsValidEnemy(npc.index, npc.m_iTarget))
 		{
-			float vPredictedPos[3]; PredictSubjectPosition(npc, target,_,_, vPredictedPos);
-			npc.SetGoalVector(vPredictedPos);
-		}
-		else 
-		{
-			npc.SetGoalEntity(target);
-		}
-		OshimunoAvengerSelfDefense(npc, distance, vecTarget, gameTime); 
-	}
-	if(IsValidEnemy(npc.index, npc.m_iTarget))
-	{
-		float vecTarget[3]; WorldSpaceCenter(npc.m_iTarget, vecTarget );
-	
-		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
-		float flDistanceToTarget = GetVectorDistance(vecTarget, VecSelfNpc, true);
-		switch(OshimunoAvengerSelfDefense(npc,GetGameTime(npc.index), npc.m_iTarget, flDistanceToTarget))
-		{
-			case 0:
+			switch(OshimunoAvengerSelfDefense(npc, gameTime, npc.m_iTarget, distance))
 			{
-				npc.m_bAllowBackWalking = false;
-				//Get the normal prediction code.
-				if(flDistanceToTarget < npc.GetLeadRadius()) 
+				case 0:
 				{
-					float vPredictedPos[3];
-					PredictSubjectPosition(npc, npc.m_iTarget,_,_, vPredictedPos);
-					npc.SetGoalVector(vPredictedPos);
+					npc.m_bAllowBackWalking = false;
+					//Get the normal prediction code.
+					if(distance < npc.GetLeadRadius()) 
+					{
+						float vPredictedPos[3];
+						PredictSubjectPosition(npc, npc.m_iTarget,_,_, vPredictedPos);
+						npc.SetGoalVector(vPredictedPos);
+					}
+					else 
+					{
+						npc.SetGoalEntity(npc.m_iTarget);
+					}
 				}
-				else 
+				case 1:
 				{
-					npc.SetGoalEntity(npc.m_iTarget);
+					npc.m_bAllowBackWalking = true;
+					float vBackoffPos[3];
+					BackoffFromOwnPositionAndAwayFromEnemy(npc, npc.m_iTarget,_,vBackoffPos);
+					npc.SetGoalVector(vBackoffPos, true); //update more often, we need it
 				}
 			}
-			case 1:
-			{
-				npc.m_bAllowBackWalking = true;
-				float vBackoffPos[3];
-				BackoffFromOwnPositionAndAwayFromEnemy(npc, npc.m_iTarget,_,vBackoffPos);
-				npc.SetGoalVector(vBackoffPos, true); //update more often, we need it
-			}
 		}
+		else
+		{
+			npc.m_flGetClosestTargetTime = 0.0;
+			npc.m_iTarget = GetClosestTarget(npc.index);
+		}
+		npc.PlayIdleSound();
 	}
-	else
-	{
-		npc.m_flGetClosestTargetTime = 0.0;
-		npc.m_iTarget = GetClosestTarget(npc.index);
-	}
-	npc.PlayIdleSound();
 }
-
 static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int target, float distance)
 {
 	if(gameTime > npc.m_flNextMeleeAttack)
@@ -215,7 +209,6 @@ static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int t
 			{
 				npc.AddGesture("ACT_MP_ATTACK_STAND_SECONDARY");
 				npc.m_iTarget = Enemy_I_See;
-				npc.PlayRangeSound();
 				float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
 				npc.FaceTowards(vecTarget, 20000.0);
 				Handle swingTrace;
@@ -228,13 +221,14 @@ static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int t
 					float origin[3], angles[3];
 					view_as<CClotBody>(npc.index).GetAttachment("effect_hand_r", origin, angles);
 					ShootLaser(npc.index, "bullet_tracer02_blue", origin, vecHit, false );
-					npc.m_flNextMeleeAttack = gameTime + 0.5;
+					npc.m_flNextMeleeAttack = gameTime + 0.8;
 
 					if(IsValidEnemy(npc.index, target))
 					{
-						float damage = 10.0;
-
+						float damage = 50.0;
+						npc.PlayRangeSound();
 						SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_BULLET, -1, _, vecHit);
+						CPrintToChatAll("dmg: %f", damage);
 					}
 				}
 				delete swingTrace;
@@ -288,6 +282,35 @@ static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int t
 		}
 	}
 	return 0;
+}
+public Action OshimunoAvengerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{
+	OshimunoAvenger npc = view_as<OshimunoAvenger>(victim);
+	
+	float gameTime = GetGameTime(npc.index);
+		
+	if(attacker <= 0)
+		return Plugin_Continue;
+		
+	if (npc.m_flHeadshotCooldown < gameTime)
+	{
+		npc.m_blPlayHurtAnimation = true;
+	}
+	if((i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED))
+		return Plugin_Continue;
+	if(npc.m_flArmorCount > 0.0)
+	{
+		ApplyStatusEffect(npc.index, attacker, "Freeze", 2.0);
+
+		if(IsValidEntity(weapon))
+		{
+			char buffer[36];
+			if(GetEntityClassname(weapon, buffer, sizeof(buffer)) && !StrContains(buffer, "tf_weap"))
+				ApplyTempAttrib(weapon, 6, 1.1, 2.0);
+		}
+	}
+
+	return Plugin_Changed;
 }
 static void ClotDeath(int entity) 
 {

@@ -73,18 +73,18 @@ methodmap OshimunoFarmer < CClotBody
 	}
 	property float m_flSuperSlash
 	{
-		public get()							{ return fl_AbilityOrAttack[this.index][7]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][7] = TempValueForProperty; }
+		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
 	}
 	property float m_flSuperSlashInAbility
 	{
-		public get()							{ return fl_AbilityOrAttack[this.index][8]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][8] = TempValueForProperty; }
+		public get()							{ return fl_AbilityOrAttack[this.index][2]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][2] = TempValueForProperty; }
 	}
 	property float m_flSuperSlashInAbilityDo
 	{
-		public get()							{ return fl_AbilityOrAttack[this.index][9]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][9] = TempValueForProperty; }
+		public get()							{ return fl_AbilityOrAttack[this.index][3]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][3] = TempValueForProperty; }
 	}
 	public void PlayIdleSound()
 	{
@@ -113,7 +113,7 @@ methodmap OshimunoFarmer < CClotBody
 	
 	public OshimunoFarmer(float vecPos[3], float vecAng[3], int ally, const char[] data)
 	{
-		OshimunoFarmer npc = view_as<OshimunoFarmer>(CClotBody(vecPos, vecAng, "models/player/engineer.mdl", "1.1", "40000", ally, false, false, true,true));
+		OshimunoFarmer npc = view_as<OshimunoFarmer>(CClotBody(vecPos, vecAng, "models/player/engineer.mdl", "1.1", "50000", ally, false, false, true,true));
 		float gameTime = GetGameTime(npc.index);
 		
 		i_NpcWeight[npc.index] = 3;
@@ -212,11 +212,6 @@ methodmap OshimunoFarmer < CClotBody
 	}
 }
 
-// static void NPCTalkMessage(int iNPC, const char[] message) // temp remove later
-// {
-// 	PrintNPCMessageWithPrefixes(iNPC, "lightblue", message);
-// }
-
 static int GetTreeCount(int entity)
 {
 	int TreeCount;
@@ -224,7 +219,7 @@ static int GetTreeCount(int entity)
 	// Count trees
 	while((entity1 = FindEntityByNPC(a)) != -1)
 	{
-		if(IsValidEntity(entity1) && i_NpcInternalId[entity1] == CherryBlossom_ID() && GetTeam(entity) == GetTeam(entity1))
+		if(IsValidEntity(entity1) && i_NpcInternalId[entity1] == OshimunoTree_ID() && GetTeam(entity) == GetTeam(entity1))
 		{
 			TreeCount++;
 		}
@@ -296,7 +291,7 @@ static void ClotThink(int iNPC)
 		}
 		npc.m_flTreeCooldown = gameTime + TREE_SPAWN_COOLDOWN;
 	}
-	if(GetTreeCount(npc.index) <= 5)// increase stats for every tree alive || TODO: add a way to count the trees currently alive
+	if(GetTreeCount(npc.index) <= 5)// increase stats for every tree alive
 	{
 	switch(GetTreeCount(npc.index))
 		{

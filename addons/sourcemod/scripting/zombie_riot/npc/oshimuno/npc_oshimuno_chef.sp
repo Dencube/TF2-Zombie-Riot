@@ -197,6 +197,8 @@ void OshimunoChefSelfDefense(OshimunoChef npc, float distance, float vecTarget[3
 				int health = GetClientHealth(target);
 				int maxhealth = SDKCall_GetMaxHealth(target);
 				int extradamage = ((maxhealth) - (health)) / 10; //deals extra damage equal to 10% of the targets missing hp
+				if(extradamage < 0) //prevent the npc from doing LESS damage if target has overheal
+					extradamage = 0; 
 				if(target > 0)
 				{
 					float damage = 50.0 + extradamage;
