@@ -6250,3 +6250,107 @@ int GetPlayerFromShared(Address pShared)
 	}
 	return -1;
 }
+
+stock void StartSpiritFireTimer(int victim, int attacker, float damage, int amount, int weapon, int damagetype, int customtype = 0, int effectoverride = 0)
+{
+	if(IsValidEntity(victim) && IsValidEntity(attacker))
+	{
+		if(HasSpecificBuff(victim, "Hardened Aura"))
+			return;
+		if(damagetype & DMG_TRUEDAMAGE)
+		{
+			StatusEffect_OnTakeDamage_DealNegative(victim, attacker, damage, DMG_CLUB);
+		}
+		if(attacker > 0 && attacker <= MaxClients) 
+			Force_ExplainBuffToClient(attacker, "Spirit Fire");
+		else if(victim > 0 && victim <= MaxClients)
+			Force_ExplainBuffToClient(victim, "Spirit Fire");
+
+
+		SpiritFireAmountCountStack[victim] += 1;
+		DataPack pack;
+		CreateDataTimer(0.5, Timer_SpiritFire, pack, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+		pack.WriteCell(EntIndexToEntRef(victim));
+		pack.WriteCell(victim);
+		pack.WriteFloat(GetGameTime());
+		if(IsValidEntity(weapon))
+			pack.WriteCell(EntIndexToEntRef(weapon));
+		else
+			pack.WriteCell(-1);
+		pack.WriteCell(EntIndexToEntRef(attacker));
+		pack.WriteCell(effectoverride);
+		pack.WriteCell(damagetype);
+		pack.WriteCell(customtype);
+		pack.WriteFloat(damage);
+		pack.WriteCell(amount);
+	}
+}
+
+public Action Timer_SpiritFire(Handle timer, DataPack pack)
+{
+	pack.Reset();
+	int victim = EntRefToEntIndex(pack.ReadCell());
+	int OriginalIndex = pack.ReadCell();
+	if(!IsValidEntity(victim))
+	{
+		SpiritFireAmountCountStack[OriginalIndex] -= 1;
+		if(SpiritFireAmountCountStack[OriginalIndex] < 0)
+			SpiritFireAmountCountStack[OriginalIndex] = 0;
+		return Plugin_Stop;
+	}
+		
+	int weapon = EntRefToEntIndex(pack.ReadCell());
+	if(weapon<=MaxClients || !IsValidEntity(weapon))
+	{
+		//if weapon isnt valid, just do -1
+		//dont remove the bleed
+		weapon = -1;
+	}
+
+	int attacker = EntRefToEntIndex(pack.ReadCell());
+	if(attacker > 0 && attacker <= MaxClients)
+	{
+		if(!attacker || !IsClientInGame(attacker))
+		{
+			SpiritFireAmountCountStack[OriginalIndex] -= 1;
+			if(SpiritFireAmountCountStack[OriginalIndex] < 0)
+				SpiritFireAmountCountStack[OriginalIndex] = 0;
+			return Plugin_Stop;
+		}
+	}
+	else
+	{
+		if(!IsValidEntity(attacker))
+			attacker = 0; //Make it the world that attacks them?
+	}
+
+	if(HasSpecificBuff(victim, "Hardened Aura"))
+	{
+		SpiritFireAmountCountStack[OriginalIndex] -= 1;
+		if(SpiritFireAmountCountStack[OriginalIndex] < 0)
+			SpiritFireAmountCountStack[OriginalIndex] = 0;
+		return Plugin_Stop;
+	}
+	float pos[3];
+	
+	WorldSpaceCenter(victim, pos);
+	int damagetype = pack.ReadCell(); //Same damagetype as the weapon.
+	int customtype = pack.ReadCell() | ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED;
+	float DamageDeal = pack.ReadFloat();
+	if(NpcStats_ElementalAmp(victim))
+	{
+		DamageDeal *= 1.15;
+	}
+	SDKHooks_TakeDamage(victim, attacker, attacker, DamageDeal, damagetype | DMG_PREVENT_PHYSICS_FORCE, weapon, _, pos, false, customtype);
+
+	victim = pack.ReadCell();
+	if(victim < 1)
+	{
+		SpiritFireAmountCountStack[OriginalIndex] -= 1;
+		return Plugin_Stop;
+	}
+
+	pack.Position--;
+	pack.WriteCell(victim-1, false);
+	return Plugin_Continue;
+}

@@ -108,7 +108,7 @@ void ConVar_PluginStart()
 #endif
 
 #if defined ZR || defined RPG
-	CvarFileNetworkDisable = CreateConVar("zr_filenetwork_disable", "0", "0 means as intended, 1 means fast download sounds (itll download any waves present instnatly), 2 means download MVM style matreials too");
+	CvarFileNetworkDisable = CreateConVar("zr_filenetwork_disable", "2", "0 means as intended, 1 means fast download sounds (itll download any waves present instnatly), 2 means download MVM style matreials too");
 	CvarXpMultiplier = CreateConVar("zr_xpmultiplier", "1.0", "Amount of xp gained is multiplied by.");
 	CvarRPGInfiniteLevelAndAmmo = CreateConVar("rpg_debug_store", "0", "Debug", FCVAR_DONTRECORD);
 	CvarCustomModels = CreateConVar("zr_custommodels", "1", "If custom player models are enabled");

@@ -13,3 +13,4 @@ mynpcs/
 !textstore.inc
 !adt_trie_sort.inc
 addons/sourcemod/scripting/zombie_riot/npc/oshimuno/npc_john_the_almighty_raid.sp
+addons/sourcemod/scripting/zombie_riot/npc/oshimuno/npc_cone_swing_standalone.sp

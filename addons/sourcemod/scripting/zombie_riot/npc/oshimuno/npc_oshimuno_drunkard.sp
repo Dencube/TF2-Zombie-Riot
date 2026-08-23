@@ -192,7 +192,6 @@ static void ClotThink(int iNPC)
 		npc.SetCycle(0.0);
 		npc.m_flTauntLoop = gameTime + 3.0;
 		npc.m_flSpeed = GetRandomFloat(270.0, 350.0);
-		CPrintToChatAll("speed: %f", npc.m_flSpeed); // debug
 	}
 
 	npc.PlayIdleSound();
@@ -236,6 +235,20 @@ void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vec
 			npc.m_flAttackHappens = gameTime + 0.25;
 			npc.m_flNextMeleeAttack = gameTime + 0.75;
 		}
+	}
+	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 35.0) && npc.m_flNextRangedAttack < gameTime)
+	{	
+		float vPredictedPos[3]; PredictSubjectPositionForProjectiles(npc, npc.m_iTarget, 1000.0, _,vPredictedPos);
+		npc.FaceTowards(vecTarget, 20000.0);
+
+		npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
+		npc.PlayMeleeSound();
+		int projectile = npc.FireArrow(vPredictedPos, 80.0, 900.0, "models/weapons/c_models/c_bottle/c_bottle.mdl"); //thrown bottle is upside down but thats fine cuz they're drunk
+		int trail = Trail_Attach(projectile, ARROW_TRAIL, 80, 0.16, 15.0, 6.0, 1);
+		i_WandParticle[projectile] = EntIndexToEntRef(trail);
+		CreateTimer(6.0, Timer_RemoveEntity, EntIndexToEntRef(trail), TIMER_FLAG_NO_MAPCHANGE);
+		SetParent(projectile, trail);
+		npc.m_flNextRangedAttack = gameTime + 12.0;	
 	}
 }
 static void ClotDeath(int entity)

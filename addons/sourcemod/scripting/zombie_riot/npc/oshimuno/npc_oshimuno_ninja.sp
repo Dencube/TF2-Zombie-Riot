@@ -1,51 +1,52 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-static const char g_DeathSounds[][] =
+static const char g_DeathSounds[][] = 
 {
-	"vo/heavy_paincrticialdeath01.mp3",
-	"vo/heavy_paincrticialdeath02.mp3",
-	"vo/heavy_paincrticialdeath03.mp3"
+	"vo/spy_paincrticialdeath01.mp3",
+	"vo/spy_paincrticialdeath02.mp3",
+	"vo/spy_paincrticialdeath03.mp3",
 };
 
-static const char g_HurtSounds[][] =
+static const char g_HurtSounds[][] = 
 {
-	"vo/heavy_painsharp01.mp3",
-	"vo/heavy_painsharp02.mp3",
-	"vo/heavy_painsharp03.mp3",
-	"vo/heavy_painsharp04.mp3",
-	"vo/heavy_painsharp05.mp3",
+	"vo/spy_painsharp01.mp3",
+	"vo/spy_painsharp02.mp3",
+	"vo/spy_painsharp03.mp3",
+	"vo/spy_painsharp04.mp3",
 };
 
-static const char g_IdleAlertedSounds[][] =
+static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/taunts/soldier_taunts19.mp3",
-	"vo/taunts/soldier_taunts20.mp3",
-	"vo/taunts/soldier_taunts21.mp3",
-	"vo/taunts/soldier_taunts18.mp3"
+	"vo/spy_battlecry01.mp3",
+	"vo/spy_battlecry02.mp3",
+	"vo/spy_battlecry03.mp3",
+	"vo/spy_battlecry04.mp3",
 };
 
-static const char g_MeleeHitSounds[][] =
+static const char g_MeleeAttackSounds[][] = 
 {
-	"weapons/cbar_hit1.wav",
-	"weapons/cbar_hit2.wav"
+	"weapons/knife_swing.wav",
 };
 
-static const char g_MeleeAttackSounds[][] =
+static const char g_MeleeHitSounds[][] = 
 {
-	"weapons/pickaxe_swing1.wav",
-	"weapons/pickaxe_swing2.wav",
-	"weapons/pickaxe_swing3.wav"
+	"weapons/blade_hit1.wav",
+	"weapons/blade_hit2.wav",
+	"weapons/blade_hit3.wav",
+	"weapons/blade_hit4.wav",
 };
 
-static const char g_RangedAttackSounds[][] = {
+static const char g_RangedAttackSounds[][] = 
+{
 	"weapons/cleaver_throw.wav",
 };
 
 #define JUMP_COOLDOWN 12.0
-#define THROW_STATE_DURATION 3.0
-#define INITIAL_THROW 0.3
-#define KUNAI_THROW_COOLDOWN 0.4
+#define INITIAL_JUMP_COOLDOWN 7.5
+#define THROW_STATE_DURATION 2.5
+#define INITIAL_THROW 0.5
+#define KUNAI_THROW_COOLDOWN 0.3
 
 void OshimunoNinjaSpyOnMapStart()
 {
@@ -109,6 +110,7 @@ methodmap NinjaSpy < CClotBody
 	public NinjaSpy(float vecPos[3], float vecAng[3], int ally)
 	{
 		NinjaSpy npc = view_as<NinjaSpy>(CClotBody(vecPos, vecAng, "models/player/spy.mdl", "1.0", "1000", ally));
+		float gameTime = GetGameTime(npc.index);
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
@@ -124,15 +126,18 @@ methodmap NinjaSpy < CClotBody
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
-		npc.m_flJumpKunaiThrow = 0.0;
+		npc.m_flJumpKunaiThrow = gameTime + INITIAL_JUMP_COOLDOWN;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/heavy/cop_glasses.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/spy/hwn2024_nightfall_veil/hwn2024_nightfall_veil.mdl");
+		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/heavy/sum23_hog_heels/sum23_hog_heels.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/spr17_legendary_lid/spr17_legendary_lid_spy.mdl");
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/heavy/dec23_bigger_mann/dec23_bigger_mann.mdl");
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_spy.mdl");
+		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(2);
@@ -246,12 +251,12 @@ void OshimunoNinjaSelfDefense(NinjaSpy npc, float distance, float vecTarget[3], 
 		npc.m_flNextRangedAttack = gameTime + INITIAL_THROW;
 		npc.m_flJumpCooldown = gameTime + JUMP_COOLDOWN;
 	}
-	if(npc.m_flJumpKunaiThrow > gameTime && npc.m_flNextRangedAttack < gameTime && distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 9)) // distance check to prevent throwing cross map
+	if(npc.m_flJumpKunaiThrow > gameTime && npc.m_flNextRangedAttack < gameTime && distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 11)) // distance check to prevent throwing cross map
 	{
 		float EnemyPos[3]; // throw a kunai at the enemy during the jump
 		WorldSpaceCenter(npc.m_iTarget, EnemyPos);
 		npc.FaceTowards(EnemyPos, 15000.0);
-		npc.FireArrow(EnemyPos, 55.0, 1000.0, "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl", 1.5); //TODO: kunai model is facing upwards during the throw
+		npc.FireArrow(EnemyPos, 35.0, 1000.0, "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl", 1.5); //TODO: kunai model is facing upwards during the throw
 		npc.m_flNextRangedAttack = gameTime + KUNAI_THROW_COOLDOWN;
 		npc.PlayRangedSound();
 	}

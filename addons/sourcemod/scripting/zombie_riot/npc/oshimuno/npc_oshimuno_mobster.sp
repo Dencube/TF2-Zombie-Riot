@@ -1,47 +1,36 @@
-#pragma semicolon 1 //TODO: add a mafia wrath system on death to all attackers/last attacker
+#pragma semicolon 1
 #pragma newdecls required
 
 static const char g_DeathSounds[][] =
 {
-	"vo/scout_paincrticialdeath01.mp3",
-	"vo/scout_paincrticialdeath02.mp3",
-	"vo/scout_paincrticialdeath03.mp3",
+	"vo/soldier_paincrticialdeath01.mp3",
+	"vo/soldier_paincrticialdeath02.mp3",
+	"vo/soldier_paincrticialdeath03.mp3"
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/scout_painsharp01.mp3",
-	"vo/scout_painsharp02.mp3",
-	"vo/scout_painsharp03.mp3",
-	"vo/scout_painsharp04.mp3",
-	"vo/scout_painsharp05.mp3",
-	"vo/scout_painsharp06.mp3",
-	"vo/scout_painsharp07.mp3",
-	"vo/scout_painsharp08.mp3",
+	"vo/soldier_painsharp01.mp3",
+	"vo/soldier_painsharp02.mp3",
+	"vo/soldier_painsharp03.mp3",
+	"vo/soldier_painsharp04.mp3",
+	"vo/soldier_painsharp05.mp3",
+	"vo/soldier_painsharp06.mp3",
+	"vo/soldier_painsharp07.mp3",
+	"vo/soldier_painsharp08.mp3"
 };
 
 static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/scout_battlecry01.mp3",
-	"vo/scout_battlecry03.mp3",
-	"vo/scout_battlecry04.mp3",
-	"vo/scout_battlecry05.mp3",
+	"vo/taunts/soldier_taunts19.mp3",
+	"vo/taunts/soldier_taunts20.mp3",
+	"vo/taunts/soldier_taunts21.mp3",
+	"vo/taunts/soldier_taunts18.mp3"
 };
 
-static char g_MeleeHitSounds[][] = 
+static const char g_RangedAttackSounds[][] = 
 {
-	"weapons/cleaver_hit_02.wav",
-	"weapons/cleaver_hit_03.wav",
-	"weapons/cleaver_hit_05.wav",
-	"weapons/cleaver_hit_06.wav",
-	"weapons/cleaver_hit_07.wav",
-};
-
-static const char g_MeleeAttackSounds[][] =
-{
-	"weapons/pickaxe_swing1.wav",
-	"weapons/pickaxe_swing2.wav",
-	"weapons/pickaxe_swing3.wav",
+	"weapons/rocket_shoot.wav",
 };
 
 void OshimunoMobsterOnMapStart()
@@ -49,8 +38,7 @@ void OshimunoMobsterOnMapStart()
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
-	PrecacheSoundArray(g_MeleeHitSounds);
-	PrecacheSoundArray(g_MeleeAttackSounds);
+	PrecacheSoundArray(g_RangedAttackSounds);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Tarakeno Mobster");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_mobster");
@@ -85,13 +73,9 @@ methodmap OshimunoMobster < CClotBody
 	{
 		EmitSoundToAll(g_DeathSounds[GetRandomInt(0, sizeof(g_DeathSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
-	public void PlayMeleeSound()
- 	{
-		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
-	}
-	public void PlayMeleeHitSound()
+	public void PlayRangedSound()
 	{
-		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
+		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
 	
 	public OshimunoMobster(float vecPos[3], float vecAng[3], int ally)
@@ -99,8 +83,8 @@ methodmap OshimunoMobster < CClotBody
 		OshimunoMobster npc = view_as<OshimunoMobster>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
-		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "bottle");
+		npc.SetActivity("ACT_MP_RUN_PRIMARY");
+		KillFeed_SetKillIcon(npc.index, "tf_projectile_rocket");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -113,19 +97,19 @@ methodmap OshimunoMobster < CClotBody
 		
 		npc.m_flSpeed = 300.0;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_boston_basher/c_boston_basher.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_rocketlauncher/c_rocketlauncher.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_scout_ninja_mask/short2014_scout_ninja_mask.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/soldier/hw2013_shaolin_sash/hw2013_shaolin_sash.mdl");
 		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_minja_vest/short2014_minja_vest.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/xms2013_jacket/xms2013_jacket_soldier.mdl");
 		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_soldier.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(3);
+		SetVariantInt(2);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -190,41 +174,20 @@ static void ClotThink(int iNPC)
 
 void OshimunoMobsterSelfDefense(OshimunoMobster npc, float distance, float vecTarget[3], float gameTime)
 {
-	if(npc.m_flAttackHappens)
-	{
-		if(npc.m_flAttackHappens < gameTime)
-		{
-			npc.m_flAttackHappens = 0.0;
-			
-			Handle swingTrace;
-			npc.FaceTowards(vecTarget, 15000.0);
-			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
-			{
-				int target = TR_GetEntityIndex(swingTrace);
-				if(target > 0)
-				{
-					float damage = 20.0;
-					
-					npc.PlayMeleeHitSound();
-					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_BULLET);
-				}
-			}
-			delete swingTrace;
-		}
-	}
-
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) && npc.m_flNextMeleeAttack < gameTime)
+	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 11.0 && npc.m_flNextRangedAttack < gameTime)
 	{
 		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
 		if(IsValidEnemy(npc.index, target, false, true))
 		{
 			npc.m_iTarget = target;
-
-			npc.AddGesture("ACT_MP_ATTACK_STAND_SECONDARY",_,_,_, 1.0);
-			npc.PlayMeleeSound();
+				
+			npc.FaceTowards(vecTarget, 20000.0);
+			npc.AddGesture("ACT_MP_ATTACK_STAND_PRIMARY");
+			npc.PlayRangedSound();
 			
-			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.55;
+			npc.FireRocket(vecTarget, 60.0, 800.0);
+			
+			npc.m_flNextRangedAttack = gameTime + 1.4;
 		}
 	}
 }

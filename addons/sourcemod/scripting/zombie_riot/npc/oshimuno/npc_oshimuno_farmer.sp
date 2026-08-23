@@ -200,11 +200,12 @@ methodmap OshimunoFarmer < CClotBody
 		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/sum26_beachcombers/sum26_beachcombers_engineer.mdl");
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/engineer/dec18_wise_whiskers/dec18_wise_whiskers.mdl");
 		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/engineer/all_work_and_no_plaid/all_work_and_no_plaid.mdl");
+		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 1);
 		npc.m_iWearable6 = npc.EquipItem("head", "models/workshop/player/items/all_class/sum24_botler_2000_style1/sum24_botler_2000_style1_engineer.mdl");
 		SetEntProp(npc.m_iWearable6, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(2);
+		SetVariantInt(1);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -284,7 +285,7 @@ static void ClotThink(int iNPC)
 		int entity = NPC_CreateByName("npc_oshimuno_tree", -1, pos, ang, GetTeam(npc.index));
 		if(entity > MaxClients)
 		{
-				
+			ConnectWithBeam(npc.index, entity, 245, 180, 255, 3.0, 3.0, 1.35, LASERBEAM);	
 			if(GetTeam(npc.index) != TFTeam_Red)
 			NpcAddedToZombiesLeftCurrently(entity, true);
 			view_as<CClotBody>(entity).m_flSpeed = npc.m_flSpeed;
@@ -362,7 +363,7 @@ void OshimunoFarmerSelfDefense(OshimunoFarmer npc, float distance, float vecTarg
 			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
 			npc.PlayMeleeSound();
 			
-			npc.m_flAttackHappens = gameTime + 1.0;
+			npc.m_flAttackHappens = gameTime + 0.25;
 			npc.m_flNextMeleeAttack = gameTime + 0.75;
 		}
 	}
@@ -377,7 +378,7 @@ static Action FarmerOnTakeDamage(int victim, int &attacker, int &inflictor, floa
 	if((ReturnEntityMaxHealth(npc.index)/3) >= GetEntProp(npc.index, Prop_Data, "m_iHealth") && !npc.Anger) //enrage below 33% hp
 	{
 		npc.Anger = true;
-		for(int i=0 ; i < 6 ; i++) //summon 6 trees || TODO: add more effects or something so the trees spawning in is more obvious
+		for(int i=0 ; i < 6 ; i++) //summon 6 trees
 		{
 			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 			float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
@@ -385,7 +386,7 @@ static Action FarmerOnTakeDamage(int victim, int &attacker, int &inflictor, floa
 
 			if(entity > MaxClients)
 			{
-				
+				ConnectWithBeam(npc.index, entity, 245, 180, 255, 3.0, 3.0, 1.35, LASERBEAM);
 				if(GetTeam(npc.index) != TFTeam_Red)
 				NpcAddedToZombiesLeftCurrently(entity, true);
 				view_as<CClotBody>(entity).m_flSpeed = npc.m_flSpeed;

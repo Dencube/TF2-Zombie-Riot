@@ -93,7 +93,17 @@ methodmap OshimunoSpiritOrb < CClotBody
 		npc.m_flSpeed = 200.0;
 		npc.m_bDissapearOnDeath = true;
 		npc.m_iWearable1 = npc.EquipItemSeperate("models/weapons/w_models/w_baseball.mdl" ,_,_, 1.75, 30.0, false);
-		SetEntityRenderColor(npc.m_iWearable1, 0, 255, 255); // orange
+		SetEntityRenderColor(npc.m_iWearable1, 0, 255, 255); // cyan
+
+		float flPos[3], flAng[3];
+
+		npc.GetAttachment("eyes", flPos, flAng);
+		npc.m_iWearable8 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_parent", npc.index, "eyes", {0.0,0.0,40.0});
+		SetVariantString("1.5");
+		AcceptEntityInput(npc.m_iWearable8, "SetModelScale");
+		npc.m_iWearable9 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_sparkles", npc.index, "eyes", {0.0,0.0,40.0});
+		SetVariantString("1.5");
+		AcceptEntityInput(npc.m_iWearable9, "SetModelScale");
 
 		npc.StartPathing();
 		return npc;
@@ -172,7 +182,7 @@ void OshimunoSpiritOrbSelfDefense(OshimunoSpiritOrb npc, float distance, float v
 				
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
-					Elemental_AddChaosDamage(target, npc.index, 5, true); // TODO: replace with spirit fire once made
+					StatusEffects_SpiritFireAddStuff(target, 2, 5.0); //TODO: make spirit fire do damage and its extra effects
 				}
 			}
 			delete swingTrace;
@@ -215,4 +225,7 @@ static void ClotDeath(int entity)
 	
 	if(IsValidEntity(npc.m_iWearable5))
 		RemoveEntity(npc.m_iWearable5);
+
+	CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable8, TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable9, TIMER_FLAG_NO_MAPCHANGE);
 }

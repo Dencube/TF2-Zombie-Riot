@@ -1,4 +1,4 @@
-#pragma semicolon 1 //TODO: add a mafia wrath system on death to all attackers/last attacker
+#pragma semicolon 1
 #pragma newdecls required
 
 static const char g_DeathSounds[][] =
@@ -100,7 +100,7 @@ methodmap OshimunoGrunt < CClotBody
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "bottle");
+		KillFeed_SetKillIcon(npc.index, "boston_basher");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -108,7 +108,7 @@ methodmap OshimunoGrunt < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = GruntOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
@@ -184,7 +184,19 @@ static void ClotThink(int iNPC)
 		}
 		OshimunoGruntSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-
+	if(npc.m_flDoingAnimation < gameTime && npc.Anger)
+	{
+		if(IsValidEntity(npc.m_iWearable1))
+			RemoveEntity(npc.m_iWearable1);
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_boston_basher/c_boston_basher.mdl");
+		npc.StartPathing();
+		npc.m_bisWalking = true;
+		npc.SetActivity("ACT_MP_RUN_MELEE");
+		float health = float(ReturnEntityMaxHealth(npc.index));
+		HealEntityGlobal(npc.index, npc.index, health, 1.0, 0.0, HEAL_SELFHEAL);
+		fl_TotalArmor[npc.index] = 1.0;
+		npc.m_flDoingAnimation = gameTime + FAR_FUTURE; //so this doesnt trigger again
+	}
 	npc.PlayIdleSound();
 }
 
@@ -224,9 +236,35 @@ void OshimunoGruntSelfDefense(OshimunoGrunt npc, float distance, float vecTarget
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.55;
+			npc.m_flNextMeleeAttack = gameTime + 0.45;
 		}
 	}
+}
+
+static Action GruntOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{	
+	OshimunoGrunt npc = view_as<OshimunoGrunt>(victim);
+	float gameTime = GetGameTime(npc.index);
+	if((ReturnEntityMaxHealth(npc.index)/2) >= GetEntProp(npc.index, Prop_Data, "m_iHealth") && !npc.Anger) //enrage below 50% hp
+	{
+		npc.Anger = true;
+		fl_TotalArmor[npc.index] = 0.66;
+		if(IsValidEntity(npc.m_iWearable1))
+			RemoveEntity(npc.m_iWearable1);
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/player/items/all_class/taunt_cheers/taunt_cheers_pyro.mdl");
+		SetEntProp(npc.m_iWearable1, Prop_Send, "m_nSkin", 1);
+
+		npc.StopPathing();
+		npc.m_bisWalking = false;
+		npc.AddActivityViaSequence("layer_taunt_cheers_scout");
+		npc.m_flNextMeleeAttack = gameTime + 1.75;
+		npc.m_flDoingAnimation = gameTime + 1.5;
+		npc.SetCycle(0.01);
+		npc.SetPlaybackRate(2.0);
+		EmitSoundToAll("player/pl_scout_dodge_can_drink.wav", npc.index, SNDCHAN_STATIC, 120, _, 0.9);
+	}
+
+	return Plugin_Changed;
 }
 static void ClotDeath(int entity) 
 {

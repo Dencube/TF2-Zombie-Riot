@@ -243,7 +243,8 @@ void InitStatusEffects()
 	StatusEffects_CasinoDebuff();
 #if defined ZR
 	StatusEffects_Aperture();
-	StatusEffects_SmokeScreen(); //combine all new effects into one like aperture and put them here
+	StatusEffects_SmokeScreen();
+	StatusEffects_SpiritFire(); //combine all new effects into one like aperture and put them here
 	StatusEffects_Ruiania();
 	StatusEffects_BrickWeapon();
 #endif
@@ -284,6 +285,7 @@ void InitStatusEffects()
 	StatusEffects_IndexNurseFather();
 	StatusEffects_Gunsaw();
 	StatusEffects_ManaRecharge();
+	
 }
 
 static int CategoryPage[MAXPLAYERS];
@@ -12164,4 +12166,81 @@ float SmokeScreen_Dodge(int attacker, int victim, StatusEffect Apply_MasterStatu
 	int Rand = GetRandomInt(0, sizeof(MissSound) - 1);
 	EmitSoundToAll(MissSound[Rand], victim, _, 80);
 	return 0.0;
+}
+int SpiritFireIndex;
+void StatusEffects_SpiritFire() //TODO: make spirit fire do damage and its extra effects
+{
+	StatusEffect data;
+	strcopy(data.BuffName, sizeof(data.BuffName), "Spirit Fire");
+	strcopy(data.HudDisplay, sizeof(data.HudDisplay), "⯚");
+	strcopy(data.AboveEnemyDisplay, sizeof(data.AboveEnemyDisplay), ""); //dont display above head, so empty
+	//-1.0 means unused
+	data.DamageTakenMulti 			= -1.0;
+	data.DamageDealMulti			= -1.0;
+	data.MovementspeedModif			= -1.0;
+	data.Positive 					= false;
+	data.ShouldScaleWithPlayerCount = false;
+	data.Slot						= 0; //0 means ignored
+	data.SlotPriority				= 0; //if its higher, then the lower version is entirely ignored.
+	data.HudDisplay_Func 			= Func_SpiritFireShow;
+	SpiritFireIndex = StatusEffect_AddGlobal(data);
+}
+#define MAX_SPIRIT_FIRE_STACK 100
+
+stock void StatusEffects_SpiritFireAddStuff(int victim, int value, float time)
+{
+	StatusEffects_SpiritFireAddStuff_Internal(victim, value, time);
+}
+stock int StatusEffects_SpiritFireReturnCount(int victim)
+{
+	if(!E_AL_StatusEffects[victim])
+		return 0;
+	static StatusEffect Apply_MasterStatusEffect;
+	static E_StatusEffect Apply_StatusEffect;
+	int ArrayPosition = E_AL_StatusEffects[victim].FindValue(SpiritFireIndex , E_StatusEffect::BuffIndex);
+	if(ArrayPosition != -1)
+	{
+		E_AL_StatusEffects[victim].GetArray(ArrayPosition, Apply_StatusEffect);
+		AL_StatusEffects.GetArray(Apply_StatusEffect.BuffIndex, Apply_MasterStatusEffect);
+		if(Apply_StatusEffect.TimeUntillOver >= GetGameTime())
+		{
+			return RoundFloat(Apply_StatusEffect.DataForUse);
+		}
+	}
+	return 0;
+
+}
+stock void StatusEffects_SpiritFireAddStuff_Internal(int victim, int value, float time)
+{
+	ApplyStatusEffect(victim, victim, "Spirit Fire", 0.5);
+	if(!E_AL_StatusEffects[victim])
+		return;
+
+	static StatusEffect Apply_MasterStatusEffect;
+	static E_StatusEffect Apply_StatusEffect;
+	int ArrayPosition = E_AL_StatusEffects[victim].FindValue(SpiritFireIndex , E_StatusEffect::BuffIndex);
+	if(ArrayPosition != -1)
+	{
+		E_AL_StatusEffects[victim].GetArray(ArrayPosition, Apply_StatusEffect);
+		AL_StatusEffects.GetArray(Apply_StatusEffect.BuffIndex, Apply_MasterStatusEffect);
+		if(Apply_StatusEffect.TimeUntillOver >= GetGameTime())
+		{
+			Apply_StatusEffect.DataForUse += float(value);
+			if(RoundToNearest(Apply_StatusEffect.DataForUse) >= MAX_SPIRIT_FIRE_STACK)
+			{
+				Apply_StatusEffect.DataForUse = float(MAX_SPIRIT_FIRE_STACK);
+			}
+			Apply_StatusEffect.TimeUntillOver += time;
+			if(Apply_StatusEffect.TimeUntillOver - GetGameTime() >= 15.0)
+			{
+				Apply_StatusEffect.TimeUntillOver = GetGameTime() + 15.0;
+			}
+			E_AL_StatusEffects[victim].SetArray(ArrayPosition, Apply_StatusEffect);
+		}
+	}
+}
+
+void Func_SpiritFireShow(int attacker, int victim, StatusEffect Apply_MasterStatusEffect, E_StatusEffect Apply_StatusEffect, int SizeOfChar, char[] HudToDisplay)
+{
+	Format(HudToDisplay, SizeOfChar, "⯚(%i/%.1f)", RoundFloat(Apply_StatusEffect.DataForUse) , Apply_StatusEffect.TimeUntillOver - GetGameTime());
 }

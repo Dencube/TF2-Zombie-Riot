@@ -210,7 +210,7 @@ void OshimunoBouncerSelfDefense(OshimunoBouncer npc, float distance, float vecTa
 					if(npc.m_iOverlordComboAttack == 5) // after 5 hits do a stronger hit
 					{
 						damage = 300.0;
-						Custom_Knockback(npc.index, target, 1000.0, true, true);
+						Custom_Knockback(npc.index, target, 1200.0, true, true);
 						if(!HasSpecificBuff(target, "Solid Stance"))
 							ApplyStatusEffect(npc.index, target, "Solid Stance", 2.0);
 						CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable9, TIMER_FLAG_NO_MAPCHANGE);

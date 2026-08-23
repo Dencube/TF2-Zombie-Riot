@@ -25,7 +25,10 @@ static const char g_IdleAlertedSounds[][] =
 	"vo/taunts/heavy_taunts19.mp3"
 };
 
-static const char g_RangeAttackSounds[] = "weapons/family_business_shoot.wav";
+static const char g_RangedAttackSounds[][] = 
+{
+	"weapons/family_business_shoot.wav"
+}; 
 
 #define STACK_COOLDOWN 3.0
 
@@ -34,7 +37,7 @@ void OshimunoAvengerOnMapStart()
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
-	PrecacheSound(g_RangeAttackSounds);
+	PrecacheSoundArray(g_RangedAttackSounds);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Tarakeno Avenger");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_avenger");
@@ -69,9 +72,9 @@ methodmap OshimunoAvenger < CClotBody
 	{
 		EmitSoundToAll(g_DeathSounds[GetRandomInt(0, sizeof(g_DeathSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
-	public void PlayRangeSound() 
+	public void PlayRangedSound()
 	{
-		EmitSoundToAll(g_RangeAttackSounds, this.index, SNDCHAN_STATIC, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, 85);
+		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
 	property float m_flStackCooldown
 	{
@@ -200,7 +203,7 @@ static void ClotThink(int iNPC)
 }
 static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int target, float distance)
 {
-	if(gameTime > npc.m_flNextMeleeAttack)
+	if(npc.m_flNextRangedAttack < gameTime)
 	{
 		if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 2.5))
 		{
@@ -221,14 +224,13 @@ static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int t
 					float origin[3], angles[3];
 					view_as<CClotBody>(npc.index).GetAttachment("effect_hand_r", origin, angles);
 					ShootLaser(npc.index, "bullet_tracer02_blue", origin, vecHit, false );
-					npc.m_flNextMeleeAttack = gameTime + 0.8;
+					npc.m_flNextRangedAttack = gameTime + 0.8;
 
 					if(IsValidEnemy(npc.index, target))
 					{
 						float damage = 50.0;
-						npc.PlayRangeSound();
+						npc.PlayRangedSound();
 						SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_BULLET, -1, _, vecHit);
-						CPrintToChatAll("dmg: %f", damage);
 					}
 				}
 				delete swingTrace;

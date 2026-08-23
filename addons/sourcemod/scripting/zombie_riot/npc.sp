@@ -1262,6 +1262,8 @@ void NPC_ConfigSetup()
 
 	VScript_CacheNPCs();
 
+	ConeSwingTest_OnMapStart_NPC(); //TODO: test npc remove later
+
 	OshimunoSmokeCarrierOnMapStart();
 	OshimunoHarukichiOnMapStart();
 	OshimunoBouncerOnMapStart();
@@ -1280,13 +1282,16 @@ void NPC_ConfigSetup()
 	OshimunoChefOnMapStart();
 	OshimunoSpiritualistOnMapStart();
 	OshimunoGruntOnMapStart();
+	OshimunoGruntEliteOnMapStart();
 	OshimunoExecutorOnMapStart();
 	OshimunoMobsterOnMapStart();
+	OshimunoMobsterEliteOnMapStart();
+	OshimunoAgentOnMapStart();
+	OshimunoAvengerOnMapStart();
 	OshimunoBartenderOnMapStart();
 	OshimunoTrashManOnMapStart();
 	OshimunoSpiritKamikazeOnMapStart();
 	OshimunoSpiritCallerOnMapStart();
-	OshimunoAvengerOnMapStart();
 	OshimunoKaijuOnMapStart();
 }
 
@@ -2808,6 +2813,7 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/construction/construction2/npc_starship_beacon.sp"
 #include "npc/construction/npc_dungeon_loot.sp"
 
+#include "npc/oshimuno/npc_cone_swing_standalone.sp" //TODO:REMOVE LATER
 #include "npc/oshimuno/npc_harukichi.sp"
 #include "npc/oshimuno/npc_oshimuno_smoke_carrier.sp"
 #include "npc/oshimuno/npc_oshimuno_bouncer.sp"
@@ -2824,9 +2830,12 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_drunkard.sp"
 #include "npc/oshimuno/npc_oshimuno_spiritualist.sp"
 #include "npc/oshimuno/npc_oshimuno_grunt.sp"
+#include "npc/oshimuno/npc_oshimuno_grunt_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_executor.sp"
 #include "npc/oshimuno/npc_oshimuno_bartender.sp"
 #include "npc/oshimuno/npc_oshimuno_mobster.sp"
+#include "npc/oshimuno/npc_oshimuno_mobster_elite.sp"
+#include "npc/oshimuno/npc_oshimuno_agent.sp"
 #include "npc/oshimuno/npc_oshimuno_trash_man.sp"
 #include "npc/oshimuno/npc_oshimuno_spirit_kamikaze.sp"
 #include "npc/oshimuno/npc_oshimuno_spiritcaller.sp"

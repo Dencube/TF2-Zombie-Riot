@@ -492,6 +492,7 @@ float BackwardsWarn[MAXPLAYERS];
 float f_BubbleProcStatus[MAXENTITIES][2];
 float f_DuelStatus[MAXENTITIES];
 int BleedAmountCountStack[MAXENTITIES];
+int SpiritFireAmountCountStack[MAXENTITIES];
 bool b_HasBombImplanted[MAXENTITIES];
 int i_RaidGrantExtra[MAXENTITIES];
 int g_particleCritText;

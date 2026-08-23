@@ -3,49 +3,45 @@
 
 static const char g_DeathSounds[][] = 
 {
-	"vo/pyro_paincrticialdeath01.mp3",
-	"vo/pyro_paincrticialdeath02.mp3",
-	"vo/pyro_paincrticialdeath03.mp3",
+	"vo/engineer_paincrticialdeath01.mp3",
+	"vo/engineer_paincrticialdeath02.mp3",
+	"vo/engineer_paincrticialdeath03.mp3",
 };
 
 static const char g_HurtSounds[][] = 
 {
-	"vo/pyro_painsharp01.mp3",
-	"vo/pyro_painsharp02.mp3",
-	"vo/pyro_painsharp03.mp3",
-	"vo/pyro_painsharp04.mp3",
-	"vo/pyro_painsharp05.mp3",
+	"vo/engineer_painsharp01.mp3",
+	"vo/engineer_painsharp02.mp3",
+	"vo/engineer_painsharp03.mp3",
+	"vo/engineer_painsharp04.mp3",
+	"vo/engineer_painsharp05.mp3",
+	"vo/engineer_painsharp06.mp3",
+	"vo/engineer_painsharp07.mp3",
+	"vo/engineer_painsharp08.mp3",
 };
+
 static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/taunts/pyro_taunts01.mp3",
-	"vo/taunts/pyro_taunts02.mp3",
-	"vo/taunts/pyro_taunts03.mp3",
+	"vo/engineer_battlecry01.mp3",
+	"vo/engineer_battlecry03.mp3",
+	"vo/engineer_battlecry04.mp3",
+	"vo/engineer_battlecry05.mp3",
 };
 
-static const char g_MeleeHitSounds[][] =
+static const char g_RangedAttackSounds[][] = 
 {
-	"weapons/fist_hit_world1.wav",
-	"weapons/fist_hit_world2.wav",
+	"weapons/pistol/pistol_fire2.wav"
 };
 
-static const char g_MeleeAttackSounds[][] =
-{
-	"weapons/boxing_gloves_swing1.wav",
-	"weapons/boxing_gloves_swing2.wav",
-	"weapons/boxing_gloves_swing4.wav"
-};
 
-void OshimunoKaijuOnMapStart()
+void OshimunoAgentOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
-	PrecacheSoundArray(g_MeleeHitSounds);
-	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Kaiju");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_kaiju");
+	strcopy(data.Name, sizeof(data.Name), "Tarakeno Agent");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_agent");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -56,10 +52,10 @@ void OshimunoKaijuOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoKaiju(vecPos, vecAng, team);
+	return OshimunoAgent(vecPos, vecAng, team);
 }
 
-methodmap OshimunoKaiju < CClotBody
+methodmap OshimunoAgent < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -77,22 +73,18 @@ methodmap OshimunoKaiju < CClotBody
 	{
 		EmitSoundToAll(g_DeathSounds[GetRandomInt(0, sizeof(g_DeathSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
-	public void PlayMeleeSound()
- 	{
-		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
-	}
-	public void PlayMeleeHitSound()
+	public void PlayRangedSound()
 	{
-		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
+		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
 	
-	public OshimunoKaiju(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoAgent(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoKaiju npc = view_as<OshimunoKaiju>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "2.1", "15000", ally));
+		OshimunoAgent npc = view_as<OshimunoAgent>(CClotBody(vecPos, vecAng, "models/player/engineer.mdl", "1.0", "1000", ally));
 		
-		i_NpcWeight[npc.index] = 10;
+		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "fists");
+		KillFeed_SetKillIcon(npc.index, "pistol");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -100,27 +92,24 @@ methodmap OshimunoKaiju < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = KaijuOnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 180.0;
-		npc.m_iOverlordComboAttack = 200; //for flat damage resistance
+		npc.m_flSpeed = 300.0;
+		npc.m_iOverlordComboAttack = 0;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_crossing_guard/c_crossing_guard.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_pistol/c_pistol.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/pyro/hwn2022_fire_breather/hwn2022_fire_breather.mdl");
-		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/engineer/sum24_desk_engineer_style1/sum24_desk_engineer_style1.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/player/items/pyro/hwn_pyro_misc1.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/engineer/eotl_winter_pants/eotl_winter_pants.mdl");
 		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
-		SetVariantString("2.1");
-		AcceptEntityInput(npc.m_iWearable3, "SetModelScale");
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/pyro/hw2013_dragon_shoes/hw2013_dragon_shoes.mdl");
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_engineer.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(3);
+		SetVariantInt(1);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -130,7 +119,7 @@ methodmap OshimunoKaiju < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoKaiju npc = view_as<OshimunoKaiju>(iNPC);
+	OshimunoAgent npc = view_as<OshimunoAgent>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -177,13 +166,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoKaijuSelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoAgentSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 	
 	npc.PlayIdleSound();
 }
 
-void OshimunoKaijuSelfDefense(OshimunoKaiju npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoAgentSelfDefense(OshimunoAgent npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -198,9 +187,7 @@ void OshimunoKaijuSelfDefense(OshimunoKaiju npc, float distance, float vecTarget
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 250.0;
-				
-					npc.PlayMeleeHitSound();
+					float damage = 60.0;
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
 			}
@@ -215,28 +202,17 @@ void OshimunoKaijuSelfDefense(OshimunoKaiju npc, float distance, float vecTarget
 		{
 			npc.m_iTarget = target;
 
-			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.5);
-			npc.PlayMeleeSound();
+			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
+			npc.PlayRangedSound();
 
-			npc.m_flAttackHappens = gameTime + 0.5;
+			npc.m_flAttackHappens = gameTime + 0.25;
 			npc.m_flNextMeleeAttack = gameTime + 1.5;
 		}
 	}
 }
-static Action KaijuOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
-{
-	//TODO: make the kaiju take less damage from weapons and increase how much it takes from debuffs OR even make it take increasingly more damage from every debuff
-	if((i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED))
-	{
-		damage *= 2.0;
-		return Plugin_Changed;
-	}
-	damage *= 0.6;
-	return Plugin_Changed;
-}
 static void ClotDeath(int entity)
 {
-	OshimunoKaiju npc = view_as<OshimunoKaiju>(entity);
+	OshimunoAgent npc = view_as<OshimunoAgent>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
