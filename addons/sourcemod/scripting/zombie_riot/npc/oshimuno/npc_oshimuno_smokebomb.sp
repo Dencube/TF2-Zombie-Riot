@@ -252,7 +252,7 @@ static void ClotDeath(int entity)
 
 	for(int entitycount; entitycount<MAXENTITIES; entitycount++) //Check for npcs
 	{
-		if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount))
+		if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount)) //TODO: code sends an error every time this guy dies? but why......
 		{
 			float pos1[3];
 			GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);
