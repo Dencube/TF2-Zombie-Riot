@@ -8180,4 +8180,169 @@
 		"en"	"SIGMALLER"
 		"ko"	"시그마 전령병"
 	}
+	"SIGMALLER"
+	{
+		"en"	"SIGMALLER"
+		"ko"	"시그마 전령병"
+	}
+	"Tarakeno Grunt"
+	{
+		"en"	"Tarakeno Grunt"
+	}
+	"Tarakeno Grunt Desc"
+	{
+		"en"	"-When low on health stops to take a drink and restore his health."
+	}
+	"Tarakeno Elite Grunt"
+	{
+		"en" 	"Tarakeno Elite Grunt"
+	}
+	"Tarakeno Elite Grunt Desc"
+	{
+		"en" 	"-When low on health jumps backwards to take a drink and restore his health."
+	}
+	"Tarakeno Agent"
+	{
+		"en" 	"Tarakeno Agent"
+	}
+	"Tarakeno Agent Desc"
+	{
+		"en" 	"-Stands still and fires a pistol at nearby enemies."
+	}
+	"Tarakeno Elite Agent"
+	{
+		"en" 	"Tarakeno Elite Agent"
+	}
+	"Tarakeno Elite Agent Desc"
+	{
+		"en" 	"-Stands still and fires a pistol at nearby enemies.\n-The longer he continously attacks the faster he shoots."
+	}
+	"Tarakeno Mobster"
+	{
+		"en"	"Tarakeno Mobster"
+	}
+	"Tarakeno Mobster Desc"
+	{
+		"en"	"Ensures that debts to Tarakeno are paid off.-Fires a rocket launcher at his enemies.\n-Avoids getting too close"
+	}
+	"Tarakeno Avenger"
+	{
+		"en"	"Tarakeno Avenger"
+	}
+	"Tarakeno Avenger Desc"
+	{
+		"en"	"Remembers and avenges his fallen comrades. -Gains increased stats whenever a nearby ally dies.\n-Stats drain over time. Gains an unusual when greatly empowered."
+	}
+	"Tarakeno Forerunner"
+	{
+		"en"	"Tarakeno Forerunner"
+	}
+	"Tarakeno Forerunner Desc"
+	{
+		"en"	"Sent to those who have fallen out of grace with Tarakeno. -Charges in a slippery and hard to predict pattern.\n-Charge hits do more damage and deal knockback"
+	}
+	"Tarakeno Ninja"
+	{
+		"en"	"Tarakeno Ninja"
+	}
+	"Tarakeno Ninja Desc"
+	{
+		"en"	"-Jumps every so often towards an enemy and rapidly throws kunais."
+	}
+	"Street Chef"
+	{
+		"en" 	"Street Chef"
+	}
+	"Street Chef Desc"
+	{
+		"en" 	"-Deals extra damage to targets based on their missing health"
+	}
+	"Crippling Gambler"
+	{
+		"en" 	"Crippling Gambler"
+	}
+	"Crippling Gambler Desc"
+	{
+		"en" 	"-Switches between 6 revolvers with different effects."
+	}
+	"Cherry Blossom"
+	{
+		"en" 	"Cherry Blossom"
+	}
+	"Cherry Blossom Desc"
+	{
+		"en" 	"A ''peaceful'' tree.\n-Creates a healing aura to allies when killed.\n-Enrages if left alive for last."
+	}
+	"Spirit Cherry Blossom"
+	{
+		"en" 	"Spirit Cherry Blossom"
+	}
+	"Spirit Cherry Blossom Desc"
+	{
+		"en" 	"A less ''peaceful'' tree.\n-Creates a healing aura to allies when killed.\n-Occasionally summmons new Spirit Orbs.\n-Enrages if left alive for last."
+	}
+	"Shibuya Dancer"
+	{
+		"en" 	"Shibuya Dancer"
+	}
+	"Shibuya Dancer Desc"
+	{
+		"en" 	"A member of the Shibuya Dance Club. \n-Extremely fast while dancing. \n-Does a flip and stops dancing after getting close enough to an enemy."
+	}
+	"Shibuya Bouncer"
+	{
+		"en" 	"Shibuya Bouncer"
+	}
+	"Shibuya Bouncer Desc"
+	{
+		"en" 	"One of the many Shibuya bouncers. \n-Every fourth hit does extreme damage and knockback. \n-Gains an unusual right before the empowered punch."
+	}
+	"Shibuya Boombox"
+	{
+		"en" 	"Shibuya Boombox"
+	}
+	"Shibuya Boombox Desc"
+	{
+		"en" 	"Oshimuno's most popular boombox brand. \n-Invulnerable to ALL damage. \n-Occasionally does damage to all enemies around itself and grants allies morale. \n-Gets knockbacked by ANY melee weapon"
+	}
+	"Shibuya DJ"
+	{
+		"en" 	"Shibuya DJ"
+	}
+	"Shibuya DJ Desc"
+	{
+		"en" 	"The architect behind the boombox's design. \n-Prioritizes grabbing and carrying boomboxes over fighting Mercenaries."
+	}
+	"Street Trickster"
+	{
+		"en" 	"Street Trickster"
+	}
+	"Street Trickster Desc"
+	{
+		"en" 	"Puts on a street show for tourists. \n-Breathes fire in a cone when encountering an enemy for the first time."
+	}
+	"Kaiju"
+	{
+		"en" 	"Kaiju"
+	}
+	"Kaiju Desc"
+	{
+		"en" 	"A terrifying beast of legends.\n-Its scales drastically reduce incoming direct damage from weapons.\n-Takes more damage for every unique debuff applied on it.\n-Tramples those it steps on while fireballing those who hide."
+	}
+	"Kaiju Juvenile"
+	{
+		"en" 	"Kaiju Juvenile"
+	}
+	"Kaiju Juvenile Desc"
+	{
+		"en" 	"An offspring of the legendary kaiju.\n-Its scales reduce incoming direct damage from weapons.\n-Takes more damage for every unique debuff applied on it.\n-Tramples those it steps on while fireballing those who hide."
+	}
+	"Spirit Orb"
+	{
+		"en" 	"Spirit Orb"
+	}
+	"Spirit Orb Desc"
+	{
+		"en" 	"The physical manifestation of the deceased's essence.\n-Applies Spirit Fire on hit.\n-Interacts with other certain enemies."
+	}
 }

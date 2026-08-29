@@ -39,7 +39,7 @@ void OshimunoBartenderOnMapStart()
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Shibuya Bartender");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_bartender");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Icon, sizeof(data.Icon), "sniper");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -81,7 +81,7 @@ methodmap OshimunoBartender < CClotBody
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_SECONDARY");
-		KillFeed_SetKillIcon(npc.index, "samrevolver");
+		KillFeed_SetKillIcon(npc.index, "skullbat");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -181,7 +181,7 @@ static int OshimunoBartenderSelfDefense(OshimunoBartender npc, float distance, f
 			{
 				npc.m_iTarget = Enemy_I_See;
 				npc.PlayMeleeSound();
-				float RocketDamage = 35.0;
+				float RocketDamage = 250.0;
 				float RocketSpeed = 900.0;
 				float VecStart[3]; WorldSpaceCenter(npc.index, VecStart );
 				float vecDest[3];

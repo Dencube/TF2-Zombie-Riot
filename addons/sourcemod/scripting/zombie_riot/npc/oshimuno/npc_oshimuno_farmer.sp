@@ -288,7 +288,6 @@ static void ClotThink(int iNPC)
 			ConnectWithBeam(npc.index, entity, 245, 180, 255, 3.0, 3.0, 1.35, LASERBEAM);	
 			if(GetTeam(npc.index) != TFTeam_Red)
 			NpcAddedToZombiesLeftCurrently(entity, true);
-			view_as<CClotBody>(entity).m_flSpeed = npc.m_flSpeed;
 		}
 		npc.m_flTreeCooldown = gameTime + TREE_SPAWN_COOLDOWN;
 	}
@@ -389,7 +388,6 @@ static Action FarmerOnTakeDamage(int victim, int &attacker, int &inflictor, floa
 				ConnectWithBeam(npc.index, entity, 245, 180, 255, 3.0, 3.0, 1.35, LASERBEAM);
 				if(GetTeam(npc.index) != TFTeam_Red)
 				NpcAddedToZombiesLeftCurrently(entity, true);
-				view_as<CClotBody>(entity).m_flSpeed = npc.m_flSpeed;
 			}
 		}
 	}

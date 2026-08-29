@@ -195,8 +195,8 @@ static void ClotThink(int iNPC)
 		npc.StartPathing();
 		npc.m_bisWalking = true;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		float health = float(ReturnEntityMaxHealth(npc.index)) * 1.5;
-		HealEntityGlobal(npc.index, npc.index, health, 1.5, 0.0, HEAL_SELFHEAL);
+		float healing = float(ReturnEntityMaxHealth(npc.index)) * 1.5;
+		HealEntityGlobal(npc.index, npc.index, healing, 1.5, 0.0, HEAL_SELFHEAL);
 		fl_TotalArmor[npc.index] = 1.0;
 		npc.m_flDoingAnimation = gameTime + FAR_FUTURE; //so this doesnt trigger again
 	}

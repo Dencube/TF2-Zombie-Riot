@@ -177,9 +177,8 @@ void OshimunoTreeHealingGiveBuffs(int entity, int victim, float &healingammount)
 		ApplyStatusEffect(entity, victim, "Defensive Backup", 1.0);
 		if(HasSpecificBuff(victim, "Recently Healed Supplies"))
 		{
-			//prevent heal stacking for enemies
 			HealBy = 0.0;
-			ApplyStatusEffect(entity, victim, "Recently Healed Supplies", 0.2);
+			ApplyStatusEffect(entity, victim, "Recently Healed Supplies", 0.5);
 		}
 	}
 	else //prevent healing npcs
@@ -189,7 +188,7 @@ void OshimunoTreeHealingGiveBuffs(int entity, int victim, float &healingammount)
 	if(HealBy <= 0.0)
 		return;
 	int health = ReturnEntityMaxHealth(victim);
-	HealEntityGlobal(entity, victim, float(health) * HealBy, 1.0);
+	HealEntityGlobal(entity, victim, float(health) * HealBy, 1.0, 0.5);
 	
 }
 

@@ -1,52 +1,44 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-static const char g_DeathSounds[][] =
+static const char g_DeathSounds[][] = 
 {
-	"vo/demoman_paincrticialdeath01.mp3",
-	"vo/demoman_paincrticialdeath02.mp3",
-	"vo/demoman_paincrticialdeath03.mp3",
-	"vo/demoman_paincrticialdeath04.mp3",
-	"vo/demoman_paincrticialdeath05.mp3"
+	"vo/medic_paincrticialdeath01.mp3",
+	"vo/medic_paincrticialdeath02.mp3",
+	"vo/medic_paincrticialdeath03.mp3",
 };
 
-static const char g_HurtSounds[][] =
+static const char g_HurtSounds[][] = 
 {
-	"vo/demoman_painsharp01.mp3",
-	"vo/demoman_painsharp02.mp3",
-	"vo/demoman_painsharp03.mp3",
-	"vo/demoman_painsharp04.mp3",
-	"vo/demoman_painsharp05.mp3",
-	"vo/demoman_painsharp06.mp3",
-	"vo/demoman_painsharp07.mp3"
+	"vo/medic_painsharp01.mp3",
+	"vo/medic_painsharp02.mp3",
+	"vo/medic_painsharp03.mp3",
+	"vo/medic_painsharp04.mp3",
 };
 
 static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/demoman_battlecry01.mp3",
-	"vo/demoman_battlecry02.mp3",
-	"vo/demoman_battlecry03.mp3",
-	"vo/demoman_battlecry04.mp3",
+	"vo/medic_battlecry01.mp3",
+	"vo/medic_battlecry02.mp3",
+	"vo/medic_battlecry03.mp3",
+	"vo/medic_battlecry04.mp3",
 };
 
-static char g_MeleeHitSounds[][] = 
+static const char g_MeleeAttackSounds[][] = 
 {
-	"weapons/samurai/tf_katana_slice_01.wav",
-	"weapons/samurai/tf_katana_slice_02.wav",
-	"weapons/samurai/tf_katana_slice_03.wav",
+	"weapons/pickaxe_swing1.wav",
+	"weapons/pickaxe_swing2.wav",
+	"weapons/pickaxe_swing3.wav",
 };
 
-static const char g_MeleeAttackSounds[][] =
+static const char g_MeleeHitSounds[][] = 
 {
-	"weapons/samurai/tf_katana_01.wav",
-	"weapons/samurai/tf_katana_02.wav",
-	"weapons/samurai/tf_katana_03.wav",
-	"weapons/samurai/tf_katana_04.wav",
-	"weapons/samurai/tf_katana_05.wav",
-	"weapons/samurai/tf_katana_06.wav",
+	"mvm/melee_impacts/cbar_hitbod_robo01.wav",
+	"mvm/melee_impacts/cbar_hitbod_robo02.wav",
+	"mvm/melee_impacts/cbar_hitbod_robo03.wav",
 };
 
-#define INITIAL_DELAY 15.0
+#define INITIAL_DELAY 8.0
 #define CALLING_DELAY 20.0
 
 void OshimunoSpiritCallerOnMapStart()
@@ -109,7 +101,7 @@ methodmap OshimunoSpiritCaller < CClotBody
 		float gameTime = GetGameTime(npc.index);
 		
 		i_NpcWeight[npc.index] = 1;
-		npc.SetActivity("ACT_MP_RUN_MELEE");
+		npc.SetActivity("ACT_MP_RUN_MELEE_ALLCLASS");
 		KillFeed_SetKillIcon(npc.index, "freedom_staff");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
@@ -123,8 +115,7 @@ methodmap OshimunoSpiritCaller < CClotBody
 		
 		npc.m_flSpeed = 300.0;
 		npc.m_flSpiritCalling = gameTime + INITIAL_DELAY; // timer for when we switch states
-		npc.m_iState = 1;	//1 is normal behavior  || 2 is for hunting spirit orbs to respawn as enemies
-		npc.Anger = false;
+		npc.m_iState = 0;	//0 is normal behavior  || 1 is for hunting spirit orbs to respawn as enemies
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_tw_eagle/c_tw_eagle.mdl");
 
@@ -169,22 +160,22 @@ static void ClotThink(int iNPC)
 
 	if(npc.m_flSpiritCalling < gameTime)
 	{
-		npc.m_iState = 2;
+		npc.m_iState = 1;
 		npc.m_flSpiritCalling = gameTime + FAR_FUTURE;
 	}
-	if(npc.m_iState == 2)
+	if(npc.m_iState == 1)
 	{
 		for(int i; i < i_MaxcountNpcTotal; i++)
 		{
-			int entity = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
-			if(IsValidEntity(entity))
+			int orb = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
+			if(IsValidEntity(orb))
 			{
 				char npc_classname[60];
-				NPC_GetPluginById(i_NpcInternalId[entity], npc_classname, sizeof(npc_classname));
+				NPC_GetPluginById(i_NpcInternalId[orb], npc_classname, sizeof(npc_classname));
 
-				if(entity != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_spirit_orb") && IsEntityAlive(entity))) // look for a spirit orb alive
+				if(orb != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_spirit_orb") && IsEntityAlive(orb))) // look for a spirit orb alive
 				{
-					npc.m_iTargetAlly = entity; //set spirit orb as target
+					npc.m_iTargetAlly = orb; //set spirit orb as target
 				}
 			}
 		}
@@ -193,12 +184,28 @@ static void ClotThink(int iNPC)
 			float vecTarget[3]; WorldSpaceCenter(npc.m_iTargetAlly, vecTarget);
 			float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
 			float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);
-
+			
+			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+			float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+			float healing = float(ReturnEntityMaxHealth(npc.index) / 4);
 			if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED))
 			{
-				//touched the spirit orb
-				npc.m_iState = 1;
+				//touched the spirit orb we now spawn a random npc ||TODO: make it spawn more enemies
+				npc.m_iState = 0;
+				HealEntityGlobal(npc.index, npc.index, healing, 1.5, 0.0, HEAL_SELFHEAL);
 				npc.m_flSpiritCalling = gameTime + CALLING_DELAY;
+
+				SmiteNpcToDeath(npc.m_iTargetAlly);
+				b_DoGibThisNpc[npc.m_iTargetAlly] = false;
+				b_NoKillFeed[npc.m_iTargetAlly] = true;
+				b_NpcForcepowerupspawn[npc.m_iTargetAlly] = 0;
+				
+				int entity = NPC_CreateByName("npc_oshimuno_spiritualist", -1, pos, ang, GetTeam(npc.index));
+				if(entity > MaxClients)
+				{	
+					if(GetTeam(npc.index) != TFTeam_Red)
+						NpcAddedToZombiesLeftCurrently(entity, true);
+				}	
 			}
 			else 
 			{
@@ -212,7 +219,7 @@ static void ClotThink(int iNPC)
 			npc.m_flSpiritCalling = gameTime + CALLING_DELAY;
 		}
 	}
-	if(npc.m_iState == 1)
+	if(npc.m_iState == 0)
 	{	
 		npc.m_flSpeed = 300.0;
 		int target = npc.m_iTarget;
@@ -279,7 +286,7 @@ void OshimunoSpiritCallerSelfDefense(OshimunoSpiritCaller npc, float distance, f
 		{
 			npc.m_iTarget = target;
 
-			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
+			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE_ALLCLASS");
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;

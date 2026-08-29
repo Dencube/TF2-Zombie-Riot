@@ -140,7 +140,6 @@ static void ClotThink(int iNPC)
 				
 				if(GetTeam(npc.index) != TFTeam_Red)
 				NpcAddedToZombiesLeftCurrently(entity, true);
-				view_as<CClotBody>(entity).m_flSpeed = npc.m_flSpeed;
 			}
 			npc.m_flOrbCooldown = gameTime + ORB_SPAWN_COOLDOWN;
 		}

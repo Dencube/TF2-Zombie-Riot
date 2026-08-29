@@ -3,45 +3,45 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/demoman_paincrticialdeath01.mp3",
-	"vo/demoman_paincrticialdeath02.mp3",
-	"vo/demoman_paincrticialdeath03.mp3",
-	"vo/demoman_paincrticialdeath04.mp3",
-	"vo/demoman_paincrticialdeath05.mp3"
+	"vo/scout_paincrticialdeath01.mp3",
+	"vo/scout_paincrticialdeath02.mp3",
+	"vo/scout_paincrticialdeath03.mp3",
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/demoman_painsharp01.mp3",
-	"vo/demoman_painsharp02.mp3",
-	"vo/demoman_painsharp03.mp3",
-	"vo/demoman_painsharp04.mp3",
-	"vo/demoman_painsharp05.mp3",
-	"vo/demoman_painsharp06.mp3",
-	"vo/demoman_painsharp07.mp3"
+	"vo/scout_painsharp01.mp3",
+	"vo/scout_painsharp02.mp3",
+	"vo/scout_painsharp03.mp3",
+	"vo/scout_painsharp04.mp3",
+	"vo/scout_painsharp05.mp3",
+	"vo/scout_painsharp06.mp3",
+	"vo/scout_painsharp07.mp3",
+	"vo/scout_painsharp08.mp3",
 };
 
-static const char g_IdleAlertedSounds[][] = 
+static const char g_IdleAlertedSounds[][] =
 {
-	"vo/demoman_battlecry01.mp3",
-	"vo/demoman_battlecry02.mp3",
-	"vo/demoman_battlecry03.mp3",
-	"vo/demoman_battlecry04.mp3",
+	"vo/scout_battlecry01.mp3",
+	"vo/scout_battlecry03.mp3",
+	"vo/scout_battlecry04.mp3",
+	"vo/scout_battlecry05.mp3",
 };
 
-static char g_MeleeHitSounds[][] = 
+static const char g_MeleeHitSounds[][] =
 {
-	"mvm/melee_impacts/bottle_hit_robo01.wav",
-	"mvm/melee_impacts/bottle_hit_robo02.wav",
-	"mvm/melee_impacts/bottle_hit_robo03.wav"
+	"weapons/cbar_hit1.wav",
+	"weapons/cbar_hit2.wav"
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/shovel_swing.wav",
+	"weapons/pickaxe_swing1.wav",
+	"weapons/pickaxe_swing2.wav",
+	"weapons/pickaxe_swing3.wav"
 };
 
-void OshimunoDrunkardOnMapStart()
+void OshimunoSmokebombOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -49,23 +49,24 @@ void OshimunoDrunkardOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Drunkard");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_drunkard");
+	strcopy(data.Name, sizeof(data.Name), "Tarakeno Smokebomb");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_smokebomb");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Oshimuno;
+	data.Category = Type_Outlaws;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoDrunkard(vecPos, vecAng, team);
+	return OshimunoSmokebomb(vecPos, vecAng, team);
 }
 
-methodmap OshimunoDrunkard < CClotBody
+methodmap OshimunoSmokebomb < CClotBody
 {
+
 	public void PlayIdleSound()
 	{
 		if(this.m_flNextIdleSound > GetGameTime(this.index))
@@ -90,18 +91,14 @@ methodmap OshimunoDrunkard < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	property float m_flTauntLoop
+	
+	public OshimunoSmokebomb(float vecPos[3], float vecAng[3], int ally)
 	{
-		public get()							{ return fl_AbilityOrAttack[this.index][2]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][2] = TempValueForProperty; }
-	}
-	public OshimunoDrunkard(float vecPos[3], float vecAng[3], int ally)
-	{
-		OshimunoDrunkard npc = view_as<OshimunoDrunkard>(CClotBody(vecPos, vecAng, "models/player/demo.mdl", "1.0", "1000", ally));
+		OshimunoSmokebomb npc = view_as<OshimunoSmokebomb>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "bottle");
+		KillFeed_SetKillIcon(npc.index, "wrap_assassin");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -112,21 +109,20 @@ methodmap OshimunoDrunkard < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 300.0;
-		npc.m_flTauntLoop = 0.0;
-		npc.m_bisWalking = false;
+		npc.m_flSpeed = 290.0;
+		
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_xms_giftwrap/c_xms_giftwrap.mdl");
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_bottle/c_bottle.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_minja_vest/short2014_minja_vest.mdl");
+		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/demo/demo_beardpipe/demo_beardpipe.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/spy/skullmask/skullmask.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/demo/vampire_shades/vampire_shades.mdl");
-
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/demo/sum19_dynamite_abs/sum19_dynamite_abs.mdl");
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2015_dino_hoodie/hwn2015_dino_hoodie_scout.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(12);
+		SetVariantInt(3);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -136,7 +132,7 @@ methodmap OshimunoDrunkard < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoDrunkard npc = view_as<OshimunoDrunkard>(iNPC);
+	OshimunoSmokebomb npc = view_as<OshimunoSmokebomb>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -183,21 +179,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoDrunkardSelfDefense(npc, distance, vecTarget, gameTime); 
-	}
-	if(npc.m_flTauntLoop < gameTime) // loops the taunt
-	{
-		npc.AddActivityViaSequence("taunt_scotsmans_stagger");
-		npc.SetPlaybackRate(1.5);
-		npc.SetCycle(0.0);
-		npc.m_flTauntLoop = gameTime + 3.0;
-		npc.m_flSpeed = GetRandomFloat(260.0, 320.0);
+		OshimunoSmokebombSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoSmokebombSelfDefense(OshimunoSmokebomb npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -236,25 +224,10 @@ void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vec
 			npc.m_flNextMeleeAttack = gameTime + 0.75;
 		}
 	}
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 35.0) && npc.m_flNextRangedAttack < gameTime)
-	{	
-		float vPredictedPos[3]; PredictSubjectPositionForProjectiles(npc, npc.m_iTarget, 1000.0, _,vPredictedPos);
-		npc.FaceTowards(vecTarget, 20000.0);
-
-		npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
-		npc.PlayMeleeSound();
-		int projectile = npc.FireArrow(vPredictedPos, 80.0, 900.0, "models/weapons/c_models/c_bottle/c_bottle.mdl"); //thrown bottle is upside down but thats fine cuz they're drunk
-		int trail = Trail_Attach(projectile, ARROW_TRAIL, 80, 0.16, 15.0, 6.0, 1);
-		i_WandParticle[projectile] = EntIndexToEntRef(trail);
-		CreateTimer(6.0, Timer_RemoveEntity, EntIndexToEntRef(trail), TIMER_FLAG_NO_MAPCHANGE);
-		SetParent(projectile, trail);
-		npc.m_flNextRangedAttack = gameTime + 12.0;	
-	}
 }
 static void ClotDeath(int entity)
 {
-	OshimunoDrunkard npc = view_as<OshimunoDrunkard>(entity);
-
+	OshimunoSmokebomb npc = view_as<OshimunoSmokebomb>(entity);
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
 	
@@ -272,4 +245,25 @@ static void ClotDeath(int entity)
 	
 	if(IsValidEntity(npc.m_iWearable5))
 		RemoveEntity(npc.m_iWearable5);
+	
+	float flPosDeath[3];
+	WorldSpaceCenter(npc.index, flPosDeath);
+	ParticleEffectAt(flPosDeath, "grenade_smoke", 2.0);
+
+	for(int entitycount; entitycount<MAXENTITIES; entitycount++) //Check for npcs
+	{
+		if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount))
+		{
+			float pos1[3];
+			GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);
+			static float pos2[3];
+			GetEntPropVector(entitycount, Prop_Data, "m_vecAbsOrigin", pos2);
+			if(GetVectorDistance(pos1, pos2, true) < (500 * 500))
+			{
+				if(!Can_I_See_Ally(npc.index, entitycount))
+					continue;
+				ApplyStatusEffect(npc.index, entitycount, "Smoke Screen", 10.0);
+			}
+		}
+	}	
 }

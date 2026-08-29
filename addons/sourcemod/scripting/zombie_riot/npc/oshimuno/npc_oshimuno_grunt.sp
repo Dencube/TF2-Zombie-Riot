@@ -54,7 +54,7 @@ void OshimunoGruntOnMapStart()
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Tarakeno Grunt");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_grunt");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Icon, sizeof(data.Icon), "militia");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -192,8 +192,8 @@ static void ClotThink(int iNPC)
 		npc.StartPathing();
 		npc.m_bisWalking = true;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		float health = float(ReturnEntityMaxHealth(npc.index));
-		HealEntityGlobal(npc.index, npc.index, health, 1.0, 0.0, HEAL_SELFHEAL);
+		float healing = float(ReturnEntityMaxHealth(npc.index));
+		HealEntityGlobal(npc.index, npc.index, healing, 1.0, 0.0, HEAL_SELFHEAL);
 		fl_TotalArmor[npc.index] = 1.0;
 		npc.m_flDoingAnimation = gameTime + FAR_FUTURE; //so this doesnt trigger again
 	}

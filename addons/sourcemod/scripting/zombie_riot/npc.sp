@@ -1264,7 +1264,6 @@ void NPC_ConfigSetup()
 
 	ConeSwingTest_OnMapStart_NPC(); //TODO: test npc remove later
 
-	OshimunoSmokeCarrierOnMapStart();
 	OshimunoHarukichiOnMapStart();
 	OshimunoBouncerOnMapStart();
 	OshimunoBoomboxOnMapStart();
@@ -1275,9 +1274,7 @@ void NPC_ConfigSetup()
 	OshimunoTreeHealingOnMapStart();
 	OshimunoFarmerOnMapStart();
 	OshimunoDancerOnMapStart();
-	OshimunoNinjaSpyOnMapStart();
 	OshimunoSpiritPyroOnMapStart();
-	OshimunoDemoknightOnMapStart();
 	OshimunoDrunkardOnMapStart();
 	OshimunoChefOnMapStart();
 	OshimunoSpiritualistOnMapStart();
@@ -1287,12 +1284,20 @@ void NPC_ConfigSetup()
 	OshimunoMobsterOnMapStart();
 	OshimunoMobsterEliteOnMapStart();
 	OshimunoAgentOnMapStart();
+	OshimunoAgentEliteOnMapStart();
 	OshimunoAvengerOnMapStart();
+	OshimunoForerunnerOnMapStart();
+	OshimunoSmokebombOnMapStart();
 	OshimunoBartenderOnMapStart();
+	OshimunoNinjaOnMapStart();
 	OshimunoTrashManOnMapStart();
 	OshimunoSpiritKamikazeOnMapStart();
 	OshimunoSpiritCallerOnMapStart();
 	OshimunoKaijuOnMapStart();
+	OshimunoKaijuJuvenileOnMapStart();
+	OshimunoTricksterOnMapStart();
+	OshimunoGamblerOnMapStart();
+	OshimunoWrestlerOnMapStart();
 }
 
 void NPC_MapEnd()
@@ -2815,7 +2820,6 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 
 #include "npc/oshimuno/npc_cone_swing_standalone.sp" //TODO:REMOVE LATER
 #include "npc/oshimuno/npc_harukichi.sp"
-#include "npc/oshimuno/npc_oshimuno_smoke_carrier.sp"
 #include "npc/oshimuno/npc_oshimuno_bouncer.sp"
 #include "npc/oshimuno/npc_oshimuno_boombox.sp"
 #include "npc/oshimuno/npc_oshimuno_dj.sp"
@@ -2825,7 +2829,7 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_ninja.sp"
 #include "npc/oshimuno/npc_oshimuno_dancer.sp"
 #include "npc/oshimuno/npc_oshimuno_spirit_pyro.sp"
-#include "npc/oshimuno/npc_oshimuno_demoknight.sp"
+#include "npc/oshimuno/npc_oshimuno_forerunner.sp"
 #include "npc/oshimuno/npc_oshimuno_chef.sp"
 #include "npc/oshimuno/npc_oshimuno_drunkard.sp"
 #include "npc/oshimuno/npc_oshimuno_spiritualist.sp"
@@ -2836,6 +2840,8 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_mobster.sp"
 #include "npc/oshimuno/npc_oshimuno_mobster_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_agent.sp"
+#include "npc/oshimuno/npc_oshimuno_agent_elite.sp"
+#include "npc/oshimuno/npc_oshimuno_smokebomb.sp"
 #include "npc/oshimuno/npc_oshimuno_trash_man.sp"
 #include "npc/oshimuno/npc_oshimuno_spirit_kamikaze.sp"
 #include "npc/oshimuno/npc_oshimuno_spiritcaller.sp"
@@ -2843,3 +2849,7 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_tree_healing.sp"
 #include "npc/oshimuno/npc_oshimuno_spirit_tree.sp"
 #include "npc/oshimuno/npc_oshimuno_kaiju.sp"
+#include "npc/oshimuno/npc_oshimuno_kaiju_juvenile.sp"
+#include "npc/oshimuno/npc_oshimuno_trickster.sp"
+#include "npc/oshimuno/npc_oshimuno_gambler.sp"
+#include "npc/oshimuno/npc_oshimuno_wrestler.sp"

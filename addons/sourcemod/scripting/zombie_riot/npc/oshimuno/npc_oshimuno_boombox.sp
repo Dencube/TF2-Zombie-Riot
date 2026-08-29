@@ -29,7 +29,7 @@ void OshimunoBoomboxOnMapStart()
 	PrecacheModel("models/buildables/dispenser_light.mdl");
 	PrecacheSound(g_ExplosionSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Boombox");
+	strcopy(data.Name, sizeof(data.Name), "Shibuya Boombox");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_boombox");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
@@ -66,9 +66,12 @@ methodmap OshimunoBoombox < CClotBody
 	public OshimunoBoombox(float vecPos[3], float vecAng[3], int ally)
 	{	
 		OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, vecAng, "models/buildables/dispenser_light.mdl", "1.35", "1000", ally));
+		
 		// OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, {-7.63202, 345.066, -44.5095}, "models/player/items/scout/boombox.mdl", "6.0", "15000", ally));
 		// boombox model use if the offset can be somehow fixed
-		i_NpcWeight[npc.index] = 1;
+
+		float gameTime = GetGameTime(npc.index);
+		i_NpcWeight[npc.index] = 2;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
 		KillFeed_SetKillIcon(npc.index, "pickaxe");
 
@@ -82,7 +85,10 @@ methodmap OshimunoBoombox < CClotBody
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 0.0;
+		SetMoraleDoAlmina(npc.index, 100.0);
+		npc.m_flNextMeleeAttack = gameTime + 4.0;
 		npc.m_bDissapearOnDeath = true;
+		b_ThisEntityIgnoredByOtherNpcsAggro[npc.index] = true; // this makes djs unable to grab the boombox || TODO: make it so only rebels ignore the boombox
 		npc.StopPathing();
 		return npc;
 	}
@@ -111,41 +117,15 @@ static void ClotThink(int iNPC)
 	
 	npc.m_flNextThinkTime = gameTime + 0.1;
 
-	int target = npc.m_iTarget;
-	if(i_Target[npc.index] != -1 && !IsValidEnemy(npc.index, target))
-		i_Target[npc.index] = -1;
-	
-	if(i_Target[npc.index] == -1 || npc.m_flGetClosestTargetTime < gameTime)
+	float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
+	if(npc.m_flNextMeleeAttack < gameTime)
 	{
-		target = GetClosestTarget(npc.index);
-		npc.m_iTarget = target;
-		npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
-	}
-	
-	if(target > 0)
-	{
-		float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
-		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
-		float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);	
-		
-		if(distance < npc.GetLeadRadius())
-		{
-			float vPredictedPos[3]; PredictSubjectPosition(npc, target,_,_, vPredictedPos);
-			npc.SetGoalVector(vPredictedPos);
-		}
-		else 
-		{
-			npc.SetGoalEntity(target);
-		}
+		npc.m_flNextMeleeAttack = gameTime + 4.0;
 
-		if(npc.m_flNextMeleeAttack < gameTime)
-		{
-			npc.m_flNextMeleeAttack = gameTime + 5.0;
-
-			spawnRing_Vectors(VecSelfNpc, BOOMBOX_RANGE, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 50, 225, 225, 175, 1, 0.5, 6.0, 0.1, 1, 640.0);
-			Explode_Logic_Custom(150.0, -1, npc.index, -1, VecSelfNpc, BOOMBOX_RANGE, _, 0.75, false, _, false, _, _);
-			npc.PlayExplosionSound();
-		}
+		spawnRing_Vectors(VecSelfNpc, BOOMBOX_RANGE, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 50, 225, 225, 175, 1, 0.5, 6.0, 0.1, 1, 640.0);
+		Explode_Logic_Custom(150.0, -1, npc.index, -1, VecSelfNpc, BOOMBOX_RANGE, _, 0.75, false, _, false);
+		AlminaMoraleGivingDo(npc.index, GetGameTime(npc.index), false, BOOMBOX_RANGE);
+		npc.PlayExplosionSound();
 	}
 	
 	float VecSelfNpcabs[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", VecSelfNpcabs);
@@ -168,6 +148,7 @@ static Action BoomboxOnTakeDamage(int victim, int &attacker, int &inflictor, flo
 	damage = 0.0;
 	return Plugin_Changed;
 }
+
 static void ClotDeath(int entity)
 {
 	OshimunoBoombox npc = view_as<OshimunoBoombox>(entity);

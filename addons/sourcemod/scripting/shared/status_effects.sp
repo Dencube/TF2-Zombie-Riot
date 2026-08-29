@@ -12167,6 +12167,7 @@ float SmokeScreen_Dodge(int attacker, int victim, StatusEffect Apply_MasterStatu
 	EmitSoundToAll(MissSound[Rand], victim, _, 80);
 	return 0.0;
 }
+ 
 int SpiritFireIndex;
 void StatusEffects_SpiritFire() //TODO: make spirit fire do damage and its extra effects
 {
@@ -12180,6 +12181,8 @@ void StatusEffects_SpiritFire() //TODO: make spirit fire do damage and its extra
 	data.MovementspeedModif			= -1.0;
 	data.Positive 					= false;
 	data.ShouldScaleWithPlayerCount = false;
+	data.OnBuffEndOrDeleted			= SpiritFireEnd;
+	data.TimerRepeatCall_Func 		= SpiritFireThink;
 	data.Slot						= 0; //0 means ignored
 	data.SlotPriority				= 0; //if its higher, then the lower version is entirely ignored.
 	data.HudDisplay_Func 			= Func_SpiritFireShow;
@@ -12191,6 +12194,7 @@ stock void StatusEffects_SpiritFireAddStuff(int victim, int value, float time)
 {
 	StatusEffects_SpiritFireAddStuff_Internal(victim, value, time);
 }
+
 stock int StatusEffects_SpiritFireReturnCount(int victim)
 {
 	if(!E_AL_StatusEffects[victim])
@@ -12208,8 +12212,8 @@ stock int StatusEffects_SpiritFireReturnCount(int victim)
 		}
 	}
 	return 0;
-
 }
+
 stock void StatusEffects_SpiritFireAddStuff_Internal(int victim, int value, float time)
 {
 	ApplyStatusEffect(victim, victim, "Spirit Fire", 0.5);
@@ -12243,4 +12247,51 @@ stock void StatusEffects_SpiritFireAddStuff_Internal(int victim, int value, floa
 void Func_SpiritFireShow(int attacker, int victim, StatusEffect Apply_MasterStatusEffect, E_StatusEffect Apply_StatusEffect, int SizeOfChar, char[] HudToDisplay)
 {
 	Format(HudToDisplay, SizeOfChar, "⯚(%i/%.1f)", RoundFloat(Apply_StatusEffect.DataForUse) , Apply_StatusEffect.TimeUntillOver - GetGameTime());
+}
+
+static void SpiritFireEnd(int attacker, int victim, StatusEffect Apply_MasterStatusEffect, E_StatusEffect Apply_StatusEffect)
+{	
+	float pos[3]; GetEntPropVector(victim, Prop_Data, "m_vecAbsOrigin", pos);
+	float ang[3]; GetEntPropVector(victim, Prop_Data, "m_angRotation", ang);
+	int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", victim, pos, ang, GetTeam(attacker));
+	if(0 < victim <= MaxClients)
+	{
+		if(!IsEntityAlive(victim))
+		{
+			for(int i=0 ; i < 3 ; i++) //summon 3 orbs
+			{
+				if(orb > MaxClients)
+				{
+					if(GetTeam(orb) != TFTeam_Red)
+						NpcAddedToZombiesLeftCurrently(orb, true);
+				}
+			}
+		}
+		return;
+	}
+	if(victim > MaxClients)
+	{
+		if(!IsEntityAlive(victim))
+		{
+			if(orb > MaxClients)
+			{
+				if(GetTeam(orb) != TFTeam_Red)
+					NpcAddedToZombiesLeftCurrently(orb, true);
+			}
+			return;
+		}
+	}
+}
+
+static void SpiritFireThink(int victim, StatusEffect Apply_MasterStatusEffect, E_StatusEffect Apply_StatusEffect)
+{
+	if(victim > MaxClients || !IsClientInGame(victim))
+		return;
+	
+	if(!IsEntityAlive(victim))
+	{
+		int ArrayPosition = E_AL_StatusEffects[victim].FindValue(Apply_StatusEffect.BuffIndex, E_StatusEffect::BuffIndex);
+		Apply_StatusEffect.TimeUntillOver = 0.0;
+		E_AL_StatusEffects[victim].SetArray(ArrayPosition, Apply_StatusEffect);
+	}
 }

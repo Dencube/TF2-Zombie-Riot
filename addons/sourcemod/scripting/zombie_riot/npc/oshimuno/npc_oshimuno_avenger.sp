@@ -56,6 +56,21 @@ static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 
 methodmap OshimunoAvenger < CClotBody
 {
+	property float m_flTimerCooldown
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
+	}
+	property int m_iAlliesDead
+	{
+		public get()							{ return i_OverlordComboAttack[this.index]; }
+		public set(int TempValueForProperty) 	{ i_OverlordComboAttack[this.index] = TempValueForProperty; }
+	}
+	property int m_iAlliesDeadMax
+	{
+		public get()							{ return i_TimesSummoned[this.index]; }
+		public set(int TempValueForProperty) 	{ i_TimesSummoned[this.index] = TempValueForProperty; }
+	}
 	public void PlayIdleSound()
 	{
 		if(this.m_flNextIdleSound > GetGameTime(this.index))
@@ -76,20 +91,11 @@ methodmap OshimunoAvenger < CClotBody
 	{
 		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
-	property float m_flStackCooldown
-	{
-		public get()							{ return fl_AbilityOrAttack[this.index][9]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][9] = TempValueForProperty; }
-	}
-	property int m_iStack
-	{
-		public get()							{ return i_TimesSummoned[this.index]; }
-		public set(int TempValueForProperty) 	{ i_TimesSummoned[this.index] = TempValueForProperty; }
-	}
 	public OshimunoAvenger(float vecPos[3], float vecAng[3], int ally)
 	{
 		OshimunoAvenger npc = view_as<OshimunoAvenger>(CClotBody(vecPos, vecAng, "models/player/heavy.mdl", "1.0", "1000", ally));
-		
+		float gameTime = GetGameTime(npc.index);
+
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_SECONDARY");
 		KillFeed_SetKillIcon(npc.index, "family_business");
@@ -102,8 +108,10 @@ methodmap OshimunoAvenger < CClotBody
 		func_NPCDeath[npc.index] = ClotDeath;
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
+		func_NPCDeathForward[npc.index] = OshimunoAvengerAllyDeath;
 		
-		npc.m_flSpeed = 300.0;
+		npc.m_flSpeed = 250.0;
+		npc.m_flTimerCooldown = gameTime + 15.0;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_russian_riot/c_russian_riot.mdl");
 
@@ -147,6 +155,34 @@ static void ClotThink(int iNPC)
 		return;
 	
 	npc.m_flNextThinkTime = gameTime + 0.1;
+
+	if(npc.m_flTimerCooldown < gameTime && npc.m_iAlliesDead > 0) // lower anger as time goes on
+	{
+		if(npc.m_iAlliesDead >= 70) // above 70
+		{
+			npc.m_iAlliesDead -= 5;
+			float flPos[3], flAng[3];
+			npc.GetAttachment("eyes", flPos, flAng);
+			if(!IsValidEntity(npc.m_iWearable9))
+				npc.m_iWearable9 = ParticleEffectAt_Parent(flPos, "unusual_devilish_headmist_purple", npc.index, "eyes", {0.0,0.0,0.0}); // using wearable9 for unusuals
+		}
+		else if (npc.m_iAlliesDead >= 50) //between 70 and 50
+		{
+			npc.m_iAlliesDead -= 3;
+			if(IsValidEntity(npc.m_iWearable9))
+				CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable9, TIMER_FLAG_NO_MAPCHANGE);
+		}
+		else if(npc.m_iAlliesDead >= 0) //betweeen 50 and 0
+		{
+			npc.m_iAlliesDead -= 2;
+		}
+
+		if(npc.m_iAlliesDead < 0) // just incase it somehow goes negative
+		{
+			npc.m_iAlliesDead = 0;
+		}
+		npc.m_flTimerCooldown = gameTime + 5.0;
+	}
 
 	int target = npc.m_iTarget;
 	if(i_Target[npc.index] != -1 && !IsValidEnemy(npc.index, target))
@@ -213,6 +249,8 @@ static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int t
 				npc.AddGesture("ACT_MP_ATTACK_STAND_SECONDARY");
 				npc.m_iTarget = Enemy_I_See;
 				float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
+				float damagebonus;
+				damagebonus = 1.0 + float(npc.m_iAlliesDead / 100);
 				npc.FaceTowards(vecTarget, 20000.0);
 				Handle swingTrace;
 				if(npc.DoSwingTrace(swingTrace, target, { 9999.0, 9999.0, 9999.0 }))
@@ -228,7 +266,7 @@ static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int t
 
 					if(IsValidEnemy(npc.index, target))
 					{
-						float damage = 50.0;
+						float damage = 50.0 * damagebonus;
 						npc.PlayRangedSound();
 						SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_BULLET, -1, _, vecHit);
 					}
@@ -285,35 +323,33 @@ static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int t
 	}
 	return 0;
 }
-public Action OshimunoAvengerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+
+public void OshimunoAvengerAllyDeath(int self, int ally)
 {
-	OshimunoAvenger npc = view_as<OshimunoAvenger>(victim);
-	
-	float gameTime = GetGameTime(npc.index);
-		
-	if(attacker <= 0)
-		return Plugin_Continue;
-		
-	if (npc.m_flHeadshotCooldown < gameTime)
-	{
-		npc.m_blPlayHurtAnimation = true;
-	}
-	if((i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED))
-		return Plugin_Continue;
-	if(npc.m_flArmorCount > 0.0)
-	{
-		ApplyStatusEffect(npc.index, attacker, "Freeze", 2.0);
+	OshimunoAvenger npc = view_as<OshimunoAvenger>(self);
 
-		if(IsValidEntity(weapon))
+	if(GetTeam(ally) != GetTeam(self))
+	{
+		return;
+	}
+	float AllyPos[3];
+	GetEntPropVector(ally, Prop_Data, "m_vecAbsOrigin", AllyPos);
+	float SelfPos[3];
+	GetEntPropVector(self, Prop_Data, "m_vecAbsOrigin", SelfPos);
+	float flDistanceToTarget = GetVectorDistance(SelfPos, AllyPos, true);
+	if(flDistanceToTarget < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 24.0))
+	{
+		npc.m_iAlliesDead += 5;
+		if(npc.m_iAlliesDead > 100)
 		{
-			char buffer[36];
-			if(GetEntityClassname(weapon, buffer, sizeof(buffer)) && !StrContains(buffer, "tf_weap"))
-				ApplyTempAttrib(weapon, 6, 1.1, 2.0);
+			npc.m_iAlliesDead = 100;
 		}
+		npc.m_flSpeed = 250.0 + float(npc.m_iAlliesDead / 2);
+		fl_TotalArmor[npc.index] = 1.0 - float(npc.m_iAlliesDead / 250);
+		CPrintToChatAll("DEBUG: ALLY DED %i ", npc.m_iAlliesDead);
 	}
-
-	return Plugin_Changed;
 }
+
 static void ClotDeath(int entity) 
 {
 	OshimunoAvenger npc = view_as<OshimunoAvenger>(entity);

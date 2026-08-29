@@ -59,7 +59,7 @@ void OshimunoDancerOnMapStart()
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	PrecacheSoundArray(MissSound);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Oshimuno Dancer");
+	strcopy(data.Name, sizeof(data.Name), "Shibuya Dancer");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_dancer");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;

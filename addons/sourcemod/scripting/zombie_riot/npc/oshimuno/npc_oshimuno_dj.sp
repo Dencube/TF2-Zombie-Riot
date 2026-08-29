@@ -46,9 +46,9 @@ void OshimunoDJOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Oshimuno DJ");
+	strcopy(data.Name, sizeof(data.Name), "Shibuya DJ");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_dj");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Icon, sizeof(data.Icon), "engineer");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Outlaws;
@@ -115,7 +115,7 @@ methodmap OshimunoDJ < CClotBody
 		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/engineer/hwn2025_technicians_tunic/hwn2025_technicians_tunic.mdl");
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(3);
+		SetVariantInt(1);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -130,10 +130,9 @@ static void ClotThink(int iNPC)
 	if(npc.m_iOverlordComboAttack == 5 && IsValidAlly(npc.index, npc.m_iTargetAlly))
 	{
 		fl_TotalArmor[iNPC] = 0.5;
-		//stun target
 		float Injured[3];
 		GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", Injured); 
-		Injured[2] += 30.0;
+		Injured[2] += 70.0;
 		b_NoGravity[npc.m_iTargetAlly] = true;
 		b_DoNotUnStuck[npc.m_iTargetAlly] = true;
 		ApplyStatusEffect(npc.m_iTargetAlly, npc.m_iTargetAlly, "Solid Stance", 999999.0);	
@@ -232,20 +231,6 @@ static void ClotThink(int iNPC)
 			{
 				float vPredictedPos[3]; PredictSubjectPosition(npc, target,_,_, vPredictedPos); 
 				npc.SetGoalVector(vPredictedPos);
-
-				if(npc.m_iOverlordComboAttack == 5) //throw the boombox we're holding
-				{
-					if(IsValidAlly(npc.index, npc.m_iTargetAlly))
-					{
-						npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE_SECONDARY",_,_,_,0.75);
-						npc.FaceTowards(vPredictedPos, 20000.0);
-						PluginBot_Jump(npc.m_iTargetAlly, vecTarget);
-						b_NoGravity[npc.m_iTargetAlly] = false;
-						b_DoNotUnStuck[npc.m_iTargetAlly] = false;
-						RemoveSpecificBuff(npc.m_iTargetAlly, "Solid Stance");
-						npc.m_iTargetAlly = 0;
-					}
-				}
 			}
 			else 
 			{

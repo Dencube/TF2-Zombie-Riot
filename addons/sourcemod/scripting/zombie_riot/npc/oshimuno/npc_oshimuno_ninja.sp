@@ -48,7 +48,7 @@ static const char g_RangedAttackSounds[][] =
 #define INITIAL_THROW 0.5
 #define KUNAI_THROW_COOLDOWN 0.3
 
-void OshimunoNinjaSpyOnMapStart()
+void OshimunoNinjaOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -56,7 +56,7 @@ void OshimunoNinjaSpyOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Ninja Spy");
+	strcopy(data.Name, sizeof(data.Name), "Tarakeno Ninja");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_ninja");
 	strcopy(data.Icon, sizeof(data.Icon), "spy");
 	data.IconCustom = true;
@@ -68,10 +68,10 @@ void OshimunoNinjaSpyOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return NinjaSpy(vecPos, vecAng, team);
+	return Ninja(vecPos, vecAng, team);
 }
 
-methodmap NinjaSpy < CClotBody
+methodmap Ninja < CClotBody
 {
 	property float m_flJumpKunaiThrow
 	{
@@ -107,9 +107,9 @@ methodmap NinjaSpy < CClotBody
 		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
 	
-	public NinjaSpy(float vecPos[3], float vecAng[3], int ally)
+	public Ninja(float vecPos[3], float vecAng[3], int ally)
 	{
-		NinjaSpy npc = view_as<NinjaSpy>(CClotBody(vecPos, vecAng, "models/player/spy.mdl", "1.0", "1000", ally));
+		Ninja npc = view_as<Ninja>(CClotBody(vecPos, vecAng, "models/player/spy.mdl", "1.0", "1000", ally));
 		float gameTime = GetGameTime(npc.index);
 		
 		i_NpcWeight[npc.index] = 1;
@@ -150,7 +150,7 @@ methodmap NinjaSpy < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	NinjaSpy npc = view_as<NinjaSpy>(iNPC);
+	Ninja npc = view_as<Ninja>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -203,7 +203,7 @@ static void ClotThink(int iNPC)
 	npc.PlayIdleSound();
 }
 
-void OshimunoNinjaSelfDefense(NinjaSpy npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoNinjaSelfDefense(Ninja npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -263,7 +263,7 @@ void OshimunoNinjaSelfDefense(NinjaSpy npc, float distance, float vecTarget[3], 
 }
 static void ClotDeath(int entity)
 {
-	NinjaSpy npc = view_as<NinjaSpy>(entity);
+	Ninja npc = view_as<Ninja>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

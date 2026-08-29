@@ -88,23 +88,23 @@ methodmap OshimunoKaiju < CClotBody
 	
 	public OshimunoKaiju(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoKaiju npc = view_as<OshimunoKaiju>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "2.1", "15000", ally));
+		OshimunoKaiju npc = view_as<OshimunoKaiju>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "2.1", "100000",  ally, _, true));
 		
-		i_NpcWeight[npc.index] = 10;
+		i_NpcWeight[npc.index] = 999;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
 		KillFeed_SetKillIcon(npc.index, "fists");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
-		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
-		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
+		npc.m_iStepNoiseType = STEPSOUND_GIANT;
+		npc.m_iNpcStepVariation = STEPTYPE_PANZER;
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
 		func_NPCOnTakeDamage[npc.index] = KaijuOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 180.0;
-		npc.m_iOverlordComboAttack = 200; //for flat damage resistance
+		npc.m_flSpeed = 140.0;
+		fl_TotalArmor[npc.index] = 0.4;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_crossing_guard/c_crossing_guard.mdl");
 
@@ -120,7 +120,7 @@ methodmap OshimunoKaiju < CClotBody
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(3);
+		SetVariantInt(7);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -228,10 +228,9 @@ static Action KaijuOnTakeDamage(int victim, int &attacker, int &inflictor, float
 	//TODO: make the kaiju take less damage from weapons and increase how much it takes from debuffs OR even make it take increasingly more damage from every debuff
 	if((i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED))
 	{
-		damage *= 2.0;
+		damage *= 1.2;
 		return Plugin_Changed;
 	}
-	damage *= 0.6;
 	return Plugin_Changed;
 }
 static void ClotDeath(int entity)

@@ -43,7 +43,7 @@ void OshimunoMobsterEliteOnMapStart()
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Tarakeno Elite Mobster");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_mobster_elite");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Icon, sizeof(data.Icon), "soldier");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -181,6 +181,10 @@ void OshimunoMobsterEliteSelfDefense(OshimunoMobsterElite npc, float distance, f
 	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 11.0 && npc.m_flNextRangedAttack < gameTime)
 	{
 		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
+		float vecTarget2[3]; WorldSpaceCenter(target, vecTarget2);
+		float vecTarget3[3]; WorldSpaceCenter(target, vecTarget3);
+		vecTarget2[1] += 80.0;
+		vecTarget3[1] -= 80.0;
 		if(IsValidEnemy(npc.index, target, false, true))
 		{
 			npc.m_iTarget = target;
@@ -190,8 +194,8 @@ void OshimunoMobsterEliteSelfDefense(OshimunoMobsterElite npc, float distance, f
 			npc.PlayRangedSound();
 			
 			npc.FireRocket(vecTarget, 60.0, 800.0);
-			npc.FireRocket(vecTarget, 60.0, 700.0);
-			npc.FireRocket(vecTarget, 60.0, 600.0);
+			npc.FireRocket(vecTarget2, 60.0, 800.0);
+			npc.FireRocket(vecTarget3, 60.0, 800.0);
 
 			npc.m_flNextRangedAttack = gameTime + 1.2;
 		}

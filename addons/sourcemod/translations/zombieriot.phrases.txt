@@ -6121,4 +6121,8 @@
 		"en"		"Ammo box here!"
 		"ko"		"탄약 상자는 여기 있습니다!"
 	}
+	"Oshimuno Raid Desc"
+	{
+		"en" 	"Lore order: (13) Following the finalization of the Mercenary Base in Construction. A mysterious client asks us with help in a foreign land: Oshimuno. The locals don't seem to take kindly to our presence."
+	}
 }

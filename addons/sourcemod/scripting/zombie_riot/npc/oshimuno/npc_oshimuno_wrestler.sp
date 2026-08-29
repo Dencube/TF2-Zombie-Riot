@@ -3,45 +3,41 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/scout_paincrticialdeath01.mp3",
-	"vo/scout_paincrticialdeath02.mp3",
-	"vo/scout_paincrticialdeath03.mp3",
-};
-
-static const char g_HurtSounds[][] =
-{
-	"vo/scout_painsharp01.mp3",
-	"vo/scout_painsharp02.mp3",
-	"vo/scout_painsharp03.mp3",
-	"vo/scout_painsharp04.mp3",
-	"vo/scout_painsharp05.mp3",
-	"vo/scout_painsharp06.mp3",
-	"vo/scout_painsharp07.mp3",
-	"vo/scout_painsharp08.mp3",
+	"vo/medic_paincrticialdeath01.mp3",
+	"vo/medic_paincrticialdeath02.mp3",
+	"vo/medic_paincrticialdeath03.mp3"
 };
 
 static const char g_IdleAlertedSounds[][] =
 {
-	"vo/scout_battlecry01.mp3",
-	"vo/scout_battlecry03.mp3",
-	"vo/scout_battlecry04.mp3",
-	"vo/scout_battlecry05.mp3",
+	"vo/medic_battlecry01.mp3",
+	"vo/medic_battlecry02.mp3",
+	"vo/medic_battlecry03.mp3",
+	"vo/medic_battlecry04.mp3",
+};
+
+static const char g_HurtSounds[][] =
+{
+	"vo/medic_painsharp01.mp3",
+	"vo/medic_painsharp02.mp3",
+	"vo/medic_painsharp03.mp3",
+	"vo/medic_painsharp04.mp3"
 };
 
 static const char g_MeleeHitSounds[][] =
 {
-	"weapons/cbar_hit1.wav",
-	"weapons/cbar_hit2.wav"
+	"weapons/fist_hit_world1.wav",
+	"weapons/fist_hit_world2.wav",
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/pickaxe_swing1.wav",
-	"weapons/pickaxe_swing2.wav",
-	"weapons/pickaxe_swing3.wav"
+	"weapons/boxing_gloves_swing1.wav",
+	"weapons/boxing_gloves_swing2.wav",
+	"weapons/boxing_gloves_swing4.wav"
 };
 
-void OshimunoSmokeCarrierOnMapStart()
+void OshimunoWrestlerOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -49,24 +45,23 @@ void OshimunoSmokeCarrierOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Smoke Carrier");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_smoke_carrier");
+	strcopy(data.Name, sizeof(data.Name), "Wrestler");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_wrestler");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Outlaws;
+	data.Category = Type_Dancer;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
 
-static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
+static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team, const char[] data)
 {
-	return OshimunoSmokeCarrier(vecPos, vecAng, team);
+	return OshimunoWrestler(vecPos, vecAng, team, data);
 }
 
-methodmap OshimunoSmokeCarrier < CClotBody
+methodmap OshimunoWrestler < CClotBody
 {
-
 	public void PlayIdleSound()
 	{
 		if(this.m_flNextIdleSound > GetGameTime(this.index))
@@ -92,13 +87,13 @@ methodmap OshimunoSmokeCarrier < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public OshimunoSmokeCarrier(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoWrestler(float vecPos[3], float vecAng[3], int ally, const char[] data)
 	{
-		OshimunoSmokeCarrier npc = view_as<OshimunoSmokeCarrier>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "1000", ally));
+		OshimunoWrestler npc = view_as<OshimunoWrestler>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.35", "5000 ", ally));
 		
-		i_NpcWeight[npc.index] = 1;
+		i_NpcWeight[npc.index] = 3;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "wrap_assassin");
+		KillFeed_SetKillIcon(npc.index, "hot_hand");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -106,24 +101,30 @@ methodmap OshimunoSmokeCarrier < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = WrestlerOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 290.0;
-		
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_xms_giftwrap/c_xms_giftwrap.mdl");
+		npc.m_flSpeed = 300.0;
+		 	
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/player/items/medic/hwn2016_burly_beast/hwn2016_burly_beast.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_minja_vest/short2014_minja_vest.mdl");
-		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/all_class/jul13_macho_mann_glasses/jul13_macho_mann_glasses_medic.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/spy/skullmask/skullmask.mdl");
-
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2015_dino_hoodie/hwn2015_dino_hoodie_scout.mdl");
-		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/jogon/jogon_medic.mdl");
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(3);
+		SetVariantInt(1);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
+
+		if(data[0])
+		{
+			npc.m_iOverlordComboAttack = StringToInt(data);
+		}
+		else
+		{
+			npc.m_iOverlordComboAttack = 50;
+		}
 
 		npc.StartPathing();
 		return npc;
@@ -132,7 +133,7 @@ methodmap OshimunoSmokeCarrier < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoSmokeCarrier npc = view_as<OshimunoSmokeCarrier>(iNPC);
+	OshimunoWrestler npc = view_as<OshimunoWrestler>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -179,20 +180,20 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoSmokeCarrierSelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoWrestlerSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-
+	
 	npc.PlayIdleSound();
 }
 
-void OshimunoSmokeCarrierSelfDefense(OshimunoSmokeCarrier npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoWrestlerSelfDefense(OshimunoWrestler npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
 		if(npc.m_flAttackHappens < gameTime)
 		{
 			npc.m_flAttackHappens = 0.0;
-			
+
 			Handle swingTrace;
 			npc.FaceTowards(vecTarget, 15000.0);
 			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
@@ -200,8 +201,7 @@ void OshimunoSmokeCarrierSelfDefense(OshimunoSmokeCarrier npc, float distance, f
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
-					
+					float damage = 100.0;
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
@@ -217,17 +217,43 @@ void OshimunoSmokeCarrierSelfDefense(OshimunoSmokeCarrier npc, float distance, f
 		{
 			npc.m_iTarget = target;
 
-			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
+			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE_ALLCLASS",_,_,_, 0.85);
 			npc.PlayMeleeSound();
-			
+
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_flNextMeleeAttack = gameTime + 1.5;
 		}
 	}
 }
+
+static Action WrestlerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{	
+	OshimunoWrestler npc = view_as<OshimunoWrestler>(victim);
+	
+	if(attacker <= 0)
+		return Plugin_Continue;
+
+	if((i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED))
+	{
+		damage *= 0.33;
+		return Plugin_Changed;
+	}
+
+	if(npc.m_iOverlordComboAttack)
+	{
+		damage -= float(npc.m_iOverlordComboAttack);
+		if(damage < 1.0)
+		{
+			damage = 1.0;
+		}
+	}
+	return Plugin_Changed;
+}
+
 static void ClotDeath(int entity)
 {
-	OshimunoSmokeCarrier npc = view_as<OshimunoSmokeCarrier>(entity);
+	OshimunoWrestler npc = view_as<OshimunoWrestler>(entity);
+
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
 	
@@ -243,27 +269,6 @@ static void ClotDeath(int entity)
 	if(IsValidEntity(npc.m_iWearable4))
 		RemoveEntity(npc.m_iWearable4);
 	
-	if(IsValidEntity(npc.m_iWearable5))
-		RemoveEntity(npc.m_iWearable5);
-	
-	float flPosDeath[3];
-	WorldSpaceCenter(npc.index, flPosDeath);
-	ParticleEffectAt(flPosDeath, "ping_circle", 1.0);
-
-	for(int entitycount; entitycount<MAXENTITIES; entitycount++) //Check for npcs
-	{
-		if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount))
-		{
-			float pos1[3];
-			GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);
-			static float pos2[3];
-			GetEntPropVector(entitycount, Prop_Data, "m_vecAbsOrigin", pos2);
-			if(GetVectorDistance(pos1, pos2, true) < (500 * 500))
-			{
-				if(!Can_I_See_Ally(npc.index, entitycount))
-					continue;
-				ApplyStatusEffect(npc.index, entitycount, "Smoke Screen", 10.0);
-			}
-		}
-	}	
+	if(IsValidEntity(npc.m_iWearable9))
+		RemoveEntity(npc.m_iWearable9);
 }

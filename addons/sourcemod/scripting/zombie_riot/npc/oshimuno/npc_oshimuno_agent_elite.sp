@@ -34,15 +34,15 @@ static const char g_RangedAttackSounds[][] =
 };
 
 
-void OshimunoAgentOnMapStart()
+void OshimunoAgentEliteOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_RangedAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Tarakeno Agent");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_agent");
+	strcopy(data.Name, sizeof(data.Name), "Tarakeno Elite Agent");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_agent_elite");
 	strcopy(data.Icon, sizeof(data.Icon), "engineer");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -53,10 +53,10 @@ void OshimunoAgentOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoAgent(vecPos, vecAng, team);
+	return OshimunoAgentElite(vecPos, vecAng, team);
 }
 
-methodmap OshimunoAgent < CClotBody
+methodmap OshimunoAgentElite < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -79,9 +79,9 @@ methodmap OshimunoAgent < CClotBody
 		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
 	
-	public OshimunoAgent(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoAgentElite(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoAgent npc = view_as<OshimunoAgent>(CClotBody(vecPos, vecAng, "models/player/engineer.mdl", "1.0", "1000", ally));
+		OshimunoAgentElite npc = view_as<OshimunoAgentElite>(CClotBody(vecPos, vecAng, "models/player/engineer.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_SECONDARY");
@@ -98,8 +98,10 @@ methodmap OshimunoAgent < CClotBody
 		
 		npc.m_flSpeed = 270.0;
 		npc.m_iState = 0; // 0 walking normally || 1 standing still to shoot
+		npc.m_iOverlordComboAttack = 0; // counter for increasing attack speed
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_pistol/c_pistol.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_invasion_pistol/c_invasion_pistol.mdl");
+		SetEntProp(npc.m_iWearable1, Prop_Send, "m_nSkin", 1);
 
 		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/engineer/sum24_desk_engineer_style1/sum24_desk_engineer_style1.mdl");
 		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
@@ -109,6 +111,9 @@ methodmap OshimunoAgent < CClotBody
 
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_engineer.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
+
+		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2024_spider_sights/hwn2024_spider_sights_engineer.mdl");
+		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(1);
@@ -121,7 +126,7 @@ methodmap OshimunoAgent < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoAgent npc = view_as<OshimunoAgent>(iNPC);
+	OshimunoAgentElite npc = view_as<OshimunoAgentElite>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -168,13 +173,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoAgentSelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoAgentEliteSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 	
 	npc.PlayIdleSound();
 }
 
-void OshimunoAgentSelfDefense(OshimunoAgent npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoAgentEliteSelfDefense(OshimunoAgentElite npc, float distance, float vecTarget[3], float gameTime)
 {
 	int target;
 	target = npc.m_iTarget;
@@ -184,6 +189,7 @@ void OshimunoAgentSelfDefense(OshimunoAgent npc, float distance, float vecTarget
 		{
 			npc.m_bisWalking = true;
 			npc.m_iState = 0;
+			npc.m_iOverlordComboAttack = 0;
 			npc.SetActivity("ACT_MP_RUN_SECONDARY");
 			npc.m_flSpeed = 270.0;
 			npc.StartPathing();
@@ -193,6 +199,7 @@ void OshimunoAgentSelfDefense(OshimunoAgent npc, float distance, float vecTarget
 	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 8.0))
 	{
 		int Enemy_I_See = Can_I_See_Enemy(npc.index, npc.m_iTarget);
+		
 					
 		if(IsValidEnemy(npc.index, Enemy_I_See))
 		{
@@ -225,12 +232,17 @@ void OshimunoAgentSelfDefense(OshimunoAgent npc, float distance, float vecTarget
 						if(IsValidEnemy(npc.index, target))
 						{
 							float damage = 12.0;
-
 							SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_BULLET, -1, _, vecHit);
+							CPrintToChatAll("debug-current stacks is:%i ", npc.m_iOverlordComboAttack);
+							if(npc.m_iOverlordComboAttack <= 19) //increment counter
+							{
+								npc.m_iOverlordComboAttack++;
+							}
 						}
 					}
 					delete swingTrace;
-					npc.m_flNextRangedAttack = gameTime + 0.25;
+					float AttackCooldown = 0.25 - npc.m_iOverlordComboAttack * 0.01; //the longer he stands still the faster he shoots (capped at 20 stacks and 0.05 delay)
+					npc.m_flNextRangedAttack = gameTime + AttackCooldown;
 				}
 			}
 		}
@@ -240,6 +252,7 @@ void OshimunoAgentSelfDefense(OshimunoAgent npc, float distance, float vecTarget
 			{
 				npc.m_bisWalking = true;
 				npc.m_iState = 0;
+				npc.m_iOverlordComboAttack = 0;
 				npc.SetActivity("ACT_MP_RUN_SECONDARY");
 				npc.m_flSpeed = 270.0;
 				npc.StartPathing();
@@ -252,6 +265,7 @@ void OshimunoAgentSelfDefense(OshimunoAgent npc, float distance, float vecTarget
 		{
 			npc.m_bisWalking = true;
 			npc.m_iState = 0;
+			npc.m_iOverlordComboAttack = 0;
 			npc.SetActivity("ACT_MP_RUN_SECONDARY");
 			npc.m_flSpeed = 270.0;
 			npc.StartPathing();
@@ -260,7 +274,7 @@ void OshimunoAgentSelfDefense(OshimunoAgent npc, float distance, float vecTarget
 }
 static void ClotDeath(int entity)
 {
-	OshimunoAgent npc = view_as<OshimunoAgent>(entity);
+	OshimunoAgentElite npc = view_as<OshimunoAgentElite>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

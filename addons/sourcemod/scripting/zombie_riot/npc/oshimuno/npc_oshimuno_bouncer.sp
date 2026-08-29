@@ -47,7 +47,7 @@ void OshimunoBouncerOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Oshimuno Bouncer");
+	strcopy(data.Name, sizeof(data.Name), "Shibuya Bouncer");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_bouncer");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
@@ -91,9 +91,9 @@ methodmap OshimunoBouncer < CClotBody
 	
 	public OshimunoBouncer(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoBouncer npc = view_as<OshimunoBouncer>(CClotBody(vecPos, vecAng, "models/player/heavy.mdl", "1.35", "15000", ally));
+		OshimunoBouncer npc = view_as<OshimunoBouncer>(CClotBody(vecPos, vecAng, "models/player/heavy.mdl", "1.35", "5000", ally));
 		
-		i_NpcWeight[npc.index] = 1;
+		i_NpcWeight[npc.index] = 3;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
 		KillFeed_SetKillIcon(npc.index, "fists");
 		
@@ -200,19 +200,19 @@ void OshimunoBouncerSelfDefense(OshimunoBouncer npc, float distance, float vecTa
 				{
 					float damage;
 					npc.m_iOverlordComboAttack++;
-					if(npc.m_iOverlordComboAttack == 4) // get unusual right before stronger hit
+					if(npc.m_iOverlordComboAttack == 3) // get unusual right before stronger hit
 					{
 						float flPos[3], flAng[3];
 
 						npc.GetAttachment("eyes", flPos, flAng);
 						npc.m_iWearable9 = ParticleEffectAt_Parent(flPos, "unusual_icrown_plasma_blue", npc.index, "eyes", {0.0,0.0,0.0}); // using wearable9 for unusuals
 					}
-					if(npc.m_iOverlordComboAttack == 5) // after 5 hits do a stronger hit
+					if(npc.m_iOverlordComboAttack == 4) // after 4 hits do a stronger hit
 					{
 						damage = 300.0;
 						Custom_Knockback(npc.index, target, 1200.0, true, true);
 						if(!HasSpecificBuff(target, "Solid Stance"))
-							ApplyStatusEffect(npc.index, target, "Solid Stance", 2.0);
+							ApplyStatusEffect(npc.index, target, "Solid Stance", 2.5);
 						CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable9, TIMER_FLAG_NO_MAPCHANGE);
 						npc.m_iOverlordComboAttack = 0;
 					}
