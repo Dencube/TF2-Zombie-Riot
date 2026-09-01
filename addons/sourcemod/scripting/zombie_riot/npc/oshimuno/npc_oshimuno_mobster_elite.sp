@@ -181,22 +181,18 @@ void OshimunoMobsterEliteSelfDefense(OshimunoMobsterElite npc, float distance, f
 	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 11.0 && npc.m_flNextRangedAttack < gameTime)
 	{
 		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
-		float vecTarget2[3]; WorldSpaceCenter(target, vecTarget2);
-		float vecTarget3[3]; WorldSpaceCenter(target, vecTarget3);
-		vecTarget2[1] += 80.0;
-		vecTarget3[1] -= 80.0;
 		if(IsValidEnemy(npc.index, target, false, true))
 		{
 			npc.m_iTarget = target;
+			
 				
 			npc.FaceTowards(vecTarget, 20000.0);
 			npc.AddGesture("ACT_MP_ATTACK_STAND_PRIMARY");
 			npc.PlayRangedSound();
 			
-			npc.FireRocket(vecTarget, 60.0, 800.0);
-			npc.FireRocket(vecTarget2, 60.0, 800.0);
-			npc.FireRocket(vecTarget3, 60.0, 800.0);
-
+			int projectile = npc.FireRocket(vecTarget, 60.0, 800.0);
+			static float ang_Look[3];
+			Initiate_HomingProjectile(projectile, npc.index, 60.0, 4.0, true, true, ang_Look, target);
 			npc.m_flNextRangedAttack = gameTime + 1.2;
 		}
 	}

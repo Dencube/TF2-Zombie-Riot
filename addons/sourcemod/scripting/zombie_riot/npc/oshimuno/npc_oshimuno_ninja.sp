@@ -256,7 +256,11 @@ void OshimunoNinjaSelfDefense(Ninja npc, float distance, float vecTarget[3], flo
 		float EnemyPos[3]; // throw a kunai at the enemy during the jump
 		WorldSpaceCenter(npc.m_iTarget, EnemyPos);
 		npc.FaceTowards(EnemyPos, 15000.0);
-		npc.FireArrow(EnemyPos, 35.0, 1000.0, "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl", 1.5); //TODO: kunai model is facing upwards during the throw
+		int projectile = npc.FireArrow(EnemyPos, 35.0, 1000.0, "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl", 1.5); //TODO: kunai model is facing upwards during the throw
+		int trail = Trail_Attach(projectile, ARROW_TRAIL, 80, 0.16, 15.0, 6.0, 1);
+		i_WandParticle[projectile] = EntIndexToEntRef(trail);
+		CreateTimer(6.0, Timer_RemoveEntity, EntIndexToEntRef(trail), TIMER_FLAG_NO_MAPCHANGE);
+		SetParent(projectile, trail);
 		npc.m_flNextRangedAttack = gameTime + KUNAI_THROW_COOLDOWN;
 		npc.PlayRangedSound();
 	}

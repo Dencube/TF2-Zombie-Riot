@@ -24,7 +24,7 @@ static const char g_IdleAlertedSounds[][] =
 };
 
 
-void OshimunoSpiritPyroOnMapStart()
+void OshimunoSpiritArsonistOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -32,9 +32,9 @@ void OshimunoSpiritPyroOnMapStart()
 	PrecacheSound("weapons/flame_thrower_loop.wav");
 	PrecacheSound("weapons/flame_thrower_pilot.wav");
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Spirit Pyro");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spirit_pyro");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Name, sizeof(data.Name), "Spirit Arsonist");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spirit_arsonist");
+	strcopy(data.Icon, sizeof(data.Icon), "pyro");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -44,10 +44,10 @@ void OshimunoSpiritPyroOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoSpiritPyro(vecPos, vecAng, team);
+	return OshimunoSpiritArsonist(vecPos, vecAng, team);
 }
 
-methodmap OshimunoSpiritPyro < CClotBody
+methodmap OshimunoSpiritArsonist < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -92,9 +92,9 @@ methodmap OshimunoSpiritPyro < CClotBody
 		}
 	}
 	
-	public OshimunoSpiritPyro(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoSpiritArsonist(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoSpiritPyro npc = view_as<OshimunoSpiritPyro>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.0", "15000", ally));
+		OshimunoSpiritArsonist npc = view_as<OshimunoSpiritArsonist>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.0", "15000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_PRIMARY");
@@ -137,7 +137,7 @@ methodmap OshimunoSpiritPyro < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoSpiritPyro npc = view_as<OshimunoSpiritPyro>(iNPC);
+	OshimunoSpiritArsonist npc = view_as<OshimunoSpiritArsonist>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -177,7 +177,7 @@ static void ClotThink(int iNPC)
 		
 		bool SpinSound = true;
 		int SetGoalVectorIndex = 0;
-		SetGoalVectorIndex = OshimunoSpiritPyroSelfDefense(npc,SpinSound); 
+		SetGoalVectorIndex = OshimunoSpiritArsonistSelfDefense(npc,SpinSound); 
 		
 		if(SpinSound)
 			npc.PlayMinigunSound(false);
@@ -216,7 +216,7 @@ static void ClotThink(int iNPC)
 	}
 	npc.PlayIdleSound();
 }
-int OshimunoSpiritPyroSelfDefense(OshimunoSpiritPyro npc, bool &SpinSound)
+int OshimunoSpiritArsonistSelfDefense(OshimunoSpiritArsonist npc, bool &SpinSound)
 {
 	int target;
 	target = npc.m_iTarget;
@@ -237,7 +237,7 @@ int OshimunoSpiritPyroSelfDefense(OshimunoSpiritPyro npc, bool &SpinSound)
 			float ProjectileSpeed = 1000.0;
 
 			int projectile;
-			projectile = npc.FireParticleRocket(vecTarget, 30.0, ProjectileSpeed, 150.0, "superrare_burning1", true);
+			projectile = npc.FireParticleRocket(vecTarget, 20.0, ProjectileSpeed, 150.0, "superrare_burning1", true);
 
 			SDKUnhook(projectile, SDKHook_StartTouch, Rocket_Particle_StartTouch);
 			int particle = EntRefToEntIndex(i_WandParticle[projectile]);
@@ -280,7 +280,7 @@ int OshimunoSpiritPyroSelfDefense(OshimunoSpiritPyro npc, bool &SpinSound)
 	return 0;
 }
 
-public void OshimunoSpiritPyro_Rocket_Particle_StartTouch(int entity, int target)
+public void OshimunoSpiritArsonist_Rocket_Particle_StartTouch(int entity, int target)
 {
 	if(target > 0 && target < MAXENTITIES)	//did we hit something???
 	{
@@ -299,13 +299,13 @@ public void OshimunoSpiritPyro_Rocket_Particle_StartTouch(int entity, int target
 			
 		float ProjectileLoc[3];
 		GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", ProjectileLoc);
-		float damage = 15.0;
+		float damage = 10.0;
 
 		SDKHooks_TakeDamage(owner, target, inflictor, damage, DMG_BULLET|DMG_PREVENT_PHYSICS_FORCE, -1);	//acts like a kinetic rocket	
 
-		Elemental_AddChaosDamage(owner, target, 20, true, true); // TODO: replace with spirit fire once finished
+		StatusEffects_SpiritFireAddStuff(target, 1, 0.3); // low spirit fire duration cuz it hits many times
 
-		NPC_Ignite(owner, target, 6.0, -1, 8.0);
+		NPC_Ignite(owner, target, 1.5, -1, 4.0);
 
 		int particle = EntRefToEntIndex(i_WandParticle[entity]);
 		if(IsValidEntity(particle))
@@ -326,7 +326,7 @@ public void OshimunoSpiritPyro_Rocket_Particle_StartTouch(int entity, int target
 }
 static void ClotDeath(int entity)
 {
-	OshimunoSpiritPyro npc = view_as<OshimunoSpiritPyro>(entity);
+	OshimunoSpiritArsonist npc = view_as<OshimunoSpiritArsonist>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

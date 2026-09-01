@@ -51,7 +51,7 @@ void OshimunoDrunkardOnMapStart()
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Drunkard");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_drunkard");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Icon, sizeof(data.Icon), "demo");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -212,7 +212,7 @@ void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vec
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
+					float damage = 40.0;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -233,7 +233,7 @@ void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vec
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_flNextMeleeAttack = gameTime + 0.8;
 		}
 	}
 	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 35.0) && npc.m_flNextRangedAttack < gameTime)
@@ -243,8 +243,8 @@ void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vec
 
 		npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
 		npc.PlayMeleeSound();
-		int projectile = npc.FireArrow(vPredictedPos, 80.0, 900.0, "models/weapons/c_models/c_bottle/c_bottle.mdl"); //thrown bottle is upside down but thats fine cuz they're drunk
-		int trail = Trail_Attach(projectile, ARROW_TRAIL, 80, 0.16, 15.0, 6.0, 1);
+		int projectile = npc.FireArrow(vPredictedPos, 40.0, 900.0, "models/weapons/c_models/c_bottle/c_bottle.mdl"); //thrown bottle is upside down but thats fine cuz they're drunk
+		int trail = Trail_Attach(projectile, ARROW_TRAIL, 80, 0.22, 15.0, 6.0, 1);
 		i_WandParticle[projectile] = EntIndexToEntRef(trail);
 		CreateTimer(6.0, Timer_RemoveEntity, EntIndexToEntRef(trail), TIMER_FLAG_NO_MAPCHANGE);
 		SetParent(projectile, trail);

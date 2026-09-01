@@ -252,18 +252,21 @@ static void ClotDeath(int entity)
 
 	for(int entitycount; entitycount<MAXENTITIES; entitycount++) //Check for npcs
 	{
-		if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount)) //TODO: code sends an error every time this guy dies? but why......
+		if(IsValidEntity(entitycount) && entitycount != npc.index && (!b_NpcHasDied[entitycount])) //Cannot buff self like this.
 		{
-			float pos1[3];
-			GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);
-			static float pos2[3];
-			GetEntPropVector(entitycount, Prop_Data, "m_vecAbsOrigin", pos2);
-			if(GetVectorDistance(pos1, pos2, true) < (500 * 500))
+			if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount)) //TODO: code sends an error every time this guy dies? but why......
 			{
-				if(!Can_I_See_Ally(npc.index, entitycount))
-					continue;
-				ApplyStatusEffect(npc.index, entitycount, "Smoke Screen", 10.0);
+				float pos1[3];
+				GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);
+				static float pos2[3];
+				GetEntPropVector(entitycount, Prop_Data, "m_vecAbsOrigin", pos2);
+				if(GetVectorDistance(pos1, pos2, true) < (500 * 500))
+				{
+					if(!Can_I_See_Ally(npc.index, entitycount))
+						continue;
+					ApplyStatusEffect(npc.index, entitycount, "Smoke Screen", 10.0);
+				}
 			}
 		}
-	}	
+	}
 }

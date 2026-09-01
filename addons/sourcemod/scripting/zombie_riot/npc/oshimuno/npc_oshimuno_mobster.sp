@@ -156,27 +156,49 @@ static void ClotThink(int iNPC)
 		float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
 		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
 		float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);	
-		
-		if(distance < npc.GetLeadRadius())
+		int SetGoalVectorIndex = 0;
+		SetGoalVectorIndex = OshimunoMobsterSelfDefense(npc, distance, vecTarget, gameTime); 
+
+		switch(SetGoalVectorIndex)
 		{
-			float vPredictedPos[3]; PredictSubjectPosition(npc, target,_,_, vPredictedPos);
-			npc.SetGoalVector(vPredictedPos);
+			case 0:
+			{
+				npc.m_bAllowBackWalking = false;
+				//Get the normal prediction code.
+				if(distance < npc.GetLeadRadius()) 
+				{
+					float vPredictedPos[3];
+					PredictSubjectPosition(npc, vecTarget,_,_, vPredictedPos);
+					npc.SetGoalVector(vPredictedPos);
+				}
+				else 
+				{
+					npc.SetGoalEntity(vecTarget);
+				}
+			}
+			case 1:
+			{
+				npc.m_bAllowBackWalking = true;
+				float vBackoffPos[3];
+				BackoffFromOwnPositionAndAwayFromEnemy(npc, npc.m_iTarget,_,vBackoffPos);
+				npc.SetGoalVector(vBackoffPos, true); //update more often, we need it
+			}
 		}
-		else 
-		{
-			npc.SetGoalEntity(target);
-		}
-		OshimunoMobsterSelfDefense(npc, distance, vecTarget, gameTime); 
+	}
+	else
+	{
+		npc.m_flGetClosestTargetTime = 0.0;
+		npc.m_iTarget = GetClosestTarget(npc.index);
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoMobsterSelfDefense(OshimunoMobster npc, float distance, float vecTarget[3], float gameTime)
+int OshimunoMobsterSelfDefense(OshimunoMobster npc, float distance, float vecTarget[3], float gameTime)
 {
+	int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
 	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 11.0 && npc.m_flNextRangedAttack < gameTime)
 	{
-		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
 		if(IsValidEnemy(npc.index, target, false, true))
 		{
 			npc.m_iTarget = target;
@@ -190,7 +212,22 @@ void OshimunoMobsterSelfDefense(OshimunoMobster npc, float distance, float vecTa
 			npc.m_flNextRangedAttack = gameTime + 1.4;
 		}
 	}
+	if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 9.0))
+	{
+		//target is too far, try to close in
+		return 0;
+	}
+	else if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 7.0))
+	{
+		if(Can_I_See_Enemy_Only(npc.index, target))
+		{
+			//target is too close, try to keep distance
+			return 1;
+		}
+	}
+	return 0;
 }
+
 static void ClotDeath(int entity) 
 {
 	OshimunoMobster npc = view_as<OshimunoMobster>(entity);

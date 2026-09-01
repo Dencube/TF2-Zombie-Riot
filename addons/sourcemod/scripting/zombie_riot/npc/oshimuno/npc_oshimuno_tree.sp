@@ -26,8 +26,8 @@ static int g_TreeConeLaser = -1;
 #define TCONE_FILL_FWD 0.7071
 #define TCONE_FILL_LEFT 0.0
 #define TCONE_INTERVAL 2.5
-#define TCONE_MELEE_DAMAGE 250.0
-#define TCONE_DAMAGE 250.0
+#define TCONE_MELEE_DAMAGE 100.0
+#define TCONE_DAMAGE 100.0
 #define TCONE_LOG_MODEL "models/props_forest/tree_pine_singlelog.mdl"
 #define TCONE_LOG_RISE 200.0
 #define TCONE_LOG_TIME 0.75
@@ -93,6 +93,7 @@ methodmap OshimunoTree < CClotBody
 		Is_a_Medic[npc.index] = true; 
 		b_thisNpcIsABoss[npc.index] = true; // no instakills
 		i_NpcIsABuilding[npc.index] = true;
+		b_NoHealthbar[npc.index] = 1;
 		KillFeed_SetKillIcon(npc.index, "megaton");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
@@ -109,22 +110,22 @@ methodmap OshimunoTree < CClotBody
 		npc.m_bDissapearOnDeath = true;
 		npc.m_flNextConeAttack = 0.0;
 
-		int Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 1000.0, .NeedLOSPlayer = true);
+		int Decision = TeleportDiversioToRandLocation(npc.index, true, 2000.0, 1000.0, .NeedLOSPlayer = true);
 		switch(Decision)
 		{
 			case 2:
 			{
-				Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 500.0, .NeedLOSPlayer = true);
+				Decision = TeleportDiversioToRandLocation(npc.index, true, 2000.0, 500.0, .NeedLOSPlayer = true);
 				if(Decision == 2)
 				{
-					Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 250.0, .NeedLOSPlayer = true);
+					Decision = TeleportDiversioToRandLocation(npc.index, true, 2000.0, 250.0, .NeedLOSPlayer = true);
 					if(Decision == 2)
 					{
-						Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 0.0, .NeedLOSPlayer = true);
+						Decision = TeleportDiversioToRandLocation(npc.index, true, 2000.0, 0.0, .NeedLOSPlayer = true);
 						if(Decision == 2)
 						{
 							//damn, cant find any.... guess we'll just not care about LOS.
-							Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 0.0);
+							Decision = TeleportDiversioToRandLocation(npc.index, true, 2000.0, 0.0);
 						}
 					}
 				}
@@ -245,12 +246,12 @@ public void OshimunoTreeAttackInvoke(int ref, int enemy)
 	int entity = EntRefToEntIndex(ref);
 	if(IsValidEntity(entity))
 	{
-		float Time=1.75;
-		float Range=150.0;
+		float Time=2.0;
+		float Range=200.0;
 		if(LastMann)
-			Range = 75.0;
+			Range = 100.0;
 
-		float Dmg=500.0;
+		float Dmg=250.0;
 		float vecTarget[3];
 		WorldSpaceCenter(enemy, vecTarget );
 		vecTarget[2] += 1.0;

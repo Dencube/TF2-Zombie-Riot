@@ -32,15 +32,15 @@ static const char g_RangedAttackSounds[][] =
 
 #define STACKDRAIN_COOLDOWN 4.0
 
-void OshimunoAvengerOnMapStart()
+void OshimunoAvengerEliteOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_RangedAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Tarakeno Avenger");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_avenger");
+	strcopy(data.Name, sizeof(data.Name), "Tarakeno Elite Avenger");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_avenger_elite");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_shotgunner");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -51,20 +51,25 @@ void OshimunoAvengerOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoAvenger(vecPos, vecAng, team);
+	return OshimunoAvengerElite(vecPos, vecAng, team);
 }
 
-methodmap OshimunoAvenger < CClotBody
+methodmap OshimunoAvengerElite < CClotBody
 {
 	property float m_flTimerCooldown
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
-	property int m_iAlliesDead
+	property int m_iAlliesDeadTemp
 	{
 		public get()							{ return i_OverlordComboAttack[this.index]; }
 		public set(int TempValueForProperty) 	{ i_OverlordComboAttack[this.index] = TempValueForProperty; }
+	}
+	property int m_iAlliesDeadPerm
+	{
+		public get()							{ return i_TimesSummoned[this.index]; }
+		public set(int TempValueForProperty) 	{ i_TimesSummoned[this.index] = TempValueForProperty; }
 	}
 	public void PlayIdleSound()
 	{
@@ -86,9 +91,9 @@ methodmap OshimunoAvenger < CClotBody
 	{
 		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
-	public OshimunoAvenger(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoAvengerElite(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoAvenger npc = view_as<OshimunoAvenger>(CClotBody(vecPos, vecAng, "models/player/heavy.mdl", "1.0", "1000", ally));
+		OshimunoAvengerElite npc = view_as<OshimunoAvengerElite>(CClotBody(vecPos, vecAng, "models/player/heavy.mdl", "1.0", "1000", ally));
 		float gameTime = GetGameTime(npc.index);
 
 		i_NpcWeight[npc.index] = 1;
@@ -103,7 +108,7 @@ methodmap OshimunoAvenger < CClotBody
 		func_NPCDeath[npc.index] = ClotDeath;
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
-		func_NPCDeathForward[npc.index] = OshimunoAvengerAllyDeath;
+		func_NPCDeathForward[npc.index] = OshimunoAvengerEliteAllyDeath;
 		
 		npc.m_flSpeed = 250.0;
 		npc.m_flTimerCooldown = gameTime + STACKDRAIN_COOLDOWN;
@@ -119,6 +124,9 @@ methodmap OshimunoAvenger < CClotBody
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_heavy.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
+		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2024_spider_sights/hwn2024_spider_sights_heavy.mdl");
+		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 1);
+
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(3);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
@@ -130,7 +138,7 @@ methodmap OshimunoAvenger < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoAvenger npc = view_as<OshimunoAvenger>(iNPC);
+	OshimunoAvengerElite npc = view_as<OshimunoAvengerElite>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -151,36 +159,32 @@ static void ClotThink(int iNPC)
 	
 	npc.m_flNextThinkTime = gameTime + 0.1;
 
-	if(npc.m_flTimerCooldown < gameTime) // lower anger as time goes on and update stats
+	if(npc.m_flTimerCooldown < gameTime) // lower temp anger as time goes on
 	{
-		npc.m_flSpeed = 250.0 + float(npc.m_iAlliesDead) / 2;
-		fl_TotalArmor[npc.index] = 1.0 - float(npc.m_iAlliesDead) / 250;
-		if(npc.m_iAlliesDead >= 70) // above 70
+		npc.m_flSpeed = 250.0 + float(npc.m_iAlliesDeadTemp) / 4 + float(npc.m_iAlliesDeadPerm) / 4;
+		fl_TotalArmor[npc.index] = 1.0 - float(npc.m_iAlliesDeadTemp) / 200 - float(npc.m_iAlliesDeadPerm) / 200;
+		if(npc.m_iAlliesDeadTemp >= 70) // above 70
 		{
-			npc.m_iAlliesDead -= 5;
-			float flPos[3], flAng[3];
-			npc.GetAttachment("eyes", flPos, flAng);
-			if(!IsValidEntity(npc.m_iWearable9))
-				npc.m_iWearable9 = ParticleEffectAt_Parent(flPos, "unusual_devilish_headmist_purple", npc.index, "eyes", {0.0,0.0,0.0}); // using wearable9 for unusuals
+			npc.m_iAlliesDeadTemp -= 5;
 		}
-		else if (npc.m_iAlliesDead >= 50) //between 70 and 50
+		else if (npc.m_iAlliesDeadTemp >= 50) //between 70 and 50
 		{
-			npc.m_iAlliesDead -= 3;
-			if(IsValidEntity(npc.m_iWearable9))
-				CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable9, TIMER_FLAG_NO_MAPCHANGE);
+			npc.m_iAlliesDeadTemp -= 3;
+			
 		}
-		else if(npc.m_iAlliesDead > 0) //betweeen 50 and 0
+		else if(npc.m_iAlliesDeadTemp > 0) //betweeen 50 and 0
 		{
-			npc.m_iAlliesDead -= 2;
+			npc.m_iAlliesDeadTemp -= 2;
 		}
 
-		if(npc.m_iAlliesDead < 0) // just incase it somehow goes negative
+		if(npc.m_iAlliesDeadTemp < 0) // just incase it somehow goes negative
 		{
-			npc.m_iAlliesDead = 0;
+			npc.m_iAlliesDeadTemp = 0;
 		}
 		npc.m_flTimerCooldown = gameTime + STACKDRAIN_COOLDOWN;
 	}
-	if(npc.m_iAlliesDead >= 70) // above 70 anger
+	int TotalStackAmount = npc.m_iAlliesDeadTemp + npc.m_iAlliesDeadPerm;
+	if(TotalStackAmount >= 70) // above 70  combined anger
 	{
 		float flPos[3], flAng[3];
 		npc.GetAttachment("eyes", flPos, flAng);
@@ -211,7 +215,7 @@ static void ClotThink(int iNPC)
 		
 		if(IsValidEnemy(npc.index, npc.m_iTarget))
 		{
-			switch(OshimunoAvengerSelfDefense(npc, gameTime, npc.m_iTarget, distance))
+			switch(OshimunoAvengerEliteSelfDefense(npc, gameTime, npc.m_iTarget, distance))
 			{
 				case 0:
 				{
@@ -245,7 +249,7 @@ static void ClotThink(int iNPC)
 		npc.PlayIdleSound();
 	}
 }
-static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int target, float distance)
+static int OshimunoAvengerEliteSelfDefense(OshimunoAvengerElite npc, float gameTime, int target, float distance)
 {
 	if(npc.m_flNextRangedAttack < gameTime)
 	{
@@ -258,7 +262,7 @@ static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int t
 				npc.m_iTarget = Enemy_I_See;
 				float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
 				float damagebonus;
-				damagebonus = 1.0 + float(npc.m_iAlliesDead / 100);
+				damagebonus = 1.0 + float(npc.m_iAlliesDeadTemp / 100) + float(npc.m_iAlliesDeadPerm / 100);
 				npc.FaceTowards(vecTarget, 20000.0);
 				Handle swingTrace;
 				if(npc.DoSwingTrace(swingTrace, target, { 9999.0, 9999.0, 9999.0 }))
@@ -332,9 +336,9 @@ static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int t
 	return 0;
 }
 
-public void OshimunoAvengerAllyDeath(int self, int ally)
+public void OshimunoAvengerEliteAllyDeath(int self, int ally)
 {
-	OshimunoAvenger npc = view_as<OshimunoAvenger>(self);
+	OshimunoAvengerElite npc = view_as<OshimunoAvengerElite>(self);
 
 	if(GetTeam(ally) != GetTeam(self))
 	{
@@ -347,17 +351,22 @@ public void OshimunoAvengerAllyDeath(int self, int ally)
 	float flDistanceToTarget = GetVectorDistance(SelfPos, AllyPos, true);
 	if(flDistanceToTarget < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 24.0))
 	{
-		npc.m_iAlliesDead += 5;
-		if(npc.m_iAlliesDead > 100)
+		npc.m_iAlliesDeadTemp += 5;
+		if(npc.m_iAlliesDeadTemp > 100)
 		{
-			npc.m_iAlliesDead = 100;
+			npc.m_iAlliesDeadTemp = 100;
+		}
+		npc.m_iAlliesDeadPerm += 2;
+		if(npc.m_iAlliesDeadPerm > 50)
+		{
+			npc.m_iAlliesDeadPerm = 50;
 		}
 	}
 }
 
 static void ClotDeath(int entity) 
 {
-	OshimunoAvenger npc = view_as<OshimunoAvenger>(entity);
+	OshimunoAvengerElite npc = view_as<OshimunoAvengerElite>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

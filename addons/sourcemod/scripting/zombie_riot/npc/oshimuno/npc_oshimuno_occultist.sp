@@ -41,7 +41,7 @@ static const char g_MeleeHitSounds[][] =
 #define INITIAL_DELAY 8.0
 #define CALLING_DELAY 20.0
 
-void OshimunoSpiritCallerOnMapStart()
+void OshimunoOccultistOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -49,8 +49,8 @@ void OshimunoSpiritCallerOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Spirit Caller");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spiritcaller");
+	strcopy(data.Name, sizeof(data.Name), "Occultist");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_occultist");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -61,10 +61,10 @@ void OshimunoSpiritCallerOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoSpiritCaller(vecPos, vecAng, team);
+	return OshimunoOccultist(vecPos, vecAng, team);
 }
 
-methodmap OshimunoSpiritCaller < CClotBody
+methodmap OshimunoOccultist < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -95,9 +95,9 @@ methodmap OshimunoSpiritCaller < CClotBody
 		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
-	public OshimunoSpiritCaller(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoOccultist(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoSpiritCaller npc = view_as<OshimunoSpiritCaller>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.0", "1000", ally));
+		OshimunoOccultist npc = view_as<OshimunoOccultist>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.0", "1000", ally));
 		float gameTime = GetGameTime(npc.index);
 		
 		i_NpcWeight[npc.index] = 1;
@@ -113,7 +113,7 @@ methodmap OshimunoSpiritCaller < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 300.0;
+		npc.m_flSpeed = 200.0;
 		npc.m_flSpiritCalling = gameTime + INITIAL_DELAY; // timer for when we switch states
 		npc.m_iState = 0;	//0 is normal behavior  || 1 is for hunting spirit orbs to respawn as enemies
 
@@ -137,7 +137,7 @@ methodmap OshimunoSpiritCaller < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoSpiritCaller npc = view_as<OshimunoSpiritCaller>(iNPC);
+	OshimunoOccultist npc = view_as<OshimunoOccultist>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -190,7 +190,7 @@ static void ClotThink(int iNPC)
 			float healing = float(ReturnEntityMaxHealth(npc.index) / 4);
 			if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED))
 			{
-				//touched the spirit orb we now spawn a random npc ||TODO: make it spawn more enemies
+				//touched the spirit orb we now spawn a random npc ||TODO: figure out how much health the summons should have
 				npc.m_iState = 0;
 				HealEntityGlobal(npc.index, npc.index, healing, 1.5, 0.0, HEAL_SELFHEAL);
 				npc.m_flSpiritCalling = gameTime + CALLING_DELAY;
@@ -200,12 +200,36 @@ static void ClotThink(int iNPC)
 				b_NoKillFeed[npc.m_iTargetAlly] = true;
 				b_NpcForcepowerupspawn[npc.m_iTargetAlly] = 0;
 				
-				int entity = NPC_CreateByName("npc_oshimuno_spiritualist", -1, pos, ang, GetTeam(npc.index));
-				if(entity > MaxClients)
-				{	
-					if(GetTeam(npc.index) != TFTeam_Red)
-						NpcAddedToZombiesLeftCurrently(entity, true);
-				}	
+				switch(GetRandomInt(0,2))
+				{
+					case 0:
+					{
+						int entity = NPC_CreateByName("npc_oshimuno_spiritualist", -1, pos, ang, GetTeam(npc.index));
+						if(entity > MaxClients)
+						{	
+							if(GetTeam(npc.index) != TFTeam_Red)
+								NpcAddedToZombiesLeftCurrently(entity, true);
+						}	
+					}
+					case 1:
+					{
+						int entity = NPC_CreateByName("npc_oshimuno_spirit_arsonist", -1, pos, ang, GetTeam(npc.index));
+						if(entity > MaxClients)
+						{	
+							if(GetTeam(npc.index) != TFTeam_Red)
+								NpcAddedToZombiesLeftCurrently(entity, true);
+						}	
+					}
+					case 2:
+					{
+						int entity = NPC_CreateByName("npc_oshimuno_spirit_kamikaze", -1, pos, ang, GetTeam(npc.index));
+						if(entity > MaxClients)
+						{	
+							if(GetTeam(npc.index) != TFTeam_Red)
+							NpcAddedToZombiesLeftCurrently(entity, true);
+						}	
+					}
+				}
 			}
 			else 
 			{
@@ -247,14 +271,14 @@ static void ClotThink(int iNPC)
 			{
 				npc.SetGoalEntity(target);
 			}
-			OshimunoSpiritCallerSelfDefense(npc, distance, vecTarget, gameTime); 
+			OshimunoOccultistSelfDefense(npc, distance, vecTarget, gameTime); 
 		}
 
 	}
 	npc.PlayIdleSound();
 }
 
-void OshimunoSpiritCallerSelfDefense(OshimunoSpiritCaller npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoOccultistSelfDefense(OshimunoOccultist npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -269,7 +293,7 @@ void OshimunoSpiritCallerSelfDefense(OshimunoSpiritCaller npc, float distance, f
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
+					float damage = 40.0;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -296,7 +320,7 @@ void OshimunoSpiritCallerSelfDefense(OshimunoSpiritCaller npc, float distance, f
 }
 static void ClotDeath(int entity)
 {
-	OshimunoSpiritCaller npc = view_as<OshimunoSpiritCaller>(entity);
+	OshimunoOccultist npc = view_as<OshimunoOccultist>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

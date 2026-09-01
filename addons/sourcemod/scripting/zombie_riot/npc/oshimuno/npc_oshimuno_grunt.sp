@@ -1,6 +1,16 @@
 #pragma semicolon 1
 #pragma newdecls required
-
+/*
+"music_setup"
+	{
+		"file"		"#zombiesurvival/oshimuno/wasteland.mp3"
+		"time"		"381" //TODO: cut down the song length before release
+		"download"	"1"
+		"name"		"wasteland"
+		"author"	"DM DOKURO"
+		"volume"	"5.0" // WHY IS THIS SONG SO FUCKING QUIET
+	}
+*/
 static const char g_DeathSounds[][] =
 {
 	"vo/scout_paincrticialdeath01.mp3",
@@ -108,7 +118,7 @@ methodmap OshimunoGrunt < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = GruntOnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = OshimunoGruntOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
@@ -215,7 +225,7 @@ void OshimunoGruntSelfDefense(OshimunoGrunt npc, float distance, float vecTarget
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 20.0;
+					float damage = 16.0;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -241,7 +251,7 @@ void OshimunoGruntSelfDefense(OshimunoGrunt npc, float distance, float vecTarget
 	}
 }
 
-static Action GruntOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+static Action OshimunoGruntOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {	
 	OshimunoGrunt npc = view_as<OshimunoGrunt>(victim);
 	float gameTime = GetGameTime(npc.index);

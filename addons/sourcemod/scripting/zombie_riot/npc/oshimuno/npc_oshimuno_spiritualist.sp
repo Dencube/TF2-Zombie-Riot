@@ -241,7 +241,6 @@ static void ClotDeath(int entity)
 				
 		if(GetTeam(npc.index) != TFTeam_Red)
 		NpcAddedToZombiesLeftCurrently(ent, true);
-		view_as<CClotBody>(ent).m_flSpeed = npc.m_flSpeed;
 	}
 
 	if(!npc.m_bGib)

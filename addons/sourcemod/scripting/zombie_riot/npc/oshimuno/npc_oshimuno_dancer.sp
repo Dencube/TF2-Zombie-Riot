@@ -61,7 +61,7 @@ void OshimunoDancerOnMapStart()
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Shibuya Dancer");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_dancer");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Icon, sizeof(data.Icon), "speedy_adivus");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Dancer;
@@ -108,7 +108,7 @@ methodmap OshimunoDancer < CClotBody
 	
 	public OshimunoDancer(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoDancer npc = view_as<OshimunoDancer>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "15000", ally));
+		OshimunoDancer npc = view_as<OshimunoDancer>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
@@ -129,16 +129,17 @@ methodmap OshimunoDancer < CClotBody
 		npc.m_bisWalking = false;
 		npc.m_iState = 2; // 0 is for normally walking || 1 is for flipping || 2 is for dancing
 		
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_invasion_bat/c_invasion_bat.mdl");
+		SetEntityRenderColor(npc.m_iWearable1, GetRandomInt(0, 255), GetRandomInt(0, 255), GetRandomInt(0, 255), 255);
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_boston_basher/c_boston_basher.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/scout/hwn2025_buzz_kill/hwn2025_buzz_kill.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop_partner/player/items/all_class/sd_tattoos/sd_tattoos_scout.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/hwn2025_torn_terror/hwn2025_torn_terror.mdl");
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/hwn2025_buzz_kill/hwn2025_buzz_kill.mdl");
-
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/scout/hwn2025_torn_terror/hwn2025_torn_terror.mdl");
-		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
-
+		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
+		SetVariantInt(3);
+		AcceptEntityInput(npc.index, "SetBodyGroup");
 		npc.StartPathing();
 		return npc;
 	}

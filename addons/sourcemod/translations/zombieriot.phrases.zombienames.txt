@@ -8207,7 +8207,7 @@
 	}
 	"Tarakeno Agent Desc"
 	{
-		"en" 	"-Stands still and fires a pistol at nearby enemies."
+		"en" 	"Swears loyalty to Tarakeno while living a semi-normal life.\n-Stands still and fires a pistol at nearby enemies."
 	}
 	"Tarakeno Elite Agent"
 	{
@@ -8231,7 +8231,15 @@
 	}
 	"Tarakeno Avenger Desc"
 	{
-		"en"	"Remembers and avenges his fallen comrades. -Gains increased stats whenever a nearby ally dies.\n-Stats drain over time. Gains an unusual when greatly empowered."
+		"en"	"Remembers and avenges his fallen comrades.\n-Gains increased stats whenever a nearby ally dies.\n-Bonus stats drain over time. Gains an unusual when greatly empowered."
+	}
+	"Tarakeno Elite Avenger"
+	{
+		"en"	"Tarakeno Elite Avenger"
+	}
+	"Tarakeno Elite Avenger Desc"
+	{
+		"en"	"Has never left a single grudge remain unsettled.\n-Gains increased stats whenever a nearby ally dies.\n-Bonus stats partially drain over time. Gains an unusual when greatly empowered."
 	}
 	"Tarakeno Forerunner"
 	{
@@ -8239,7 +8247,15 @@
 	}
 	"Tarakeno Forerunner Desc"
 	{
-		"en"	"Sent to those who have fallen out of grace with Tarakeno. -Charges in a slippery and hard to predict pattern.\n-Charge hits do more damage and deal knockback"
+		"en"	"Sent to those who have fallen out of grace with Tarakeno.\n-Charges in a slippery and hard to predict pattern.\n-Charge hits do more damage and deal knockback"
+	}
+	"Tarakeno Smokebomb"
+	{
+		"en" 	"Tarakeno Smokebomb"
+	}
+	"Tarakeno Smokebomb Desc"
+	{
+		"en" 	"Hinders the sight and causes confusion on the frontlines.\n-On death explodes into a cloud of smoke impairing vision.\n-Also applies a buff to enemies giving them a movement speed increase and chacne to dodge."
 	}
 	"Tarakeno Ninja"
 	{
@@ -8247,7 +8263,23 @@
 	}
 	"Tarakeno Ninja Desc"
 	{
-		"en"	"-Jumps every so often towards an enemy and rapidly throws kunais."
+		"en"	"Takes advantage of the chaos caused by the other Tarakeno members.\n-Jumps every so often towards an enemy and rapidly throws kunais."
+	}
+	"Tarakeno Executor"
+	{
+		"en" 	"Tarakeno Executor"
+	}
+	"Tarakeno Executor Desc"
+	{
+		"en" 	"Ensures that civil unrest doesn't affect Tarakeno's plans.\n-Each shot does damage based on the target's max health.\n-Moves slowly and his gun is short range.\n-Spawns in with a notification."
+	}
+	"Tarakeno Elite Executor"
+	{
+		"en" 	"Tarakeno Elite Executor"
+	}
+	"Tarakeno Elite Executor Desc"
+	{
+		"en" 	"Hides within the populations of other nations to keep Oshimuno's existance a secret.\n-Each shot does damage based on the target's max health.\n-Moves slowly and his gun is short range.\n-Spawns in silently and makes almost no sounds."
 	}
 	"Street Chef"
 	{
@@ -8255,7 +8287,7 @@
 	}
 	"Street Chef Desc"
 	{
-		"en" 	"-Deals extra damage to targets based on their missing health"
+		"en" 	"Serves the best seafood dishes.\n-Deals extra damage to targets based on their missing health"
 	}
 	"Crippling Gambler"
 	{
@@ -8263,7 +8295,7 @@
 	}
 	"Crippling Gambler Desc"
 	{
-		"en" 	"-Switches between 6 revolvers with different effects."
+		"en" 	"Just needs one more win to finally stop for good.\n-Switches between 6 revolvers with different effects."
 	}
 	"Cherry Blossom"
 	{
@@ -8296,6 +8328,14 @@
 	"Shibuya Bouncer Desc"
 	{
 		"en" 	"One of the many Shibuya bouncers. \n-Every fourth hit does extreme damage and knockback. \n-Gains an unusual right before the empowered punch."
+	}
+	"Shibuya Bartender"
+	{
+		"en" 	"Shibuya Bartender"
+	}
+	"Shibuya Bartender Desc"
+	{
+		"en" 	"Serves powerful self-made cocktails.\n-Throws explosive drinks from far away."
 	}
 	"Shibuya Boombox"
 	{
@@ -8344,5 +8384,57 @@
 	"Spirit Orb Desc"
 	{
 		"en" 	"The physical manifestation of the deceased's essence.\n-Applies Spirit Fire on hit.\n-Interacts with other certain enemies."
+	}
+	"Tree Healing"
+	{
+		"en" 	"Tree Healing"
+	}
+	"Tree Healing Desc"
+	{
+		"en" 	"Tree Healing"
+	}
+	"Drunkard"
+	{
+		"en" 	"Drunkard"
+	}
+	"Drunkard Desc"
+	{
+		"en" 	"A fighter under the influence of a copious amount of alcohol.\n-Randomly speeds up or slows down.\n-Occasionally throws bottles at his foes."
+	}
+	"Wrestler"
+	{
+		"en" 	"Wrestler"
+	}
+	"Wrestler Desc"
+	{
+		"en" 	"Perfected his body and metabolism after decades of exercise.\n-Takes reduced damage from burn, bleed and ranged attacks."
+	}
+	"DEATH TO MY BOOMBOXES"
+	{
+		"en" 	"=Failed name="
+	}
+	"Spiritualist"
+	{
+		"en" 	"Spiritualist"
+	}
+	"Spiritualist Desc"
+	{
+		"en" 	"Devoted his life to controling the power of Spirits.\n-On death spawns a Spirit Orb.\n-Applies Spirit Fire on enemies with Spirit Fire."
+	}
+	"Occultist"
+	{
+		"en" 	"Occultist"
+	}
+	"Occultist Desc"
+	{
+		"en" 	"Utilizes Spirits for rituals with unpredictable results.\n-Occasionally goes to hunt for a Spirit Orb to resurrect into a random enemy."
+	}
+	"Spirit Arsonist"
+	{
+		"en" 	"Spirit Arsonist"
+	}
+	"Spirit Arsonist Desc"
+	{
+		"en" 	"Weaponized Spirit Fire to melt down the strongest of fighters.\n-Wields a flamethrower that applies lots of Spirit Fire Potency."
 	}
 }

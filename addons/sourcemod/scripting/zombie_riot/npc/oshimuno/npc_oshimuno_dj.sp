@@ -27,8 +27,8 @@ static const char g_IdleAlertedSounds[][] =
 
 static const char g_MeleeHitSounds[][] =
 {
-	"weapons/cbar_hit1.wav",
-	"weapons/cbar_hit2.wav"
+	"weapons/wrench_hit_build_success1.wav",
+	"weapons/wrench_hit_build_success2.wav"
 };
 
 static const char g_MeleeAttackSounds[][] =
@@ -94,7 +94,7 @@ methodmap OshimunoDJ < CClotBody
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "pickaxe");
+		KillFeed_SetKillIcon(npc.index, "wrench");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -110,9 +110,13 @@ methodmap OshimunoDJ < CClotBody
 		npc.m_iOverlordComboAttack = 0; 
 		Is_a_Medic[npc.index] = true;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/player/items/engineer/hwn2022_cabinet_mann/hwn2022_cabinet_mann.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_wrench/c_wrench.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/engineer/hwn2025_technicians_tunic/hwn2025_technicians_tunic.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/engineer/hwn2022_cabinet_mann/hwn2022_cabinet_mann.mdl");
+		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
+
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/engineer/hwn2025_technicians_tunic/hwn2025_technicians_tunic.mdl");
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(1);
@@ -126,10 +130,11 @@ methodmap OshimunoDJ < CClotBody
 static void ClotThink(int iNPC)
 {
 	OshimunoDJ npc = view_as<OshimunoDJ>(iNPC);
+
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_iOverlordComboAttack == 5 && IsValidAlly(npc.index, npc.m_iTargetAlly))
 	{
-		fl_TotalArmor[iNPC] = 0.5;
+		fl_TotalArmor[iNPC] = 1.0;
 		float Injured[3];
 		GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", Injured); 
 		Injured[2] += 70.0;
@@ -141,7 +146,7 @@ static void ClotThink(int iNPC)
 	}
 	else
 	{
-		fl_TotalArmor[iNPC] = 1.0;
+		fl_TotalArmor[iNPC] = 0.5;
 	}
 	if(npc.m_flNextDelayTime > gameTime)
 	{
@@ -167,17 +172,23 @@ static void ClotThink(int iNPC)
 	{
 		for(int i; i < i_MaxcountNpcTotal; i++)
 		{
-			int entity = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
-			if(IsValidEntity(entity))
+			int boombox = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
+			if(IsValidEntity(boombox))
 			{
 				char npc_classname[60];
-				NPC_GetPluginById(i_NpcInternalId[entity], npc_classname, sizeof(npc_classname));
+				NPC_GetPluginById(i_NpcInternalId[boombox], npc_classname, sizeof(npc_classname));
 
-				if(entity != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_boombox") && IsEntityAlive(entity))) // look for a boombox alive then grab it
+				if(boombox != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_boombox") && IsEntityAlive(boombox))) // look for an unclaimed boombox alive then grab it
 				{
-					npc.m_iOverlordComboAttack = 1;
-					npc.m_iTargetAlly = entity; //set boombox as target
-					npc.Anger = true;
+					OshimunoBoombox npcOther = view_as<OshimunoBoombox>(boombox);
+					if(!IsValidEntity(npcOther.m_iTargetAlly))
+					{
+						npcOther.m_iTargetAlly = npc.index; // boombox sets this dj as its owner
+						npc.m_iTargetAlly = boombox; //set boombox as target
+						npc.m_iOverlordComboAttack = 1;
+						npc.Anger = true;
+						break;
+					}
 				}
 			}
 		}
@@ -283,9 +294,13 @@ void OshimunoDJSelfDefense(OshimunoDJ npc, float distance, float vecTarget[3], f
 	}
 }
 
-static void ClotDeath(int entity)
+static void ClotDeath(int entity, int m_iTargetAlly)
 {
 	OshimunoDJ npc = view_as<OshimunoDJ>(entity);
+
+	b_NoGravity[npc.m_iTargetAlly] = false;
+	b_DoNotUnStuck[npc.m_iTargetAlly] = false;
+	RemoveSpecificBuff(npc.m_iTargetAlly, "Solid Stance");
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
@@ -295,4 +310,5 @@ static void ClotDeath(int entity)
 	
 	if(IsValidEntity(npc.m_iWearable2))
 		RemoveEntity(npc.m_iWearable2);
+	
 }

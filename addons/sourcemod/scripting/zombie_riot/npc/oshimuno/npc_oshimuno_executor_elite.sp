@@ -16,28 +16,14 @@ static const char g_HurtSounds[][] =
 	"vo/spy_painsharp04.mp3",
 };
 
-static const char g_IdleAlertedSounds[][] = 
-{
-	"vo/spy_battlecry01.mp3",
-	"vo/spy_battlecry02.mp3",
-	"vo/spy_battlecry03.mp3",
-	"vo/spy_battlecry04.mp3",
-};
 
-static const char g_MeleeAttackSounds[][] =
-{
-	"weapons/ambassador_shoot.wav",
-};
-
-void OshimunoExecutorOnMapStart()
+void OshimunoExecutorEliteOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
-	PrecacheSoundArray(g_IdleAlertedSounds);
-	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Tarakeno Executor");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_executor");
+	strcopy(data.Name, sizeof(data.Name), "Tarakeno Elite Executor");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_executor_elite");
 	strcopy(data.Icon, sizeof(data.Icon), "spy");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -48,19 +34,11 @@ void OshimunoExecutorOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoExecutor(vecPos, vecAng, team);
+	return OshimunoExecutorElite(vecPos, vecAng, team);
 }
 
-methodmap OshimunoExecutor < CClotBody
+methodmap OshimunoExecutorElite < CClotBody
 {
-	public void PlayIdleSound()
-	{
-		if(this.m_flNextIdleSound > GetGameTime(this.index))
-			return;
-		
-		EmitSoundToAll(g_IdleAlertedSounds[GetRandomInt(0, sizeof(g_IdleAlertedSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
-		this.m_flNextIdleSound = GetGameTime(this.index) + GetRandomFloat(12.0, 24.0);
-	}
 	public void PlayHurtSound()
 	{
 		EmitSoundToAll(g_HurtSounds[GetRandomInt(0, sizeof(g_HurtSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
@@ -69,14 +47,10 @@ methodmap OshimunoExecutor < CClotBody
 	{
 		EmitSoundToAll(g_DeathSounds[GetRandomInt(0, sizeof(g_DeathSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
-	public void PlayMeleeSound()
- 	{
-		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
-	}
 	
-	public OshimunoExecutor(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoExecutorElite(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoExecutor npc = view_as<OshimunoExecutor>(CClotBody(vecPos, vecAng, "models/player/spy.mdl", "1.0", "1000", ally));
+		OshimunoExecutorElite npc = view_as<OshimunoExecutorElite>(CClotBody(vecPos, vecAng, "models/player/spy.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_SECONDARY");
@@ -104,6 +78,9 @@ methodmap OshimunoExecutor < CClotBody
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_spy.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
+		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2024_spider_sights/hwn2024_spider_sights_spy.mdl");
+		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 1);
+
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(2);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
@@ -116,7 +93,7 @@ methodmap OshimunoExecutor < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoExecutor npc = view_as<OshimunoExecutor>(iNPC);
+	OshimunoExecutorElite npc = view_as<OshimunoExecutorElite>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -163,13 +140,12 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoExecutorSelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoExecutorEliteSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
-	npc.PlayIdleSound();
 }
 
-void OshimunoExecutorSelfDefense(OshimunoExecutor npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoExecutorEliteSelfDefense(OshimunoExecutorElite npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -183,10 +159,10 @@ void OshimunoExecutorSelfDefense(OshimunoExecutor npc, float distance, float vec
 			{
 				int target = TR_GetEntityIndex(swingTrace);
 				float maxhealth = float(SDKCall_GetMaxHealth(target));
-				float extradamage = (maxhealth) / 10;
+				float extradamage = (maxhealth) / 8;
 				if(target > 0)
 				{
-					float damage = 25.0 + extradamage;
+					float damage = 50.0 + extradamage;
 					
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_TRUEDAMAGE);
 				}
@@ -203,7 +179,6 @@ void OshimunoExecutorSelfDefense(OshimunoExecutor npc, float distance, float vec
 			npc.m_iTarget = target;
 
 			npc.AddGesture("ACT_MP_ATTACK_STAND_SECONDARY",_,_,_, 2.0);
-			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.05;
 			npc.m_flNextMeleeAttack = gameTime + 0.75;
@@ -212,7 +187,7 @@ void OshimunoExecutorSelfDefense(OshimunoExecutor npc, float distance, float vec
 }
 static void ClotDeath(int entity) 
 {
-	OshimunoExecutor npc = view_as<OshimunoExecutor>(entity);
+	OshimunoExecutorElite npc = view_as<OshimunoExecutorElite>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

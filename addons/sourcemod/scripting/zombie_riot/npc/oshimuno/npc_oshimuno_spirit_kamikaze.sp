@@ -3,7 +3,6 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/demoman_paincrticialdeath01.mp3",
 	"vo/demoman_paincrticialdeath02.mp3",
 	"vo/demoman_paincrticialdeath03.mp3",
 	"vo/demoman_paincrticialdeath04.mp3",
@@ -31,32 +30,27 @@ static const char g_IdleAlertedSounds[][] =
 
 static char g_MeleeHitSounds[][] = 
 {
-	"weapons/samurai/tf_katana_slice_01.wav",
-	"weapons/samurai/tf_katana_slice_02.wav",
-	"weapons/samurai/tf_katana_slice_03.wav",
+	"weapons/boxing_gloves_hit1.wav",
+	"weapons/boxing_gloves_hit2.wav",
+	"weapons/boxing_gloves_hit3.wav",
+	"weapons/boxing_gloves_hit4.wav",
 };
 
-static const char g_MeleeAttackSounds[][] =
+static const char g_RangedAttackSounds[][] = 
 {
-	"weapons/samurai/tf_katana_01.wav",
-	"weapons/samurai/tf_katana_02.wav",
-	"weapons/samurai/tf_katana_03.wav",
-	"weapons/samurai/tf_katana_04.wav",
-	"weapons/samurai/tf_katana_05.wav",
-	"weapons/samurai/tf_katana_06.wav",
+	"weapons/grenade_launcher1.wav",
 };
-
 void OshimunoSpiritKamikazeOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
-	PrecacheSoundArray(g_MeleeAttackSounds);
+	PrecacheSoundArray(g_RangedAttackSounds);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Spirit Kamikaze");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spirit_kamikaze");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Icon, sizeof(data.Icon), "demo");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -87,22 +81,24 @@ methodmap OshimunoSpiritKamikaze < CClotBody
 	{
 		EmitSoundToAll(g_DeathSounds[GetRandomInt(0, sizeof(g_DeathSounds) - 1)], this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
-	public void PlayMeleeSound()
- 	{
-		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
-	}
 	public void PlayMeleeHitSound()
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
+	}
+	public void PlayRangedSound()
+	{
+		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
 	public OshimunoSpiritKamikaze(float vecPos[3], float vecAng[3], int ally)
 	{
 		OshimunoSpiritKamikaze npc = view_as<OshimunoSpiritKamikaze>(CClotBody(vecPos, vecAng, "models/player/demo.mdl", "1.0", "1000", ally));
+		float gameTime = GetGameTime(npc.index);
 		
 		i_NpcWeight[npc.index] = 1;
-		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "ullapool_caber_explosion");
+		npc.SetActivity("ACT_MP_RUN_SECONDARY");
+		KillFeed_SetKillIcon(npc.index, "tf_projectile_pipe");
+		
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -110,12 +106,14 @@ methodmap OshimunoSpiritKamikaze < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = OshimunoSpiritKamikazeOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 300.0;
+		npc.m_flSpeed = 240.0;
+		npc.m_iState = 0;  // 0 for walking with grenade launcher || 1 for shooting and standing still
+		npc.m_flNextMeleeAttack = gameTime + FAR_FUTURE;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_caber/c_caber.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_grenadelauncher/c_grenadelauncher.mdl");
 
 		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/all_class/hw2013_stiff_buddy/hw2013_stiff_buddy_scout.mdl");
 
@@ -125,7 +123,7 @@ methodmap OshimunoSpiritKamikaze < CClotBody
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(12);
+		SetVariantInt(4);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -184,62 +182,178 @@ static void ClotThink(int iNPC)
 		}
 		OshimunoSpiritKamikazeSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
+	if(npc.m_flDoingAnimation < gameTime && npc.Anger)
+	{
+		if(IsValidEntity(npc.m_iWearable1))
+			RemoveEntity(npc.m_iWearable1);
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_caber/c_caber.mdl");
+		KillFeed_SetKillIcon(npc.index, "ullapool_caber_explosion");
+		npc.StartPathing();
+		npc.m_flSpeed = 400.0;
+		npc.m_bisWalking = true;
+		npc.SetActivity("ACT_MP_RUN_MELEE");
+		fl_TotalArmor[npc.index] = 1.0;
+		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
+		npc.m_flDoingAnimation = gameTime + FAR_FUTURE; //so this doesnt trigger again
+	}
 
 	npc.PlayIdleSound();
 }
 
 void OshimunoSpiritKamikazeSelfDefense(OshimunoSpiritKamikaze npc, float distance, float vecTarget[3], float gameTime)
-{
-	if(npc.m_flAttackHappens)
+{	
+	if(npc.Anger) // suicide charge
 	{
-		if(npc.m_flAttackHappens < gameTime)
+		if(npc.m_flAttackHappens)
 		{
-			npc.m_flAttackHappens = 0.0;
-			
-			Handle swingTrace;
-			npc.FaceTowards(vecTarget, 15000.0);
-			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
+			if(npc.m_flAttackHappens < gameTime)
 			{
-				int target = TR_GetEntityIndex(swingTrace);
-				if(target > 0)
+				npc.m_flAttackHappens = 0.0;
+			
+				Handle swingTrace;
+				npc.FaceTowards(vecTarget, 15000.0);
+				if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
 				{
-					float damage = 60.0;
+					int target = TR_GetEntityIndex(swingTrace);
+					if(target > 0)
+					{
+						float damage = 150.0;
 					
-					npc.PlayMeleeHitSound();
-					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
-					Elemental_AddChaosDamage(target, npc.index, 20, true); // TODO: replace with spirit fire once made
+						npc.PlayMeleeHitSound();
+						SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
+						Elemental_AddChaosDamage(target, npc.index, 20, true); // TODO: replace with spirit fire once made
 
-					float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-					pos[2] += 45;
-					makeexplosion(-1, pos, 0, 0 , 0);
+						float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+						pos[2] += 45;
+						StatusEffects_SpiritFireAddStuff(target, 15, 0.25);
+						makeexplosion(-1, pos, 0, 0 , 0);
+						SmiteNpcToDeath(npc.index);
+					}
 				}
+				delete swingTrace;
 			}
-			delete swingTrace;
+		}
+
+		if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) && npc.m_flNextMeleeAttack < gameTime)
+		{
+			int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
+			if(IsValidEnemy(npc.index, target, false, true))
+			{
+				npc.m_iTarget = target;
+
+				npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
+			
+				npc.m_flAttackHappens = gameTime + 0.25;
+				npc.m_flNextMeleeAttack = gameTime + 0.75;
+			}
 		}
 	}
-
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) && npc.m_flNextMeleeAttack < gameTime)
+	else // normal state
 	{
-		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
-		if(IsValidEnemy(npc.index, target, false, true))
+		if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 20.0) && npc.m_flNextRangedAttack < gameTime)
 		{
-			npc.m_iTarget = target;
+			float VecAim[3]; WorldSpaceCenter(npc.m_iTarget, VecAim );
+			npc.FaceTowards(VecAim, 20000.0);
+			int Enemy_I_See = Can_I_See_Enemy(npc.index, npc.m_iTarget);
+			if(IsValidEnemy(npc.index, Enemy_I_See))
+			{
+				npc.m_iTarget = Enemy_I_See;
+				npc.PlayRangedSound();
+				float RocketDamage = 90.0;
+				float RocketSpeed = 450.0;
+				float VecStart[3]; WorldSpaceCenter(npc.index, VecStart);
+				float vecDest[3];
+				vecDest = vecTarget;
+				vecDest[0] += GetRandomFloat(-55.0, 55.0);
+				vecDest[1] += GetRandomFloat(-55.0, 55.0);
+				vecDest[2] += GetRandomFloat(-10.0, 20.0);
+				float SpeedReturn[3];
 
-			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
-			npc.PlayMeleeSound();
-			
-			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+				npc.AddGesture("ACT_MP_ATTACK_STAND_SECONDARY");
+				int RocketGet = npc.FireRocket(vecDest, RocketDamage, RocketSpeed, "models/weapons/w_models/w_grenade_grenadelauncher.mdl", 1.2);
+				SetEntProp(RocketGet, Prop_Send, "m_nSkin", 1);
+				//Reducing gravity, reduces speed, lol.
+				SetEntityGravity(RocketGet, 0.7);
+				ArcToLocationViaSpeedProjectile(RocketGet, vecDest, SpeedReturn, 2.0, 1.0);
+				Better_Gravity_Rocket(RocketGet, 50.0);
+				TeleportEntity(RocketGet, NULL_VECTOR, NULL_VECTOR, SpeedReturn);
+				npc.m_flNextRangedAttack = gameTime + 1.8;
+			}
+		}
+		if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 8.0)) // prevent from walking too close
+		{
+			if(Can_I_See_Enemy_Only(npc.index, npc.m_iTarget))
+			{
+				float VecAim[3]; WorldSpaceCenter(npc.m_iTarget, VecAim );
+				npc.FaceTowards(VecAim, 20000.0);
+				//stand
+				if(npc.m_iState != 1)
+				{
+					npc.m_bisWalking = false;
+					npc.m_iState = 1;
+					npc.SetActivity("ACT_MP_RUN_SECONDARY");
+					npc.m_flSpeed = 0.0;
+					npc.StopPathing();
+				}
+			}
+			else
+			{
+				if(npc.m_iState != 0)
+				{
+					npc.m_bisWalking = true;
+					npc.m_iState = 0;
+					npc.SetActivity("ACT_MP_RUN_SECONDARY");
+					npc.m_flSpeed = 240.0;
+					npc.StartPathing();
+				}
+			}
+		}
+		else //enemy is too far away.
+		{
+			if(npc.m_iState != 0)
+			{
+				npc.m_bisWalking = true;
+				npc.m_iState = 0;
+				npc.SetActivity("ACT_MP_RUN_SECONDARY");
+				npc.m_flSpeed = 240.0;
+				npc.StartPathing();
+			}
 		}
 	}
 }
-static void ClotDeath(int entity)
+static Action OshimunoSpiritKamikazeOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{	
+	OshimunoSpiritKamikaze npc = view_as<OshimunoSpiritKamikaze>(victim);
+	float gameTime = GetGameTime(npc.index);
+	if((ReturnEntityMaxHealth(npc.index)/2) >= GetEntProp(npc.index, Prop_Data, "m_iHealth") && !npc.Anger) //enrage below 50% hp
+	{
+		npc.Anger = true;
+		fl_TotalArmor[npc.index] = 0.33;
+		if(IsValidEntity(npc.m_iWearable1))
+			RemoveEntity(npc.m_iWearable1);
+
+		npc.StopPathing();
+		npc.m_bisWalking = false;
+		npc.AddActivityViaSequence("taunt_unleashed_rage_demo");
+		npc.m_flNextMeleeAttack = gameTime + 1.75;
+		npc.m_flNextRangedAttack = gameTime + FAR_FUTURE;
+		npc.m_flDoingAnimation = gameTime + 1.5;
+		npc.SetPlaybackRate(2.0);
+		npc.SetCycle(0.01);
+		EmitSoundToAll("vo/demoman_paincrticialdeath01.mp3", npc.index);
+	}
+
+	return Plugin_Changed;
+}
+static void ClotDeath(int entity) // TODO: maybe prevent this npc from gibbing when doing the suicide charge
 {
 	OshimunoSpiritKamikaze npc = view_as<OshimunoSpiritKamikaze>(entity);
-
-	float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-	pos[2] += 45;
-	makeexplosion(entity, pos, 75, 150, _, true, true, 3.0);
+	if(npc.Anger) // explode on death if enraged
+	{
+		float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+		pos[2] += 45;
+		makeexplosion(entity, pos, 75, 150, _, true, true, 3.0);
+	}
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

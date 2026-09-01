@@ -97,7 +97,7 @@ methodmap OshimunoBartender < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 300.0;
+		npc.m_flSpeed = 240.0;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_madmilk/c_madmilk.mdl"); //TODO: replace with alch potion later if possible
 
@@ -111,6 +111,8 @@ methodmap OshimunoBartender < CClotBody
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
+		SetVariantInt(2);
+		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
 		return npc;
@@ -151,40 +153,6 @@ static void ClotThink(int iNPC)
 		npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
 	}
 	
-if(npc.m_flWeaponSwitchCooldown < GetGameTime(npc.index))
-	{
-		npc.m_flWeaponSwitchCooldown = GetGameTime(npc.index) + 5.0;
-		static float flMyPos[3];
-		GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", flMyPos);
-		static float hullcheckmaxs[3];
-		static float hullcheckmins[3];
-
-		//Defaults:
-		//hullcheckmaxs = view_as<float>( { 24.0, 24.0, 72.0 } );
-		//hullcheckmins = view_as<float>( { -24.0, -24.0, 0.0 } );
-
-		hullcheckmaxs = view_as<float>( { 35.0, 35.0, 500.0 } ); //check if above is free
-		hullcheckmins = view_as<float>( { -35.0, -35.0, 17.0 } );
-
-		if(!IsSpaceOccupiedWorldOnly(flMyPos, hullcheckmins, hullcheckmaxs, npc.index))
-		{
-			if(npc.m_iChanged_WalkCycle != 1)
-			{
-				npc.m_bisWalking = true;
-				npc.m_iChanged_WalkCycle = 1;
-				npc.SetActivity("ACT_CUSTOM_WALK_SPEAR");
-			}
-		}
-		else
-		{
-			if(npc.m_iChanged_WalkCycle != 2)
-			{
-				npc.m_bisWalking = true;
-				npc.m_iChanged_WalkCycle = 2;
-				npc.SetActivity("ACT_ACHILLES_RUN_DAGGER");
-			}
-		}
-	}
 	if(IsValidEnemy(npc.index, npc.m_iTarget))
 	{
 		float vecTarget[3]; WorldSpaceCenter(npc.m_iTarget, vecTarget );
@@ -208,7 +176,7 @@ if(npc.m_flWeaponSwitchCooldown < GetGameTime(npc.index))
 				{
 					npc.SetGoalEntity(npc.m_iTarget);
 				}
-				npc.m_flSpeed = 200.0;
+				npc.m_flSpeed = 240.0;
 			}
 			case 1:
 			{
@@ -231,7 +199,7 @@ static int OshimunoBartenderSelfDefense(OshimunoBartender npc, float gameTime, f
 	//Direct mode
 	if(gameTime > npc.m_flNextRangedAttack)
 	{
-		if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 30.0))
+		if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 27.0))
 		{
 			float VecAim[3]; WorldSpaceCenter(npc.m_iTarget, VecAim );
 			npc.FaceTowards(VecAim, 20000.0);
@@ -241,44 +209,24 @@ static int OshimunoBartenderSelfDefense(OshimunoBartender npc, float gameTime, f
 				npc.m_iTarget = Enemy_I_See;
 				npc.PlayMeleeSound();
 				float RocketDamage = 35.0;
-				float RocketSpeed = 650.0;
+				float RocketSpeed = 750.0;
 				float vecTarget[3]; WorldSpaceCenter(npc.m_iTarget, vecTarget );
 				float VecStart[3]; WorldSpaceCenter(npc.index, VecStart );
 				float vecDest[3];
 				vecDest = vecTarget;
 				vecDest[0] += GetRandomFloat(-35.0, 35.0);
 				vecDest[1] += GetRandomFloat(-35.0, 35.0);
-				vecDest[2] += GetRandomFloat(-35.0, 35.0);
-				if(npc.m_iChanged_WalkCycle == 1)
-				{
-					float SpeedReturn[3];
-					npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE");
+				vecDest[2] += GetRandomFloat(-10.0, 15.0);
+				float SpeedReturn[3];
 
-					int RocketGet = npc.FireRocket(vecDest, RocketDamage, RocketSpeed, "models/workshop/weapons/c_models/c_madmilk/c_madmilk.mdl", 1.2);
-					//Reducing gravity, reduces speed, lol.
-					SetEntityGravity(RocketGet, 1.3); 	
-					//I dont care if its not too accurate, ig they suck with the weapon idk lol, lore.
-					ArcToLocationViaSpeedProjectile(RocketGet, vecDest, SpeedReturn, 1.75, 1.0);
-					Better_Gravity_Rocket(RocketGet, 55.0);
-					TeleportEntity(RocketGet, NULL_VECTOR, NULL_VECTOR, SpeedReturn);
-
-					//This will return vecTarget as the speed we need.
-				}
-				else
-				{
-					npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE");
-					//They do a direct attack, slow down the rocket and make it deal less damage.
-					RocketDamage *= 0.7;
-					//	npc.PlayRangedSound();
-					npc.FireRocket(vecTarget, RocketDamage, RocketSpeed, "models/workshop/weapons/c_models/c_madmilk/c_madmilk.mdl", 1.2);
-				}
-				npc.m_flNextRangedAttack = gameTime + 1.75;
-
-				
-				//Launch something to target, unsure if rocket or something else.
-				//idea:launch fake rocket with noclip or whatever that passes through all
-				//then whereever the orginal goal was, land there.
-				//it should be a mortar.
+				npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE");
+				int RocketGet = npc.FireRocket(vecDest, RocketDamage, RocketSpeed, "models/workshop/weapons/c_models/c_madmilk/c_madmilk.mdl", 1.2);
+				//Reducing gravity, reduces speed, lol.
+				SetEntityGravity(RocketGet, 1.0);
+				ArcToLocationViaSpeedProjectile(RocketGet, vecDest, SpeedReturn, 1.5, 1.0);
+				Better_Gravity_Rocket(RocketGet, 50.0);
+				TeleportEntity(RocketGet, NULL_VECTOR, NULL_VECTOR, SpeedReturn);
+				npc.m_flNextRangedAttack = gameTime + 1.5;
 			}
 		}
 	}

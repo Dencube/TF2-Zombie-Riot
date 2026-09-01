@@ -29,6 +29,8 @@ void OshimunoGamblerOnMapStart()
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
+	PrecacheSound("weapons/revolver_shoot.wav");
+	PrecacheSound("weapons/enforcer_shoot.wav");
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Crippling Gambler");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_gambler");

@@ -239,12 +239,12 @@ void OshimunoForerunnerSelfDefense(OshimunoForerunner npc, float distance, float
 				{
 					if(npc.m_iState == 0) //normal hit
 					{
-						damage = 60.0;
+						damage = 45.0;
 					}
 					else //charging hit
 					{
-						damage = 120.0;
-						Custom_Knockback(npc.index, target, 700.0, true, true);
+						damage = 105.0;
+						Custom_Knockback(npc.index, target, 800.0, true, true);
 						npc.m_iOverlordComboAttack--;
 					}
 					npc.PlayMeleeHitSound();
@@ -274,14 +274,14 @@ void OshimunoForerunnerSelfDefense(OshimunoForerunner npc, float distance, float
 		{	
 			CPrintToChatAll("DEBUG: CHARGING");
 			npc.PlayChargeSound();
-			npc.m_flSpeed = 410.0;
+			npc.m_flSpeed = 390.0;
 			npc.m_flChargeDuration = gameTime + CHARGE_STATE_DURATION;
 			npc.m_iState = 1;
 			npc.m_iOverlordComboAttack--;
 
 			f_NpcAdjustFriction[npc.index] = 0.25;
 			ApplyStatusEffect(npc.index, npc.index, "Ruina's Agility", 99999.0);
-			NpcStats_RuinaAgilityStengthen(npc.index, 2.0);
+			NpcStats_RuinaAgilityStengthen(npc.index, 1.8);
 			ApplyStatusEffect(npc.index, npc.index, "Intangible", 99999.0);
 			f_CheckIfStuckPlayerDelay[npc.index] = FAR_FUTURE; //She CANT stuck you, so dont make players not unstuck in cant bve stuck ? what ?
 			b_ThisEntityIgnoredBeingCarried[npc.index] = true; //cant be targeted AND wont do npc collsiions

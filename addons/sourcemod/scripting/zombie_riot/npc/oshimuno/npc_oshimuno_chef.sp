@@ -48,7 +48,7 @@ void OshimunoChefOnMapStart()
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Street Chef");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_chef");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Icon, sizeof(data.Icon), "pyro");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -90,7 +90,7 @@ methodmap OshimunoChef < CClotBody
 	
 	public OshimunoChef(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoChef npc = view_as<OshimunoChef>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.0", "1000", ally));
+		OshimunoChef npc = view_as<OshimunoChef>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.35", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
@@ -194,14 +194,14 @@ void OshimunoChefSelfDefense(OshimunoChef npc, float distance, float vecTarget[3
 			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
 			{
 				int target = TR_GetEntityIndex(swingTrace);
-				int health = GetClientHealth(target);
-				int maxhealth = SDKCall_GetMaxHealth(target);
-				int extradamage = ((maxhealth) - (health)) / 10; //deals extra damage equal to 10% of the targets missing hp
-				if(extradamage < 0) //prevent the npc from doing LESS damage if target has overheal
-					extradamage = 0; 
+				float health = float(GetClientHealth(target));
+				float maxhealth = float(SDKCall_GetMaxHealth(target));
+				float extradamage = ((maxhealth) - (health)) / 8; //deals extra damage equal to 12.5% of the targets missing hp
+				if(extradamage < 0.0) //prevent the npc from doing LESS damage if target has overheal
+					extradamage = 0.0; 
 				if(target > 0)
 				{
-					float damage = 50.0 + extradamage;
+					float damage = 60.0 + extradamage;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -211,7 +211,7 @@ void OshimunoChefSelfDefense(OshimunoChef npc, float distance, float vecTarget[3
 		}
 	}
 
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) && npc.m_flNextMeleeAttack < gameTime)
+	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 1.5 && npc.m_flNextMeleeAttack < gameTime)
 	{
 		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
 		if(IsValidEnemy(npc.index, target, false, true))

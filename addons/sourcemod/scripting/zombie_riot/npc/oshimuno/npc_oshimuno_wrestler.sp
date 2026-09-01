@@ -47,7 +47,7 @@ void OshimunoWrestlerOnMapStart()
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Wrestler");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_wrestler");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Icon, sizeof(data.Icon), "medic_uber");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Dancer;
@@ -55,9 +55,9 @@ void OshimunoWrestlerOnMapStart()
 	NPC_Add(data);
 }
 
-static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team, const char[] data)
+static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoWrestler(vecPos, vecAng, team, data);
+	return OshimunoWrestler(vecPos, vecAng, team);
 }
 
 methodmap OshimunoWrestler < CClotBody
@@ -87,9 +87,9 @@ methodmap OshimunoWrestler < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public OshimunoWrestler(float vecPos[3], float vecAng[3], int ally, const char[] data)
+	public OshimunoWrestler(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoWrestler npc = view_as<OshimunoWrestler>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.35", "5000 ", ally));
+		OshimunoWrestler npc = view_as<OshimunoWrestler>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.35", "5000", ally));
 		
 		i_NpcWeight[npc.index] = 3;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
@@ -105,6 +105,7 @@ methodmap OshimunoWrestler < CClotBody
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
+		npc.m_flRangedArmor = 0.7;
 		 	
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/player/items/medic/hwn2016_burly_beast/hwn2016_burly_beast.mdl");
 
@@ -116,15 +117,6 @@ methodmap OshimunoWrestler < CClotBody
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(1);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
-
-		if(data[0])
-		{
-			npc.m_iOverlordComboAttack = StringToInt(data);
-		}
-		else
-		{
-			npc.m_iOverlordComboAttack = 50;
-		}
 
 		npc.StartPathing();
 		return npc;
@@ -227,9 +219,7 @@ void OshimunoWrestlerSelfDefense(OshimunoWrestler npc, float distance, float vec
 }
 
 static Action WrestlerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
-{	
-	OshimunoWrestler npc = view_as<OshimunoWrestler>(victim);
-	
+{
 	if(attacker <= 0)
 		return Plugin_Continue;
 
@@ -237,15 +227,6 @@ static Action WrestlerOnTakeDamage(int victim, int &attacker, int &inflictor, fl
 	{
 		damage *= 0.33;
 		return Plugin_Changed;
-	}
-
-	if(npc.m_iOverlordComboAttack)
-	{
-		damage -= float(npc.m_iOverlordComboAttack);
-		if(damage < 1.0)
-		{
-			damage = 1.0;
-		}
 	}
 	return Plugin_Changed;
 }

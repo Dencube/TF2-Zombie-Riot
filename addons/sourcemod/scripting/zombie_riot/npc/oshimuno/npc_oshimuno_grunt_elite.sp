@@ -108,7 +108,7 @@ methodmap OshimunoGruntElite < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = GruntEliteOnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = OshimunoGruntEliteOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
@@ -244,7 +244,7 @@ void OshimunoGruntEliteSelfDefense(OshimunoGruntElite npc, float distance, float
 	}
 }
 
-static Action GruntEliteOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+static Action OshimunoGruntEliteOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {	
 	OshimunoGruntElite npc = view_as<OshimunoGruntElite>(victim);
 	float gameTime = GetGameTime(npc.index);

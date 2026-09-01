@@ -1268,31 +1268,34 @@ void NPC_ConfigSetup()
 	OshimunoBouncerOnMapStart();
 	OshimunoBoomboxOnMapStart();
 	OshimunoDJOnMapStart();
+	OshimunoBreakBoomboxOnMapStart();
 	OshimunoSpiritOrbOnMapStart();
 	OshimunoTreeOnMapStart();
 	OshimunoSpiritTreeOnMapStart();
 	OshimunoTreeHealingOnMapStart();
 	OshimunoFarmerOnMapStart();
 	OshimunoDancerOnMapStart();
-	OshimunoSpiritPyroOnMapStart();
+	OshimunoSpiritArsonistOnMapStart();
 	OshimunoDrunkardOnMapStart();
 	OshimunoChefOnMapStart();
 	OshimunoSpiritualistOnMapStart();
 	OshimunoGruntOnMapStart();
 	OshimunoGruntEliteOnMapStart();
 	OshimunoExecutorOnMapStart();
+	OshimunoExecutorEliteOnMapStart();
 	OshimunoMobsterOnMapStart();
 	OshimunoMobsterEliteOnMapStart();
 	OshimunoAgentOnMapStart();
 	OshimunoAgentEliteOnMapStart();
 	OshimunoAvengerOnMapStart();
+	OshimunoAvengerEliteOnMapStart();
 	OshimunoForerunnerOnMapStart();
 	OshimunoSmokebombOnMapStart();
 	OshimunoBartenderOnMapStart();
 	OshimunoNinjaOnMapStart();
 	OshimunoTrashManOnMapStart();
 	OshimunoSpiritKamikazeOnMapStart();
-	OshimunoSpiritCallerOnMapStart();
+	OshimunoOccultistOnMapStart();
 	OshimunoKaijuOnMapStart();
 	OshimunoKaijuJuvenileOnMapStart();
 	OshimunoTricksterOnMapStart();
@@ -2821,22 +2824,26 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_cone_swing_standalone.sp" //TODO:REMOVE LATER
 #include "npc/oshimuno/npc_harukichi.sp"
 #include "npc/oshimuno/npc_oshimuno_bouncer.sp"
+#include "npc/oshimuno/npc_oshimuno_bartender.sp"
 #include "npc/oshimuno/npc_oshimuno_boombox.sp"
 #include "npc/oshimuno/npc_oshimuno_dj.sp"
+#include "npc/oshimuno/npc_oshimuno_break_boombox.sp"
 #include "npc/oshimuno/npc_oshimuno_spirit_orb.sp"
 #include "npc/oshimuno/npc_oshimuno_tree.sp"
 #include "npc/oshimuno/npc_oshimuno_farmer.sp"
 #include "npc/oshimuno/npc_oshimuno_ninja.sp"
 #include "npc/oshimuno/npc_oshimuno_dancer.sp"
-#include "npc/oshimuno/npc_oshimuno_spirit_pyro.sp"
+#include "npc/oshimuno/npc_oshimuno_spirit_arsonist.sp"
 #include "npc/oshimuno/npc_oshimuno_forerunner.sp"
 #include "npc/oshimuno/npc_oshimuno_chef.sp"
 #include "npc/oshimuno/npc_oshimuno_drunkard.sp"
 #include "npc/oshimuno/npc_oshimuno_spiritualist.sp"
 #include "npc/oshimuno/npc_oshimuno_grunt.sp"
 #include "npc/oshimuno/npc_oshimuno_grunt_elite.sp"
+#include "npc/oshimuno/npc_oshimuno_avenger.sp"
+#include "npc/oshimuno/npc_oshimuno_avenger_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_executor.sp"
-#include "npc/oshimuno/npc_oshimuno_bartender.sp"
+#include "npc/oshimuno/npc_oshimuno_executor_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_mobster.sp"
 #include "npc/oshimuno/npc_oshimuno_mobster_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_agent.sp"
@@ -2844,8 +2851,7 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_smokebomb.sp"
 #include "npc/oshimuno/npc_oshimuno_trash_man.sp"
 #include "npc/oshimuno/npc_oshimuno_spirit_kamikaze.sp"
-#include "npc/oshimuno/npc_oshimuno_spiritcaller.sp"
-#include "npc/oshimuno/npc_oshimuno_avenger.sp"
+#include "npc/oshimuno/npc_oshimuno_occultist.sp"
 #include "npc/oshimuno/npc_oshimuno_tree_healing.sp"
 #include "npc/oshimuno/npc_oshimuno_spirit_tree.sp"
 #include "npc/oshimuno/npc_oshimuno_kaiju.sp"

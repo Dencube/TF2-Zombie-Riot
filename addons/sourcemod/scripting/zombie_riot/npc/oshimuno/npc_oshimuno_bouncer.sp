@@ -49,7 +49,7 @@ void OshimunoBouncerOnMapStart()
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Shibuya Bouncer");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_bouncer");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Icon, sizeof(data.Icon), "heavy_steelfist");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Dancer;

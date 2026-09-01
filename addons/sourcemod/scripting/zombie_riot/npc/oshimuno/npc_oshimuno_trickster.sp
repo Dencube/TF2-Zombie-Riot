@@ -47,7 +47,7 @@ static bool g_ConeFillOk = false;
 static int g_ConeLaser = -1;
 
 #define CONE_FILL_MAT "laststand/fill_cone.vmt"
-#define CONE_RADIUS 300.0
+#define CONE_RADIUS 250.0
 #define CONE_MELEE_ARC 90.0			// punch hit radius
 #define CONE_HALFANGLE 30.0	    	// angle based on relative north, 22.5 = a 45 degree cone
 #define CONE_LIFESPAN 0.3	    	// how long the cone lasts before disappearing
@@ -65,11 +65,12 @@ void OshimunoTricksterOnMapStart()
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
+	PrecacheSound("weapons/flame_thrower_airblast.wav");
 	g_ConeLaser = PrecacheModel("sprites/laserbeam.vmt");
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Trickster");
+	strcopy(data.Name, sizeof(data.Name), "Street Trickster");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_trickster");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Icon, sizeof(data.Icon), "pyro_freeze_1");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -108,7 +109,6 @@ methodmap OshimunoTrickster < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	
 	public OshimunoTrickster(float vecPos[3], float vecAng[3], int ally)
 	{
 		OshimunoTrickster npc = view_as<OshimunoTrickster>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.0", "1000", ally));
@@ -224,7 +224,7 @@ void OshimunoTricksterSelfDefense(OshimunoTrickster npc, float distance, float v
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
+					float damage = 80.0;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -256,21 +256,19 @@ void OshimunoTricksterSelfDefense(OshimunoTrickster npc, float distance, float v
 			npc.m_iTarget = target;
 			if(IsValidEntity(npc.m_iWearable1))
 				RemoveEntity(npc.m_iWearable1);
-			npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/player/items/pyro/taunt_friendly_fire/taunt_friendly_fire.mdl");
-			SetEntProp(npc.m_iWearable1, Prop_Send, "m_nSkin", 1);
-
+			npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_degreaser/c_degreaser.mdl");
+			EmitSoundToAll("weapons/flame_thrower_airblast.wav", npc.index);
+			npc.SetActivity("ACT_MP_RUN_PRIMARY");
 			npc.StopPathing();
 			npc.m_bisWalking = false;
-			npc.AddActivityViaSequence("layer_taunt_friendly_fire");
 			npc.m_iOverlordComboAttack--;
 			npc.m_flNextMeleeAttack = gameTime + 1.25;
-			npc.m_flDoingAnimation = gameTime + 0.5;
-			npc.SetCycle(1.3);
-			npc.SetPlaybackRate(2.0);
+			npc.m_flDoingAnimation = gameTime + 0.75;
+			
+			
 
-			npc.PlayMeleeSound();
-			float damage = 100.0;
-			NPC_Ignite(target, npc.index, 10.0, -1, 4.0);
+			float damage = 120.0;
+			NPC_Ignite(target, npc.index, 8.0, -1, 2.0);
 			SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 
 			float yawDeg;
@@ -350,8 +348,8 @@ static void OshimunoTricksterResolveCone(OshimunoTrickster npc, const float apex
 		float at[3];
 		WorldSpaceCenter(client, at);
 
-		float damage = 100.0;
-		NPC_Ignite(client, npc.index, 2.0, -1, 4.0);
+		float damage = 120.0;
+		NPC_Ignite(client, npc.index, 8.0, -1, 2.0);
 		SDKHooks_TakeDamage(client, npc.index, npc.index, damage, DMG_CLUB);
 	}
 }

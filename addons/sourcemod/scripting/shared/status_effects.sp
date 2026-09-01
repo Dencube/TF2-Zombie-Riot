@@ -12176,7 +12176,7 @@ void StatusEffects_SpiritFire() //TODO: make spirit fire do damage and its extra
 	strcopy(data.HudDisplay, sizeof(data.HudDisplay), "⯚");
 	strcopy(data.AboveEnemyDisplay, sizeof(data.AboveEnemyDisplay), ""); //dont display above head, so empty
 	//-1.0 means unused
-	data.DamageTakenMulti 			= -1.0;
+	data.DamageTakenMulti 			=  1.0;
 	data.DamageDealMulti			= -1.0;
 	data.MovementspeedModif			= -1.0;
 	data.Positive 					= false;
@@ -12201,7 +12201,7 @@ stock int StatusEffects_SpiritFireReturnCount(int victim)
 		return 0;
 	static StatusEffect Apply_MasterStatusEffect;
 	static E_StatusEffect Apply_StatusEffect;
-	int ArrayPosition = E_AL_StatusEffects[victim].FindValue(SpiritFireIndex , E_StatusEffect::BuffIndex);
+	int ArrayPosition = E_AL_StatusEffects[victim].FindValue(SpiritFireIndex, E_StatusEffect::BuffIndex);
 	if(ArrayPosition != -1)
 	{
 		E_AL_StatusEffects[victim].GetArray(ArrayPosition, Apply_StatusEffect);
@@ -12222,7 +12222,7 @@ stock void StatusEffects_SpiritFireAddStuff_Internal(int victim, int value, floa
 
 	static StatusEffect Apply_MasterStatusEffect;
 	static E_StatusEffect Apply_StatusEffect;
-	int ArrayPosition = E_AL_StatusEffects[victim].FindValue(SpiritFireIndex , E_StatusEffect::BuffIndex);
+	int ArrayPosition = E_AL_StatusEffects[victim].FindValue(SpiritFireIndex, E_StatusEffect::BuffIndex);
 	if(ArrayPosition != -1)
 	{
 		E_AL_StatusEffects[victim].GetArray(ArrayPosition, Apply_StatusEffect);
@@ -12235,9 +12235,9 @@ stock void StatusEffects_SpiritFireAddStuff_Internal(int victim, int value, floa
 				Apply_StatusEffect.DataForUse = float(MAX_SPIRIT_FIRE_STACK);
 			}
 			Apply_StatusEffect.TimeUntillOver += time;
-			if(Apply_StatusEffect.TimeUntillOver - GetGameTime() >= 15.0)
+			if(Apply_StatusEffect.TimeUntillOver - GetGameTime() >= 10.0)
 			{
-				Apply_StatusEffect.TimeUntillOver = GetGameTime() + 15.0;
+				Apply_StatusEffect.TimeUntillOver = GetGameTime() + 10.0;
 			}
 			E_AL_StatusEffects[victim].SetArray(ArrayPosition, Apply_StatusEffect);
 		}
@@ -12249,17 +12249,17 @@ void Func_SpiritFireShow(int attacker, int victim, StatusEffect Apply_MasterStat
 	Format(HudToDisplay, SizeOfChar, "⯚(%i/%.1f)", RoundFloat(Apply_StatusEffect.DataForUse) , Apply_StatusEffect.TimeUntillOver - GetGameTime());
 }
 
-static void SpiritFireEnd(int attacker, int victim, StatusEffect Apply_MasterStatusEffect, E_StatusEffect Apply_StatusEffect)
+static void SpiritFireEnd(int entity, StatusEffect Apply_MasterStatusEffect, E_StatusEffect Apply_StatusEffect)
 {	
-	float pos[3]; GetEntPropVector(victim, Prop_Data, "m_vecAbsOrigin", pos);
-	float ang[3]; GetEntPropVector(victim, Prop_Data, "m_angRotation", ang);
-	int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", victim, pos, ang, GetTeam(attacker));
-	if(0 < victim <= MaxClients)
+	if(0 < entity <= MaxClients)
 	{
-		if(!IsEntityAlive(victim))
+		if(!IsEntityAlive(entity))
 		{
 			for(int i=0 ; i < 3 ; i++) //summon 3 orbs
 			{
+				float pos[3]; GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", pos);
+				float ang[3]; GetEntPropVector(entity, Prop_Data, "m_angRotation", ang);
+				int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", entity, pos, ang, TFTeam_Blue);
 				if(orb > MaxClients)
 				{
 					if(GetTeam(orb) != TFTeam_Red)
@@ -12269,10 +12269,13 @@ static void SpiritFireEnd(int attacker, int victim, StatusEffect Apply_MasterSta
 		}
 		return;
 	}
-	if(victim > MaxClients)
+	if(entity > MaxClients)
 	{
-		if(!IsEntityAlive(victim))
-		{
+		if(!IsEntityAlive(entity))
+		{	
+			float pos[3]; GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", pos);
+			float ang[3]; GetEntPropVector(entity, Prop_Data, "m_angRotation", ang);
+			int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", entity, pos, ang, TFTeam_Blue); 
 			if(orb > MaxClients)
 			{
 				if(GetTeam(orb) != TFTeam_Red)
@@ -12294,4 +12297,8 @@ static void SpiritFireThink(int victim, StatusEffect Apply_MasterStatusEffect, E
 		Apply_StatusEffect.TimeUntillOver = 0.0;
 		E_AL_StatusEffects[victim].SetArray(ArrayPosition, Apply_StatusEffect);
 	}
+	float pos[3];
+	WorldSpaceCenter(victim, pos);
+	float value = Apply_StatusEffect.DataForUse
+	SDKHooks_TakeDamage(victim, 0, 0, value, DMG_TRUEDAMAGE, -1, {0.0,0.0,0.0}, pos, false, (ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED | ZR_DAMAGE_IGNORE_DEATH_PENALTY));
 }
