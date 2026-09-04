@@ -3,69 +3,84 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/demoman_paincrticialdeath01.mp3",
-	"vo/demoman_paincrticialdeath02.mp3",
-	"vo/demoman_paincrticialdeath03.mp3",
-	"vo/demoman_paincrticialdeath04.mp3",
-	"vo/demoman_paincrticialdeath05.mp3"
+	"vo/soldier_paincrticialdeath01.mp3",
+	"vo/soldier_paincrticialdeath02.mp3",
+	"vo/soldier_paincrticialdeath03.mp3"
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/demoman_painsharp01.mp3",
-	"vo/demoman_painsharp02.mp3",
-	"vo/demoman_painsharp03.mp3",
-	"vo/demoman_painsharp04.mp3",
-	"vo/demoman_painsharp05.mp3",
-	"vo/demoman_painsharp06.mp3",
-	"vo/demoman_painsharp07.mp3"
+	"vo/soldier_painsharp01.mp3",
+	"vo/soldier_painsharp02.mp3",
+	"vo/soldier_painsharp03.mp3",
+	"vo/soldier_painsharp04.mp3",
+	"vo/soldier_painsharp05.mp3",
+	"vo/soldier_painsharp06.mp3",
+	"vo/soldier_painsharp07.mp3",
+	"vo/soldier_painsharp08.mp3"
 };
 
-static const char g_IdleAlertedSounds[][] = 
+static const char g_IdleAlertedSounds[][] =
 {
-	"vo/demoman_battlecry01.mp3",
-	"vo/demoman_battlecry02.mp3",
-	"vo/demoman_battlecry03.mp3",
-	"vo/demoman_battlecry04.mp3",
+	"vo/taunts/soldier_taunts19.mp3",
+	"vo/taunts/soldier_taunts20.mp3",
+	"vo/taunts/soldier_taunts21.mp3",
+	"vo/taunts/soldier_taunts18.mp3"
 };
 
-static char g_MeleeHitSounds[][] = 
+static const char g_MeleeHitSounds[][] =
 {
-	"mvm/melee_impacts/bottle_hit_robo01.wav",
-	"mvm/melee_impacts/bottle_hit_robo02.wav",
-	"mvm/melee_impacts/bottle_hit_robo03.wav"
+	"weapons/blade_slice_2.wav",
+	"weapons/blade_slice_3.wav",
+	"weapons/blade_slice_4.wav"
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/shovel_swing.wav",
+	"weapons/samurai/tf_katana_01.wav",
+	"weapons/samurai/tf_katana_02.wav",
+	"weapons/samurai/tf_katana_03.wav",
+	"weapons/samurai/tf_katana_04.wav",
+	"weapons/samurai/tf_katana_05.wav",
+	"weapons/samurai/tf_katana_06.wav",
+};
+static const char g_MeleeBroke[][] =
+{
+	"player/taunt_sorcery_staff_break.wav",
 };
 
-void OshimunoDrunkardOnMapStart()
+
+void OshimunoTaishimoOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
+	PrecacheSoundArray(g_MeleeBroke);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Drunkard");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_drunkard");
-	strcopy(data.Icon, sizeof(data.Icon), "demo");
+	strcopy(data.Name, sizeof(data.Name), "Taishimo");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_taishimo");
+	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Oshimuno;
+	data.Category = Type_Outlaws;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoDrunkard(vecPos, vecAng, team);
+	return Taishimo(vecPos, vecAng, team);
 }
 
-methodmap OshimunoDrunkard < CClotBody
+methodmap Taishimo < CClotBody
 {
+	property int m_iAttacksLeft
+	{
+		public get()		{	return this.m_iOverlordComboAttack;	}
+		public set(int value) 	{	this.m_iOverlordComboAttack = value;	}
+	}
 	public void PlayIdleSound()
 	{
 		if(this.m_flNextIdleSound > GetGameTime(this.index))
@@ -86,22 +101,23 @@ methodmap OshimunoDrunkard < CClotBody
  	{
 		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
 	}
+	public void PlayMeleeBroke()
+ 	{
+		EmitSoundToAll(g_MeleeBroke[GetRandomInt(0, sizeof(g_MeleeBroke) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
+	}
+
 	public void PlayMeleeHitSound()
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	property float m_flTauntLoop
+	
+	public Taishimo(float vecPos[3], float vecAng[3], int ally)
 	{
-		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
-	}
-	public OshimunoDrunkard(float vecPos[3], float vecAng[3], int ally)
-	{
-		OshimunoDrunkard npc = view_as<OshimunoDrunkard>(CClotBody(vecPos, vecAng, "models/player/demo.mdl", "1.0", "1000", ally));
+		Taishimo npc = view_as<Taishimo>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "999999", ally));
 		
-		i_NpcWeight[npc.index] = 1;
+		i_NpcWeight[npc.index] = 5;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "bottle");
+		KillFeed_SetKillIcon(npc.index, "demokatana");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -112,21 +128,23 @@ methodmap OshimunoDrunkard < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 300.0;
-		npc.m_flTauntLoop = 0.0;
-		npc.m_bisWalking = false;
+		npc.m_flSpeed = 290.0;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_bottle/c_bottle.mdl");
+		npc.m_iAttacksLeft = 3;
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana_soldier.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/demo/demo_beardpipe/demo_beardpipe.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/soldier/dec15_diplomat/dec15_diplomat.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/demo/vampire_shades/vampire_shades.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/soldier/jul13_gangplank_garment/jul13_gangplank_garment.mdl");
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/demo/sum19_dynamite_abs/sum19_dynamite_abs.mdl");
-		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/soldier/hw2013_shaolin_sash/hw2013_shaolin_sash.mdl");
+
+		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/soldier/hw2013_faux_manchu/hw2013_faux_manchu.mdl");
+
+		npc.m_iWearable6 = npc.EquipItem("head", "models/workshop/player/items/all_class/fall2013_hong_kong_cone/fall2013_hong_kong_cone_soldier.mdl");
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(12);
+		SetVariantInt(2);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -136,7 +154,7 @@ methodmap OshimunoDrunkard < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoDrunkard npc = view_as<OshimunoDrunkard>(iNPC);
+	Taishimo npc = view_as<Taishimo>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -183,21 +201,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoDrunkardSelfDefense(npc, distance, vecTarget, gameTime); 
-	}
-	if(npc.m_flTauntLoop < gameTime) // loops the taunt
-	{
-		npc.AddActivityViaSequence("taunt_scotsmans_stagger");
-		npc.SetPlaybackRate(1.5);
-		npc.SetCycle(0.0);
-		npc.m_flTauntLoop = gameTime + 3.0;
-		npc.m_flSpeed = GetRandomFloat(260.0, 320.0);
+		TaishimoSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vecTarget[3], float gameTime)
+void TaishimoSelfDefense(Taishimo npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -212,12 +222,40 @@ void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vec
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 40.0;
-					
+					float damage = 60.0;
+					if(ShouldNpcDealBonusDamage(target))
+					{
+						damage *= 3.0;
+						if(npc.m_iAttacksLeft > 0)
+						{
+							damage *= 6.0;
+						}
+					}
+					else
+					{
+						if(npc.m_iAttacksLeft > 0)
+						{
+							damage *= 1.15;
+						}
+					}
+
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
+					
+					npc.m_iAttacksLeft--;
+					if(npc.m_iAttacksLeft == 0)
+					{
+						if(IsValidEntity(npc.m_iWearable1))
+							RemoveEntity(npc.m_iWearable1);
+
+						npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_paintrain/c_paintrain.mdl");
+						npc.DispatchParticleEffect(npc.index, "mvm_pow_gold_seq_wood2", NULL_VECTOR, NULL_VECTOR, NULL_VECTOR, npc.FindAttachment("effect_hand_R"), PATTACH_ABSORIGIN, true);
+						npc.PlayMeleeBroke();
+						//break melee
+					}
 				}
 			}
+
 			delete swingTrace;
 		}
 	}
@@ -233,27 +271,13 @@ void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vec
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.8;
+			npc.m_flNextMeleeAttack = gameTime + 0.75;
 		}
-	}
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 35.0) && npc.m_flNextRangedAttack < gameTime)
-	{	
-		float vPredictedPos[3]; PredictSubjectPositionForProjectiles(npc, npc.m_iTarget, 1000.0, _,vPredictedPos);
-		npc.FaceTowards(vecTarget, 20000.0);
-
-		npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
-		npc.PlayMeleeSound();
-		int projectile = npc.FireArrow(vPredictedPos, 40.0, 900.0, "models/weapons/c_models/c_bottle/c_bottle.mdl"); //thrown bottle is upside down but thats fine cuz they're drunk
-		int trail = Trail_Attach(projectile, ARROW_TRAIL, 80, 0.22, 15.0, 6.0, 1);
-		i_WandParticle[projectile] = EntIndexToEntRef(trail);
-		CreateTimer(6.0, Timer_RemoveEntity, EntIndexToEntRef(trail), TIMER_FLAG_NO_MAPCHANGE);
-		SetParent(projectile, trail);
-		npc.m_flNextRangedAttack = gameTime + 12.0;	
 	}
 }
 static void ClotDeath(int entity)
 {
-	OshimunoDrunkard npc = view_as<OshimunoDrunkard>(entity);
+	Taishimo npc = view_as<Taishimo>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
@@ -272,4 +296,7 @@ static void ClotDeath(int entity)
 	
 	if(IsValidEntity(npc.m_iWearable5))
 		RemoveEntity(npc.m_iWearable5);
+
+	if(IsValidEntity(npc.m_iWearable6))
+		RemoveEntity(npc.m_iWearable6);
 }

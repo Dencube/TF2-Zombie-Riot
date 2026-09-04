@@ -3,84 +3,75 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/soldier_paincrticialdeath01.mp3",
-	"vo/soldier_paincrticialdeath02.mp3",
-	"vo/soldier_paincrticialdeath03.mp3"
+	"vo/scout_paincrticialdeath01.mp3",
+	"vo/scout_paincrticialdeath02.mp3",
+	"vo/scout_paincrticialdeath03.mp3",
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/soldier_painsharp01.mp3",
-	"vo/soldier_painsharp02.mp3",
-	"vo/soldier_painsharp03.mp3",
-	"vo/soldier_painsharp04.mp3",
-	"vo/soldier_painsharp05.mp3",
-	"vo/soldier_painsharp06.mp3",
-	"vo/soldier_painsharp07.mp3",
-	"vo/soldier_painsharp08.mp3"
+	"vo/scout_painsharp01.mp3",
+	"vo/scout_painsharp02.mp3",
+	"vo/scout_painsharp03.mp3",
+	"vo/scout_painsharp04.mp3",
+	"vo/scout_painsharp05.mp3",
+	"vo/scout_painsharp06.mp3",
+	"vo/scout_painsharp07.mp3",
+	"vo/scout_painsharp08.mp3",
 };
 
-static const char g_IdleAlertedSounds[][] =
+static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/taunts/soldier_taunts19.mp3",
-	"vo/taunts/soldier_taunts20.mp3",
-	"vo/taunts/soldier_taunts21.mp3",
-	"vo/taunts/soldier_taunts18.mp3"
+	"vo/scout_battlecry01.mp3",
+	"vo/scout_battlecry03.mp3",
+	"vo/scout_battlecry04.mp3",
+	"vo/scout_battlecry05.mp3",
 };
 
 static const char g_MeleeHitSounds[][] =
 {
-	"weapons/blade_slice_2.wav",
-	"weapons/blade_slice_3.wav",
-	"weapons/blade_slice_4.wav"
+	"weapons/cleaver_hit_02.wav",
+	"weapons/cleaver_hit_03.wav",
+	"weapons/cleaver_hit_05.wav",
+	"weapons/cleaver_hit_06.wav",
+	"weapons/cleaver_hit_07.wav",
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/samurai/tf_katana_01.wav",
-	"weapons/samurai/tf_katana_02.wav",
-	"weapons/samurai/tf_katana_03.wav",
-	"weapons/samurai/tf_katana_04.wav",
-	"weapons/samurai/tf_katana_05.wav",
-	"weapons/samurai/tf_katana_06.wav",
-};
-static const char g_MeleeBroke[][] =
-{
-	"player/taunt_sorcery_staff_break.wav",
+	"weapons/pickaxe_swing1.wav",
+	"weapons/pickaxe_swing2.wav",
+	"weapons/pickaxe_swing3.wav",
 };
 
-
-void OshimunoHarukichiOnMapStart()
+void OshimunoFloggerOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
-	PrecacheSoundArray(g_MeleeBroke);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Harukichi");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_harukichi");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Name, sizeof(data.Name), "Spirit Flogger");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_flogger");
+	strcopy(data.Icon, sizeof(data.Icon), "militia");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Outlaws;
+	data.Category = Type_Oshimuno;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
 
+#define INITIAL_ORB_ABSORB_CD 8.0
+#define ORB_ABSORB_CD 20.0
+
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return Harukichi(vecPos, vecAng, team);
+	return OshimunoFlogger(vecPos, vecAng, team);
 }
 
-methodmap Harukichi < CClotBody
+methodmap OshimunoFlogger < CClotBody
 {
-	property int m_iAttacksLeft
-	{
-		public get()		{	return this.m_iOverlordComboAttack;	}
-		public set(int value) 	{	this.m_iOverlordComboAttack = value;	}
-	}
 	public void PlayIdleSound()
 	{
 		if(this.m_flNextIdleSound > GetGameTime(this.index))
@@ -101,23 +92,18 @@ methodmap Harukichi < CClotBody
  	{
 		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
 	}
-	public void PlayMeleeBroke()
- 	{
-		EmitSoundToAll(g_MeleeBroke[GetRandomInt(0, sizeof(g_MeleeBroke) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
-	}
-
 	public void PlayMeleeHitSound()
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public Harukichi(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoFlogger(float vecPos[3], float vecAng[3], int ally)
 	{
-		Harukichi npc = view_as<Harukichi>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "1000", ally));
+		OshimunoFlogger npc = view_as<OshimunoFlogger>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "1000", ally));
 		
-		i_NpcWeight[npc.index] = 5;
+		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "demokatana");
+		KillFeed_SetKillIcon(npc.index, "disciplinary_action");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -125,26 +111,24 @@ methodmap Harukichi < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = OshimunoFloggerOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 290.0;
+		npc.m_flSpeed = 300.0;
 
-		npc.m_iAttacksLeft = 3;
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana_soldier.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_riding_crop/c_riding_crop.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/soldier/dec15_diplomat/dec15_diplomat.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_scout_ninja_mask/short2014_scout_ninja_mask.mdl");
+		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/soldier/jul13_gangplank_garment/jul13_gangplank_garment.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_minja_vest/short2014_minja_vest.mdl");
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/soldier/hw2013_shaolin_sash/hw2013_shaolin_sash.mdl");
-
-		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/soldier/hw2013_faux_manchu/hw2013_faux_manchu.mdl");
-
-		npc.m_iWearable6 = npc.EquipItem("head", "models/workshop/player/items/all_class/fall2013_hong_kong_cone/fall2013_hong_kong_cone_soldier.mdl");
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_scout.mdl");
+		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(2);
+		SetVariantInt(3);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -154,7 +138,7 @@ methodmap Harukichi < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	Harukichi npc = view_as<Harukichi>(iNPC);
+	OshimunoFlogger npc = view_as<OshimunoFlogger>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -201,13 +185,12 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		HarukichiSelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoFloggerSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-
 	npc.PlayIdleSound();
 }
 
-void HarukichiSelfDefense(Harukichi npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoFloggerSelfDefense(OshimunoFlogger npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -222,40 +205,12 @@ void HarukichiSelfDefense(Harukichi npc, float distance, float vecTarget[3], flo
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
-					if(ShouldNpcDealBonusDamage(target))
-					{
-						damage *= 3.0;
-						if(npc.m_iAttacksLeft > 0)
-						{
-							damage *= 6.0;
-						}
-					}
-					else
-					{
-						if(npc.m_iAttacksLeft > 0)
-						{
-							damage *= 1.15;
-						}
-					}
-
+					float damage = 105.0;
+					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
-					
-					npc.m_iAttacksLeft--;
-					if(npc.m_iAttacksLeft == 0)
-					{
-						if(IsValidEntity(npc.m_iWearable1))
-							RemoveEntity(npc.m_iWearable1);
-
-						npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_paintrain/c_paintrain.mdl");
-						npc.DispatchParticleEffect(npc.index, "mvm_pow_gold_seq_wood2", NULL_VECTOR, NULL_VECTOR, NULL_VECTOR, npc.FindAttachment("effect_hand_R"), PATTACH_ABSORIGIN, true);
-						npc.PlayMeleeBroke();
-						//break melee
-					}
 				}
 			}
-
 			delete swingTrace;
 		}
 	}
@@ -271,16 +226,26 @@ void HarukichiSelfDefense(Harukichi npc, float distance, float vecTarget[3], flo
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_flNextMeleeAttack = gameTime + 0.45;
 		}
 	}
 }
-static void ClotDeath(int entity)
+
+static Action OshimunoFloggerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{	
+	OshimunoFlogger npc = view_as<OshimunoFlogger>(victim);
+	if((ReturnEntityMaxHealth(npc.index)/2) >= GetEntProp(npc.index, Prop_Data, "m_iHealth") && !npc.Anger) //enrage below 50% hp
+	{
+		npc.Anger = true;
+		fl_TotalArmor[npc.index] = 0.66;
+		EmitSoundToAll("player/pl_scout_dodge_can_drink.wav", npc.index, SNDCHAN_STATIC, 120, _, 0.9);
+	}
+
+	return Plugin_Changed;
+}
+static void ClotDeath(int entity) 
 {
-	Harukichi npc = view_as<Harukichi>(entity);
-	float flPosDeath[3];
-	WorldSpaceCenter(npc.index, flPosDeath);
-	ParticleEffectAt(flPosDeath, "ping_circle", 1.0);
+	OshimunoFlogger npc = view_as<OshimunoFlogger>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
@@ -299,7 +264,4 @@ static void ClotDeath(int entity)
 	
 	if(IsValidEntity(npc.m_iWearable5))
 		RemoveEntity(npc.m_iWearable5);
-
-	if(IsValidEntity(npc.m_iWearable6))
-		RemoveEntity(npc.m_iWearable6);
 }

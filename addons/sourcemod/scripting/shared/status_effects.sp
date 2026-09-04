@@ -244,6 +244,7 @@ void InitStatusEffects()
 #if defined ZR
 	StatusEffects_Aperture();
 	StatusEffects_SmokeScreen();
+	StatusEffects_Adoration();
 	StatusEffects_SpiritFire(); //combine all new effects into one like aperture and put them here
 	StatusEffects_Ruiania();
 	StatusEffects_BrickWeapon();
@@ -12137,7 +12138,7 @@ void StatusEffects_SmokeScreen()
 	strcopy(data.BuffName, sizeof(data.BuffName), "Smoke Screen");
 	strcopy(data.HudDisplay, sizeof(data.HudDisplay), "Ⲷ");
 	strcopy(data.AboveEnemyDisplay, sizeof(data.AboveEnemyDisplay), ""); //dont display above head, so empty
-
+	//-1.0 means unused
 	data.DamageTakenMulti 			=  1.0;
 	data.DamageDealMulti			= -1.0;
 	data.MovementspeedModif			=  1.2;
@@ -12169,7 +12170,7 @@ float SmokeScreen_Dodge(int attacker, int victim, StatusEffect Apply_MasterStatu
 }
  
 int SpiritFireIndex;
-void StatusEffects_SpiritFire() //TODO: make spirit fire do damage and its extra effects
+void StatusEffects_SpiritFire()
 {
 	StatusEffect data;
 	strcopy(data.BuffName, sizeof(data.BuffName), "Spirit Fire");
@@ -12301,4 +12302,21 @@ static void SpiritFireThink(int victim, StatusEffect Apply_MasterStatusEffect, E
 	WorldSpaceCenter(victim, pos);
 	float value = Apply_StatusEffect.DataForUse
 	SDKHooks_TakeDamage(victim, 0, 0, value, DMG_TRUEDAMAGE, -1, {0.0,0.0,0.0}, pos, false, (ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED | ZR_DAMAGE_IGNORE_DEATH_PENALTY));
+}
+void StatusEffects_Adoration()
+{
+	StatusEffect data;
+
+	strcopy(data.BuffName, sizeof(data.BuffName), "Adoration");
+	strcopy(data.HudDisplay, sizeof(data.HudDisplay), "⍝");
+	strcopy(data.AboveEnemyDisplay, sizeof(data.AboveEnemyDisplay), ""); //dont display above head, so empty
+	//-1.0 means unused
+	data.DamageTakenMulti 			= -1.0;
+	data.DamageDealMulti			=  0.2;
+	data.MovementspeedModif			=  1.2;
+	data.Positive 					= true;
+	data.ShouldScaleWithPlayerCount = false;
+	data.Slot						= 0; //0 means ignored
+	data.SlotPriority				= 0; //if its higher, then the lower version is entirely ignored.
+	StatusEffect_AddGlobal(data);
 }

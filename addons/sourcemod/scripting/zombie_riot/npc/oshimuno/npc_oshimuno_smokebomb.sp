@@ -254,7 +254,7 @@ static void ClotDeath(int entity)
 	{
 		if(IsValidEntity(entitycount) && entitycount != npc.index && (!b_NpcHasDied[entitycount])) //Cannot buff self like this.
 		{
-			if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount)) //TODO: code sends an error every time this guy dies? but why......
+			if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount))
 			{
 				float pos1[3];
 				GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);

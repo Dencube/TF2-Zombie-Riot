@@ -64,6 +64,8 @@ methodmap OshimunoBoombox < CClotBody
 		npc.m_flNextMeleeAttack = gameTime + 4.0;
 		b_NoHealthbar[npc.index] = 1;
 		npc.m_bDissapearOnDeath = true;
+		npc.m_bStaticNPC = true;
+   		AddNpcToAliveList(npc.index, 1);
 		/*b_ThisEntityIgnoredByOtherNpcsAggro[npc.index] = true;*/ // this makes djs unable to grab the boombox || TODO: make it so only rebels ignore the boombox
 		npc.StopPathing();
 		return npc;

@@ -30,24 +30,17 @@ static const char g_IdleAlertedSounds[][] =
 
 static const char g_MeleeHitSounds[][] =
 {
-	"weapons/cbar_hit1.wav",
-	"weapons/cbar_hit2.wav"
+	"weapons/batsaber_hit_flesh1.wav",
+	"weapons/batsaber_hit_flesh2.wav",
+	"weapons/batsaber_hit_world1.wav",
+	"weapons/batsaber_hit_world2.wav"
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/pickaxe_swing1.wav",
-	"weapons/pickaxe_swing2.wav",
-	"weapons/pickaxe_swing3.wav"
-};
-static const char MissSound[][] =
-{
-	"weapons/fx/nearmiss/bulletltor08.wav",
-	"weapons/fx/nearmiss/bulletltor09.wav",
-	"weapons/fx/nearmiss/bulletltor10.wav",
-	"weapons/fx/nearmiss/bulletltor11.wav",
-	"weapons/fx/nearmiss/bulletltor13.wav",
-	"weapons/fx/nearmiss/bulletltor14.wav",
+	"weapons/batsaber_swing1.wav",
+	"weapons/batsaber_swing2.wav",
+	"weapons/batsaber_swing3.wav"
 };
 
 void OshimunoDancerOnMapStart()
@@ -57,7 +50,6 @@ void OshimunoDancerOnMapStart()
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
-	PrecacheSoundArray(MissSound);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Shibuya Dancer");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_dancer");
@@ -102,8 +94,8 @@ methodmap OshimunoDancer < CClotBody
 	}
 	property float m_flTauntLoop
 	{
-		public get()							{ return fl_AbilityOrAttack[this.index][2]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][2] = TempValueForProperty; }
+		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
 	
 	public OshimunoDancer(float vecPos[3], float vecAng[3], int ally)

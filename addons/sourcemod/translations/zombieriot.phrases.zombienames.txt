@@ -8223,7 +8223,15 @@
 	}
 	"Tarakeno Mobster Desc"
 	{
-		"en"	"Ensures that debts to Tarakeno are paid off.-Fires a rocket launcher at his enemies.\n-Avoids getting too close"
+		"en"	"Ensures that debts to Tarakeno are paid off.-Fires a rocket launcher at his enemies.\n-Avoids getting too close."
+	}
+	"Tarakeno Elite Mobster"
+	{
+		"en"	"Tarakeno Elite Mobster"
+	}
+	"Tarakeno Elite Mobster Desc"
+	{
+		"en"	"Never misses the mark when it comes to his duties.-Fires a homing rocket launcher at his enemies.\n-Avoids getting too close."
 	}
 	"Tarakeno Avenger"
 	{
@@ -8421,11 +8429,11 @@
 	{
 		"en" 	"Devoted his life to controling the power of Spirits.\n-On death spawns a Spirit Orb.\n-Applies Spirit Fire on enemies with Spirit Fire."
 	}
-	"Occultist"
+	"Spirit Occultist"
 	{
-		"en" 	"Occultist"
+		"en" 	"Spirit Occultist"
 	}
-	"Occultist Desc"
+	"Spirit Occultist Desc"
 	{
 		"en" 	"Utilizes Spirits for rituals with unpredictable results.\n-Occasionally goes to hunt for a Spirit Orb to resurrect into a random enemy."
 	}
@@ -8436,5 +8444,29 @@
 	"Spirit Arsonist Desc"
 	{
 		"en" 	"Weaponized Spirit Fire to melt down the strongest of fighters.\n-Wields a flamethrower that applies lots of Spirit Fire Potency."
+	}
+	"Spirit Kamikaze"
+	{
+		"en" 	"Spirit Kamikaze"
+	}
+	"Spirit Kamikaze Desc"
+	{
+		"en" 	"A deranged explosives expert living in the woods.\n-Starts out shooting arcing pipes.\n-Enters a frenzied charge with an ullapool caber applying Spirit Fire on hit."
+	}
+	"Sakurawa"
+	{
+		"en" 	"Sakurawa"
+	}
+	"Sakurawa Desc"
+	{
+		"en" 	"Chief farmer maintaining Tarakeno's Spirit Energy supply.\n-Gains increased stats for every Tree alive.\n-Spawns Trees throughout the fight."
+	}
+	"Spirit Vessel"
+	{
+		"en" 	"Spirit Vessel"
+	}
+	"Spirit Vessel Desc"
+	{
+		"en" 	"A bodybuilder who tried using Spirits to grow his muscles and instead became possessed.\n-Explodes with Spirit Fire every time it loses enough hp. \n-Heals rapidly after taking no non-debuff/teuton damage for a period of time"
 	}
 }

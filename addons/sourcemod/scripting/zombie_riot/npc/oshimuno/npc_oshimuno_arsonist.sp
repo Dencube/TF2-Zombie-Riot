@@ -24,7 +24,7 @@ static const char g_IdleAlertedSounds[][] =
 };
 
 
-void OshimunoSpiritArsonistOnMapStart()
+void OshimunoArsonistOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -33,7 +33,7 @@ void OshimunoSpiritArsonistOnMapStart()
 	PrecacheSound("weapons/flame_thrower_pilot.wav");
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Spirit Arsonist");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spirit_arsonist");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_arsonist");
 	strcopy(data.Icon, sizeof(data.Icon), "pyro");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -44,10 +44,10 @@ void OshimunoSpiritArsonistOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoSpiritArsonist(vecPos, vecAng, team);
+	return OshimunoArsonist(vecPos, vecAng, team);
 }
 
-methodmap OshimunoSpiritArsonist < CClotBody
+methodmap OshimunoArsonist < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -92,9 +92,9 @@ methodmap OshimunoSpiritArsonist < CClotBody
 		}
 	}
 	
-	public OshimunoSpiritArsonist(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoArsonist(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoSpiritArsonist npc = view_as<OshimunoSpiritArsonist>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.0", "15000", ally));
+		OshimunoArsonist npc = view_as<OshimunoArsonist>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.0", "15000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_PRIMARY");
@@ -137,7 +137,7 @@ methodmap OshimunoSpiritArsonist < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoSpiritArsonist npc = view_as<OshimunoSpiritArsonist>(iNPC);
+	OshimunoArsonist npc = view_as<OshimunoArsonist>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -177,7 +177,7 @@ static void ClotThink(int iNPC)
 		
 		bool SpinSound = true;
 		int SetGoalVectorIndex = 0;
-		SetGoalVectorIndex = OshimunoSpiritArsonistSelfDefense(npc,SpinSound); 
+		SetGoalVectorIndex = OshimunoArsonistSelfDefense(npc,SpinSound); 
 		
 		if(SpinSound)
 			npc.PlayMinigunSound(false);
@@ -216,7 +216,7 @@ static void ClotThink(int iNPC)
 	}
 	npc.PlayIdleSound();
 }
-int OshimunoSpiritArsonistSelfDefense(OshimunoSpiritArsonist npc, bool &SpinSound)
+int OshimunoArsonistSelfDefense(OshimunoArsonist npc, bool &SpinSound)
 {
 	int target;
 	target = npc.m_iTarget;
@@ -280,7 +280,7 @@ int OshimunoSpiritArsonistSelfDefense(OshimunoSpiritArsonist npc, bool &SpinSoun
 	return 0;
 }
 
-public void OshimunoSpiritArsonist_Rocket_Particle_StartTouch(int entity, int target)
+public void OshimunoArsonist_Rocket_Particle_StartTouch(int entity, int target)
 {
 	if(target > 0 && target < MAXENTITIES)	//did we hit something???
 	{
@@ -326,7 +326,7 @@ public void OshimunoSpiritArsonist_Rocket_Particle_StartTouch(int entity, int ta
 }
 static void ClotDeath(int entity)
 {
-	OshimunoSpiritArsonist npc = view_as<OshimunoSpiritArsonist>(entity);
+	OshimunoArsonist npc = view_as<OshimunoArsonist>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

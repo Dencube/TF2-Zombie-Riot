@@ -144,6 +144,15 @@ static void ClotThink(int iNPC)
 	
 	npc.m_flNextThinkTime = gameTime + 0.1;
 
+	if(npc.m_bAllowBackWalking)
+	{
+		if(IsValidEnemy(npc.index, npc.m_iTarget))
+		{
+			float WorldSpaceVec[3]; WorldSpaceCenter(npc.m_iTarget, WorldSpaceVec);
+			npc.FaceTowards(WorldSpaceVec, 150.0);
+		}
+	}
+	
 	int target = npc.m_iTarget;
 	if(i_Target[npc.index] != -1 && !IsValidEnemy(npc.index, target))
 		i_Target[npc.index] = -1;

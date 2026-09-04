@@ -49,7 +49,7 @@ void OshimunoFarmerOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Oshimuno Farmer");
+	strcopy(data.Name, sizeof(data.Name), "Sakurawa");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_farmer");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;

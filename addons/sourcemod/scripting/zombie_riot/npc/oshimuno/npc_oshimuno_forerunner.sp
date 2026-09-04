@@ -217,7 +217,6 @@ static void ClotThink(int iNPC)
 		f_NpcAdjustFriction[npc.index] = 1.0;
 		RemoveSpecificBuff(npc.index, "Ruina's Agility");
 		RemoveSpecificBuff(npc.index, "Intangible");
-		CPrintToChatAll("DEBUG:WE'RE DONE CHARGING");
 	}
 }
 
@@ -245,7 +244,6 @@ void OshimunoForerunnerSelfDefense(OshimunoForerunner npc, float distance, float
 					{
 						damage = 105.0;
 						Custom_Knockback(npc.index, target, 800.0, true, true);
-						npc.m_iOverlordComboAttack--;
 					}
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -272,7 +270,6 @@ void OshimunoForerunnerSelfDefense(OshimunoForerunner npc, float distance, float
 		}
 		if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 15.0 && npc.m_iOverlordComboAttack > 0)
 		{	
-			CPrintToChatAll("DEBUG: CHARGING");
 			npc.PlayChargeSound();
 			npc.m_flSpeed = 390.0;
 			npc.m_flChargeDuration = gameTime + CHARGE_STATE_DURATION;

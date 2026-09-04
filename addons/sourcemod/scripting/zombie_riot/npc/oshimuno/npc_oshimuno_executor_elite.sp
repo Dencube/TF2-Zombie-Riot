@@ -147,41 +147,86 @@ static void ClotThink(int iNPC)
 
 void OshimunoExecutorEliteSelfDefense(OshimunoExecutorElite npc, float distance, float vecTarget[3], float gameTime)
 {
-	if(npc.m_flAttackHappens)
+	int target;
+	target = npc.m_iTarget;
+	if(!IsValidEnemy(npc.index,target))
 	{
-		if(npc.m_flAttackHappens < gameTime)
+		if(npc.m_iState != 0)
 		{
-			npc.m_flAttackHappens = 0.0;
-			
-			Handle swingTrace;
-			npc.FaceTowards(vecTarget, 15000.0);
-			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
-			{
-				int target = TR_GetEntityIndex(swingTrace);
-				float maxhealth = float(SDKCall_GetMaxHealth(target));
-				float extradamage = (maxhealth) / 8;
-				if(target > 0)
-				{
-					float damage = 50.0 + extradamage;
+			npc.m_bisWalking = true;
+			npc.m_iState = 0;
+			npc.SetActivity("ACT_MP_RUN_SECONDARY");
+			npc.m_flSpeed = 150.0;
+			npc.StartPathing();
+		}
+		return;
+	}
+	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 2.0))
+	{
+		int Enemy_I_See = Can_I_See_Enemy(npc.index, npc.m_iTarget);
 					
-					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_TRUEDAMAGE);
+		if(IsValidEnemy(npc.index, Enemy_I_See))
+		{
+			if(npc.m_iState != 1)
+			{
+				npc.m_bisWalking = false;
+				npc.m_iState = 1;
+				npc.SetActivity("ACT_MP_STAND_SECONDARY");
+				npc.m_flSpeed = 0.0;
+				npc.StopPathing();
+			}	
+			if(npc.m_flNextRangedAttack < gameTime)
+			{
+				if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 3.0))
+				{	
+					npc.AddGesture("ACT_MP_ATTACK_STAND_SECONDARY", true);
+					npc.FaceTowards(vecTarget, 20000.0);
+					Handle swingTrace;
+					if(npc.DoSwingTrace(swingTrace, target, { 9999.0, 9999.0, 9999.0 }))
+					{
+						target = TR_GetEntityIndex(swingTrace);	
+
+						float vecHit[3];
+						TR_GetEndPosition(vecHit, swingTrace);
+						float origin[3], angles[3];
+						view_as<CClotBody>(npc.m_iWearable1).GetAttachment("muzzle", origin, angles);
+						ShootLaser(npc.m_iWearable1, "bullet_tracer02_blue_crit", origin, vecHit, false );
+						float maxhealth = float(SDKCall_GetMaxHealth(target));
+						float extradamage = (maxhealth) / 8; //12.5% of max health as damage
+
+						if(IsValidEnemy(npc.index, target))
+						{
+							float damage = 50.0 + extradamage;
+
+							SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_TRUEDAMAGE, -1, _, vecHit);
+						}
+					}
+					delete swingTrace;
+					npc.m_flNextRangedAttack = gameTime + 1.6;
 				}
 			}
-			delete swingTrace;
+		}
+		else
+		{
+			if(npc.m_iState != 0)
+			{
+				npc.m_bisWalking = true;
+				npc.m_iState = 0;
+				npc.SetActivity("ACT_MP_RUN_SECONDARY");
+				npc.m_flSpeed = 150.0;
+				npc.StartPathing();
+			}
 		}
 	}
-
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 2.0 && npc.m_flNextMeleeAttack < gameTime)
+	else
 	{
-		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
-		if(IsValidEnemy(npc.index, target, false, true))
+		if(npc.m_iState != 0)
 		{
-			npc.m_iTarget = target;
-
-			npc.AddGesture("ACT_MP_ATTACK_STAND_SECONDARY",_,_,_, 2.0);
-			
-			npc.m_flAttackHappens = gameTime + 0.05;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_bisWalking = true;
+			npc.m_iState = 0;
+			npc.SetActivity("ACT_MP_RUN_SECONDARY");
+			npc.m_flSpeed = 150.0;
+			npc.StartPathing();
 		}
 	}
 }

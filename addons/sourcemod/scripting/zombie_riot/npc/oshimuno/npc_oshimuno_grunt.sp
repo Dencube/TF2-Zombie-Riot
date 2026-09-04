@@ -225,7 +225,7 @@ void OshimunoGruntSelfDefense(OshimunoGrunt npc, float distance, float vecTarget
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 16.0;
+					float damage = 27.0;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);

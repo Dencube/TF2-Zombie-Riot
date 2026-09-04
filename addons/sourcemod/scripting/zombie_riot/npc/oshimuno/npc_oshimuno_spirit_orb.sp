@@ -124,6 +124,14 @@ static void ClotThink(int iNPC)
 		}
 		OshimunoSpiritOrbSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
+	
+	if(IsValidEntity(npc.m_iTargetAlly)) // for removing ownership
+	{
+		if(!IsEntityAlive(npc.m_iTargetAlly))
+		{
+			npc.m_iTargetAlly = INVALID_ENT_REFERENCE;
+		}
+	}
 }
 
 void OshimunoSpiritOrbSelfDefense(OshimunoSpiritOrb npc, float distance, float vecTarget[3], float gameTime)
@@ -145,7 +153,7 @@ void OshimunoSpiritOrbSelfDefense(OshimunoSpiritOrb npc, float distance, float v
 				
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
-					StatusEffects_SpiritFireAddStuff(target, 2, 2.0);
+					StatusEffects_SpiritFireAddStuff(target, 3, 2.0);
 				}
 			}
 			delete swingTrace;

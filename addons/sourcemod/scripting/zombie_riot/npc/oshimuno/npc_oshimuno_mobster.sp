@@ -140,6 +140,15 @@ static void ClotThink(int iNPC)
 	
 	npc.m_flNextThinkTime = gameTime + 0.1;
 
+	if(npc.m_bAllowBackWalking)
+	{
+		if(IsValidEnemy(npc.index, npc.m_iTarget))
+		{
+			float WorldSpaceVec[3]; WorldSpaceCenter(npc.m_iTarget, WorldSpaceVec);
+			npc.FaceTowards(WorldSpaceVec, 150.0);
+		}
+	}
+	
 	int target = npc.m_iTarget;
 	if(i_Target[npc.index] != -1 && !IsValidEnemy(npc.index, target))
 		i_Target[npc.index] = -1;
@@ -157,7 +166,7 @@ static void ClotThink(int iNPC)
 		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
 		float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);	
 		int SetGoalVectorIndex = 0;
-		SetGoalVectorIndex = OshimunoMobsterSelfDefense(npc, distance, vecTarget, gameTime); 
+		SetGoalVectorIndex = OshimunoMobsterSelfDefense(npc, distance, vecTarget, gameTime, npc.m_iTarget); 
 
 		switch(SetGoalVectorIndex)
 		{
@@ -168,12 +177,12 @@ static void ClotThink(int iNPC)
 				if(distance < npc.GetLeadRadius()) 
 				{
 					float vPredictedPos[3];
-					PredictSubjectPosition(npc, vecTarget,_,_, vPredictedPos);
+					PredictSubjectPosition(npc, npc.m_iTarget,_,_, vPredictedPos);
 					npc.SetGoalVector(vPredictedPos);
 				}
 				else 
 				{
-					npc.SetGoalEntity(vecTarget);
+					npc.SetGoalEntity(npc.m_iTarget);
 				}
 			}
 			case 1:
@@ -194,9 +203,8 @@ static void ClotThink(int iNPC)
 	npc.PlayIdleSound();
 }
 
-int OshimunoMobsterSelfDefense(OshimunoMobster npc, float distance, float vecTarget[3], float gameTime)
+int OshimunoMobsterSelfDefense(OshimunoMobster npc, float distance, float vecTarget[3], float gameTime, int target)
 {
-	int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
 	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 11.0 && npc.m_flNextRangedAttack < gameTime)
 	{
 		if(IsValidEnemy(npc.index, target, false, true))
@@ -212,12 +220,12 @@ int OshimunoMobsterSelfDefense(OshimunoMobster npc, float distance, float vecTar
 			npc.m_flNextRangedAttack = gameTime + 1.4;
 		}
 	}
-	if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 9.0))
+	if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 10.0))
 	{
 		//target is too far, try to close in
 		return 0;
 	}
-	else if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 7.0))
+	else if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 5.0))
 	{
 		if(Can_I_See_Enemy_Only(npc.index, target))
 		{

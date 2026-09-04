@@ -40,7 +40,7 @@ static const char g_RangedAttackSounds[][] =
 {
 	"weapons/grenade_launcher1.wav",
 };
-void OshimunoSpiritKamikazeOnMapStart()
+void OshimunoPowdermanOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -48,8 +48,8 @@ void OshimunoSpiritKamikazeOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_RangedAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Spirit Kamikaze");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spirit_kamikaze");
+	strcopy(data.Name, sizeof(data.Name), "Spirit Powderman");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_powderman");
 	strcopy(data.Icon, sizeof(data.Icon), "demo");
 	data.IconCustom = true;
 	data.Flags = 0;
@@ -60,10 +60,10 @@ void OshimunoSpiritKamikazeOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoSpiritKamikaze(vecPos, vecAng, team);
+	return OshimunoPowderman(vecPos, vecAng, team);
 }
 
-methodmap OshimunoSpiritKamikaze < CClotBody
+methodmap OshimunoPowderman < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -90,9 +90,9 @@ methodmap OshimunoSpiritKamikaze < CClotBody
 		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public OshimunoSpiritKamikaze(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoPowderman(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoSpiritKamikaze npc = view_as<OshimunoSpiritKamikaze>(CClotBody(vecPos, vecAng, "models/player/demo.mdl", "1.0", "1000", ally));
+		OshimunoPowderman npc = view_as<OshimunoPowderman>(CClotBody(vecPos, vecAng, "models/player/demo.mdl", "1.0", "1000", ally));
 		float gameTime = GetGameTime(npc.index);
 		
 		i_NpcWeight[npc.index] = 1;
@@ -106,7 +106,7 @@ methodmap OshimunoSpiritKamikaze < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = OshimunoSpiritKamikazeOnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = OshimunoPowdermanOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 240.0;
@@ -133,7 +133,7 @@ methodmap OshimunoSpiritKamikaze < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoSpiritKamikaze npc = view_as<OshimunoSpiritKamikaze>(iNPC);
+	OshimunoPowderman npc = view_as<OshimunoPowderman>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -180,7 +180,7 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoSpiritKamikazeSelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoPowdermanSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 	if(npc.m_flDoingAnimation < gameTime && npc.Anger)
 	{
@@ -193,14 +193,13 @@ static void ClotThink(int iNPC)
 		npc.m_bisWalking = true;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
 		fl_TotalArmor[npc.index] = 1.0;
-		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
 		npc.m_flDoingAnimation = gameTime + FAR_FUTURE; //so this doesnt trigger again
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoSpiritKamikazeSelfDefense(OshimunoSpiritKamikaze npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoPowdermanSelfDefense(OshimunoPowderman npc, float distance, float vecTarget[3], float gameTime)
 {	
 	if(npc.Anger) // suicide charge
 	{
@@ -221,11 +220,10 @@ void OshimunoSpiritKamikazeSelfDefense(OshimunoSpiritKamikaze npc, float distanc
 					
 						npc.PlayMeleeHitSound();
 						SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
-						Elemental_AddChaosDamage(target, npc.index, 20, true); // TODO: replace with spirit fire once made
 
 						float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 						pos[2] += 45;
-						StatusEffects_SpiritFireAddStuff(target, 15, 0.25);
+						StatusEffects_SpiritFireAddStuff(target, 15, 3.0);
 						makeexplosion(-1, pos, 0, 0 , 0);
 						SmiteNpcToDeath(npc.index);
 					}
@@ -321,9 +319,9 @@ void OshimunoSpiritKamikazeSelfDefense(OshimunoSpiritKamikaze npc, float distanc
 		}
 	}
 }
-static Action OshimunoSpiritKamikazeOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+static Action OshimunoPowdermanOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {	
-	OshimunoSpiritKamikaze npc = view_as<OshimunoSpiritKamikaze>(victim);
+	OshimunoPowderman npc = view_as<OshimunoPowderman>(victim);
 	float gameTime = GetGameTime(npc.index);
 	if((ReturnEntityMaxHealth(npc.index)/2) >= GetEntProp(npc.index, Prop_Data, "m_iHealth") && !npc.Anger) //enrage below 50% hp
 	{
@@ -335,19 +333,19 @@ static Action OshimunoSpiritKamikazeOnTakeDamage(int victim, int &attacker, int 
 		npc.StopPathing();
 		npc.m_bisWalking = false;
 		npc.AddActivityViaSequence("taunt_unleashed_rage_demo");
+		EmitSoundToAll("vo/demoman_paincrticialdeath01.mp3", npc.index);
 		npc.m_flNextMeleeAttack = gameTime + 1.75;
 		npc.m_flNextRangedAttack = gameTime + FAR_FUTURE;
 		npc.m_flDoingAnimation = gameTime + 1.5;
 		npc.SetPlaybackRate(2.0);
 		npc.SetCycle(0.01);
-		EmitSoundToAll("vo/demoman_paincrticialdeath01.mp3", npc.index);
 	}
 
 	return Plugin_Changed;
 }
 static void ClotDeath(int entity) // TODO: maybe prevent this npc from gibbing when doing the suicide charge
 {
-	OshimunoSpiritKamikaze npc = view_as<OshimunoSpiritKamikaze>(entity);
+	OshimunoPowderman npc = view_as<OshimunoPowderman>(entity);
 	if(npc.Anger) // explode on death if enraged
 	{
 		float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);

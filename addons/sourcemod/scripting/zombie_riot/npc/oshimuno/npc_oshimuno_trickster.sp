@@ -267,8 +267,7 @@ void OshimunoTricksterSelfDefense(OshimunoTrickster npc, float distance, float v
 			
 			
 
-			float damage = 120.0;
-			NPC_Ignite(target, npc.index, 8.0, -1, 2.0);
+			float damage = 100.0;
 			SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 
 			float yawDeg;
@@ -348,7 +347,7 @@ static void OshimunoTricksterResolveCone(OshimunoTrickster npc, const float apex
 		float at[3];
 		WorldSpaceCenter(client, at);
 
-		float damage = 120.0;
+		float damage = 100.0;
 		NPC_Ignite(client, npc.index, 8.0, -1, 2.0);
 		SDKHooks_TakeDamage(client, npc.index, npc.index, damage, DMG_CLUB);
 	}

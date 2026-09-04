@@ -49,7 +49,7 @@ void OshimunoOccultistOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Occultist");
+	strcopy(data.Name, sizeof(data.Name), "Spirit Occultist");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_occultist");
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
@@ -165,17 +165,27 @@ static void ClotThink(int iNPC)
 	}
 	if(npc.m_iState == 1)
 	{
-		for(int i; i < i_MaxcountNpcTotal; i++)
-		{
-			int orb = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
-			if(IsValidEntity(orb))
+		if(!npc.Anger)
+		{	
+			for(int i; i < i_MaxcountNpcTotal; i++)
 			{
-				char npc_classname[60];
-				NPC_GetPluginById(i_NpcInternalId[orb], npc_classname, sizeof(npc_classname));
-
-				if(orb != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_spirit_orb") && IsEntityAlive(orb))) // look for a spirit orb alive
+				int orb = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
+				if(IsValidEntity(orb))
 				{
-					npc.m_iTargetAlly = orb; //set spirit orb as target
+					char npc_classname[60];
+					NPC_GetPluginById(i_NpcInternalId[orb], npc_classname, sizeof(npc_classname));
+
+					if(orb != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_spirit_orb") && IsEntityAlive(orb))) // look for an unclaimed orb alive then grab it
+					{
+						OshimunSpiritOrb npcOther = view_as<OshimunSpiritOrb>(orb);
+						if(!IsValidEntity(npcOther.m_iTargetAlly))
+						{
+							npcOther.m_iTargetAlly = npc.index; // orb sets this npc as its owner
+							npc.m_iTargetAlly = orb; //set orb as target
+							npc.Anger = true;
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -213,7 +223,7 @@ static void ClotThink(int iNPC)
 					}
 					case 1:
 					{
-						int entity = NPC_CreateByName("npc_oshimuno_spirit_arsonist", -1, pos, ang, GetTeam(npc.index));
+						int entity = NPC_CreateByName("npc_oshimuno_arsonist", -1, pos, ang, GetTeam(npc.index));
 						if(entity > MaxClients)
 						{	
 							if(GetTeam(npc.index) != TFTeam_Red)
@@ -222,7 +232,7 @@ static void ClotThink(int iNPC)
 					}
 					case 2:
 					{
-						int entity = NPC_CreateByName("npc_oshimuno_spirit_kamikaze", -1, pos, ang, GetTeam(npc.index));
+						int entity = NPC_CreateByName("npc_oshimuno_powderman", -1, pos, ang, GetTeam(npc.index));
 						if(entity > MaxClients)
 						{	
 							if(GetTeam(npc.index) != TFTeam_Red)

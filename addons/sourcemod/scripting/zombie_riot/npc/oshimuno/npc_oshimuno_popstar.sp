@@ -3,45 +3,41 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/demoman_paincrticialdeath01.mp3",
-	"vo/demoman_paincrticialdeath02.mp3",
-	"vo/demoman_paincrticialdeath03.mp3",
-	"vo/demoman_paincrticialdeath04.mp3",
-	"vo/demoman_paincrticialdeath05.mp3"
+	"vo/medic_paincrticialdeath01.mp3",
+	"vo/medic_paincrticialdeath02.mp3",
+	"vo/medic_paincrticialdeath03.mp3"
+};
+
+static const char g_IdleAlertedSounds[][] =
+{
+	"vo/medic_battlecry01.mp3",
+	"vo/medic_battlecry02.mp3",
+	"vo/medic_battlecry03.mp3",
+	"vo/medic_battlecry04.mp3",
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/demoman_painsharp01.mp3",
-	"vo/demoman_painsharp02.mp3",
-	"vo/demoman_painsharp03.mp3",
-	"vo/demoman_painsharp04.mp3",
-	"vo/demoman_painsharp05.mp3",
-	"vo/demoman_painsharp06.mp3",
-	"vo/demoman_painsharp07.mp3"
+	"vo/medic_painsharp01.mp3",
+	"vo/medic_painsharp02.mp3",
+	"vo/medic_painsharp03.mp3",
+	"vo/medic_painsharp04.mp3"
 };
 
-static const char g_IdleAlertedSounds[][] = 
+static const char g_MeleeHitSounds[][] =
 {
-	"vo/demoman_battlecry01.mp3",
-	"vo/demoman_battlecry02.mp3",
-	"vo/demoman_battlecry03.mp3",
-	"vo/demoman_battlecry04.mp3",
-};
-
-static char g_MeleeHitSounds[][] = 
-{
-	"mvm/melee_impacts/bottle_hit_robo01.wav",
-	"mvm/melee_impacts/bottle_hit_robo02.wav",
-	"mvm/melee_impacts/bottle_hit_robo03.wav"
+	"weapons/fist_hit_world1.wav",
+	"weapons/fist_hit_world2.wav",
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/shovel_swing.wav",
+	"weapons/boxing_gloves_swing1.wav",
+	"weapons/boxing_gloves_swing2.wav",
+	"weapons/boxing_gloves_swing4.wav"
 };
 
-void OshimunoDrunkardOnMapStart()
+void OshimunoPopstarOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -49,22 +45,22 @@ void OshimunoDrunkardOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Drunkard");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_drunkard");
-	strcopy(data.Icon, sizeof(data.Icon), "demo");
+	strcopy(data.Name, sizeof(data.Name), "Popstar");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_popstar");
+	strcopy(data.Icon, sizeof(data.Icon), "medic_uber");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Oshimuno;
+	data.Category = Type_Dancer;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoDrunkard(vecPos, vecAng, team);
+	return OshimunoPopstar(vecPos, vecAng, team);
 }
 
-methodmap OshimunoDrunkard < CClotBody
+methodmap OshimunoPopstar < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -95,13 +91,19 @@ methodmap OshimunoDrunkard < CClotBody
 		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
-	public OshimunoDrunkard(float vecPos[3], float vecAng[3], int ally)
+	property float m_flInvulDuration
 	{
-		OshimunoDrunkard npc = view_as<OshimunoDrunkard>(CClotBody(vecPos, vecAng, "models/player/demo.mdl", "1.0", "1000", ally));
-		
-		i_NpcWeight[npc.index] = 1;
-		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "bottle");
+		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
+	}
+	public OshimunoPopstar(float vecPos[3], float vecAng[3], int ally)
+	{
+		OshimunoPopstar npc = view_as<OshimunoPopstar>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.0", "5000", ally));
+
+		float gameTime = GetGameTime(npc.index);
+		i_NpcWeight[npc.index] = 3;
+		npc.SetActivity("ACT_MP_RUN_MELEE_ALLCLASS");
+		KillFeed_SetKillIcon(npc.index, "saxxy");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -109,24 +111,24 @@ methodmap OshimunoDrunkard < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = PopstarOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
+		npc.m_iState = 0;
 		npc.m_flTauntLoop = 0.0;
-		npc.m_bisWalking = false;
+		NPCTalkMessage(npc.index, "Looks like we got a a brand new set of fans. Boys, give em one hell of a dance battle!");
+		npc.m_flInvulDuration = gameTime + 10.0; // 0 is for standing still and dancing while invincible
+		
+		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_saxxy/c_saxxy.mdl");
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_bottle/c_bottle.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/all_class/jul13_macho_mann_glasses/jul13_macho_mann_glasses_medic.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/demo/demo_beardpipe/demo_beardpipe.mdl");
-
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/demo/vampire_shades/vampire_shades.mdl");
-
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/demo/sum19_dynamite_abs/sum19_dynamite_abs.mdl");
-		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/jogon/jogon_medic.mdl");
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(12);
+		SetVariantInt(1);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -134,9 +136,14 @@ methodmap OshimunoDrunkard < CClotBody
 	}
 }
 
+static void NPCTalkMessage(int iNPC, const char[] message)
+{
+	PrintNPCMessageWithPrefixes(iNPC, "turquoise", message);
+}
+
 static void ClotThink(int iNPC)
 {
-	OshimunoDrunkard npc = view_as<OshimunoDrunkard>(iNPC);
+	OshimunoPopstar npc = view_as<OshimunoPopstar>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -183,28 +190,69 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoDrunkardSelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoPopstarSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-	if(npc.m_flTauntLoop < gameTime) // loops the taunt
+	if(npc.m_iState == 0)
 	{
-		npc.AddActivityViaSequence("taunt_scotsmans_stagger");
-		npc.SetPlaybackRate(1.5);
-		npc.SetCycle(0.0);
-		npc.m_flTauntLoop = gameTime + 3.0;
-		npc.m_flSpeed = GetRandomFloat(260.0, 320.0);
-	}
+		/*
+		if(npc.m_flTauntLoop < gameTime) // loops the taunt if dancing
+		{
+			npc.AddActivityViaSequence("taunt_conga");
+			npc.SetPlaybackRate(1.2);
+			npc.SetCycle(0.0);
+			npc.m_flTauntLoop = gameTime + 3.0;
+			NPCTalkMessage(npc.index, "Let's give our brand new guests a show!");
+		}
+		*/
+		if(npc.m_flInvulDuration > gameTime)
+		{
+			b_NpcIsInvulnerable[npc.index] = true;
+			npc.StopPathing();
+		}
+		else
+		{
+			b_NpcIsInvulnerable[npc.index] = false;
+			npc.m_iState = 1;
+			NPCTalkMessage(npc.index, "A star has to lookout for all of her fans!");
+			npc.StartPathing();
+		}
+		for(int i; i < i_MaxcountNpcTotal; i++) // EVERYONE adores the popstar
+		{
+			int entity = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
+			if(IsValidEntity(entity))
+			{
+				ApplyStatusEffect(npc.index, entity, "Adoration", 30.0);
+			}
+		}
+		if(!npc.Anger)
+		{
+			npc.Anger = true;
+			for(int i=0 ; i < 4 ; i++) //summons 4 dancers
+			{
+				float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+				float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+				int entity = NPC_CreateByName("npc_oshimuno_bouncer", -1, pos, ang, GetTeam(npc.index));
 
+				if(entity > MaxClients)
+				{
+					if(GetTeam(npc.index) != TFTeam_Red)
+					NpcAddedToZombiesLeftCurrently(entity, true);
+				}
+			}
+		}
+	}
+	
 	npc.PlayIdleSound();
 }
 
-void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoPopstarSelfDefense(OshimunoPopstar npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
 		if(npc.m_flAttackHappens < gameTime)
 		{
 			npc.m_flAttackHappens = 0.0;
-			
+
 			Handle swingTrace;
 			npc.FaceTowards(vecTarget, 15000.0);
 			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
@@ -212,8 +260,7 @@ void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vec
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 40.0;
-					
+					float damage = 100.0;
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
@@ -229,31 +276,31 @@ void OshimunoDrunkardSelfDefense(OshimunoDrunkard npc, float distance, float vec
 		{
 			npc.m_iTarget = target;
 
-			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
+			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE_ALLCLASS",_,_,_, 0.85);
 			npc.PlayMeleeSound();
-			
+
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.8;
+			npc.m_flNextMeleeAttack = gameTime + 1.5;
 		}
 	}
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 35.0) && npc.m_flNextRangedAttack < gameTime)
-	{	
-		float vPredictedPos[3]; PredictSubjectPositionForProjectiles(npc, npc.m_iTarget, 1000.0, _,vPredictedPos);
-		npc.FaceTowards(vecTarget, 20000.0);
-
-		npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
-		npc.PlayMeleeSound();
-		int projectile = npc.FireArrow(vPredictedPos, 40.0, 900.0, "models/weapons/c_models/c_bottle/c_bottle.mdl"); //thrown bottle is upside down but thats fine cuz they're drunk
-		int trail = Trail_Attach(projectile, ARROW_TRAIL, 80, 0.22, 15.0, 6.0, 1);
-		i_WandParticle[projectile] = EntIndexToEntRef(trail);
-		CreateTimer(6.0, Timer_RemoveEntity, EntIndexToEntRef(trail), TIMER_FLAG_NO_MAPCHANGE);
-		SetParent(projectile, trail);
-		npc.m_flNextRangedAttack = gameTime + 12.0;	
-	}
 }
+
+static Action PopstarOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{
+	if(attacker <= 0)
+		return Plugin_Continue;
+
+	if((i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED))
+	{
+		damage *= 0.33;
+		return Plugin_Changed;
+	}
+	return Plugin_Changed;
+}
+
 static void ClotDeath(int entity)
 {
-	OshimunoDrunkard npc = view_as<OshimunoDrunkard>(entity);
+	OshimunoPopstar npc = view_as<OshimunoPopstar>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
@@ -270,6 +317,6 @@ static void ClotDeath(int entity)
 	if(IsValidEntity(npc.m_iWearable4))
 		RemoveEntity(npc.m_iWearable4);
 	
-	if(IsValidEntity(npc.m_iWearable5))
-		RemoveEntity(npc.m_iWearable5);
+	if(IsValidEntity(npc.m_iWearable9))
+		RemoveEntity(npc.m_iWearable9);
 }

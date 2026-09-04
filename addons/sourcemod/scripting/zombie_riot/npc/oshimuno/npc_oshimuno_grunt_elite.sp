@@ -256,7 +256,7 @@ static Action OshimunoGruntEliteOnTakeDamage(int victim, int &attacker, int &inf
 			RemoveEntity(npc.m_iWearable1);
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/player/items/all_class/taunt_cheers/taunt_cheers_pyro.mdl");
 		SetEntProp(npc.m_iWearable1, Prop_Send, "m_nSkin", 1);
-
+		
 		npc.StopPathing();
 		npc.m_bisWalking = false;
 		Custom_Knockback(attacker, npc.index, 650.0, true, true); // "jump" backwards

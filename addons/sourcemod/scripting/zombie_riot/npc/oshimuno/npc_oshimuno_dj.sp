@@ -1,28 +1,31 @@
 #pragma semicolon 1
-#pragma newdecls required //TODO:dont know how to remove the engineer's hat even tho he has different cosmetics on
+#pragma newdecls required
 
 static const char g_DeathSounds[][] =
 {
-	"vo/heavy_paincrticialdeath01.mp3",
-	"vo/heavy_paincrticialdeath02.mp3",
-	"vo/heavy_paincrticialdeath03.mp3"
+	"vo/engineer_paincrticialdeath01.mp3",
+	"vo/engineer_paincrticialdeath02.mp3",
+	"vo/engineer_paincrticialdeath03.mp3"
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/heavy_painsharp01.mp3",
-	"vo/heavy_painsharp02.mp3",
-	"vo/heavy_painsharp03.mp3",
-	"vo/heavy_painsharp04.mp3",
-	"vo/heavy_painsharp05.mp3",
+	"vo/engineer_painsharp01.mp3",
+	"vo/engineer_painsharp02.mp3",
+	"vo/engineer_painsharp03.mp3",
+	"vo/engineer_painsharp04.mp3",
+	"vo/engineer_painsharp05.mp3",
+	"vo/engineer_painsharp06.mp3",
+	"vo/engineer_painsharp07.mp3",
+	"vo/engineer_painsharp08.mp3"
 };
 
 static const char g_IdleAlertedSounds[][] =
 {
-	"vo/taunts/soldier_taunts19.mp3",
-	"vo/taunts/soldier_taunts20.mp3",
-	"vo/taunts/soldier_taunts21.mp3",
-	"vo/taunts/soldier_taunts18.mp3"
+	"vo/engineer_battlecry01.mp3",
+	"vo/engineer_battlecry03.mp3",
+	"vo/engineer_battlecry04.mp3",
+	"vo/engineer_battlecry05.mp3",
 };
 
 static const char g_MeleeHitSounds[][] =
@@ -298,7 +301,7 @@ static void ClotDeath(int entity, int m_iTargetAlly)
 {
 	OshimunoDJ npc = view_as<OshimunoDJ>(entity);
 
-	b_NoGravity[npc.m_iTargetAlly] = false;
+	b_NoGravity[npc.m_iTargetAlly] = false; //drop the boombox once we die with it
 	b_DoNotUnStuck[npc.m_iTargetAlly] = false;
 	RemoveSpecificBuff(npc.m_iTargetAlly, "Solid Stance");
 
