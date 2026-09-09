@@ -69,8 +69,8 @@ methodmap OshimunoSpiritOrb < CClotBody
 		SetEntityRenderColor(npc.m_iWearable1, 0, 255, 255, 100); // cyan
 
 		float flPos[3], flAng[3];
-
 		npc.GetAttachment("eyes", flPos, flAng);
+		
 		npc.m_iWearable8 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_parent", npc.index, "eyes", {0.0,0.0,40.0});
 
 		npc.m_iWearable9 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_sparkles", npc.index, "eyes", {0.0,0.0,40.0});
@@ -125,7 +125,7 @@ static void ClotThink(int iNPC)
 		OshimunoSpiritOrbSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 	
-	if(IsValidEntity(npc.m_iTargetAlly)) // for removing ownership
+	if(IsValidEntity(npc.m_iTargetAlly)) // for removing ownership if owner dies
 	{
 		if(!IsEntityAlive(npc.m_iTargetAlly))
 		{

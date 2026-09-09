@@ -44,7 +44,7 @@ static const char g_RangedAttackSounds[][] =
 
 #define JUMP_COOLDOWN 12.0
 #define INITIAL_JUMP_COOLDOWN 7.5
-#define THROW_STATE_DURATION 2.5
+#define THROW_STATE_DURATION 2.0
 #define INITIAL_THROW 0.5
 #define KUNAI_THROW_COOLDOWN 0.3
 
@@ -239,10 +239,10 @@ void OshimunoNinjaSelfDefense(Ninja npc, float distance, float vecTarget[3], flo
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_flNextMeleeAttack = gameTime + 0.8;
 		}
 	}
-	else if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 1.5) && distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 7) && npc.m_flJumpCooldown < gameTime)
+	else if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 1.5 && distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 7 && npc.m_flJumpCooldown < gameTime)
 	{
 		vecTarget[2] += 275.0;
 		PluginBot_Jump(npc.index, vecTarget);
@@ -251,7 +251,7 @@ void OshimunoNinjaSelfDefense(Ninja npc, float distance, float vecTarget[3], flo
 		npc.m_flNextRangedAttack = gameTime + INITIAL_THROW;
 		npc.m_flJumpCooldown = gameTime + JUMP_COOLDOWN;
 	}
-	if(npc.m_flJumpKunaiThrow > gameTime && npc.m_flNextRangedAttack < gameTime && distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 11)) // distance check to prevent throwing cross map
+	if(npc.m_flJumpKunaiThrow > gameTime && npc.m_flNextRangedAttack < gameTime && distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 11) // distance check to prevent throwing cross map
 	{
 		float EnemyPos[3]; // throw a kunai at the enemy during the jump
 		WorldSpaceCenter(npc.m_iTarget, EnemyPos);

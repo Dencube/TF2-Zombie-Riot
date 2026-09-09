@@ -1,5 +1,5 @@
 #pragma semicolon 1
-#pragma newdecls required
+#pragma newdecls required //TODO: npc's weapon doesnt grow the more orbs he absorbs
 
 static const char g_DeathSounds[][] =
 {
@@ -96,11 +96,16 @@ methodmap OshimunoFlogger < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	
+	property float m_flSpiritAbsorb
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
+	}
 	public OshimunoFlogger(float vecPos[3], float vecAng[3], int ally)
 	{
 		OshimunoFlogger npc = view_as<OshimunoFlogger>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "1000", ally));
 		
+		float gameTime = GetGameTime(npc.index);
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
 		KillFeed_SetKillIcon(npc.index, "disciplinary_action");
@@ -111,24 +116,26 @@ methodmap OshimunoFlogger < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = OshimunoFloggerOnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
+		npc.m_iOverlordComboAttack = 0;
+		npc.Anger = true;
+		npc.m_flSpiritAbsorb = gameTime + INITIAL_ORB_ABSORB_CD;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_riding_crop/c_riding_crop.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_claidheamohmor/c_claidheamohmor.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_scout_ninja_mask/short2014_scout_ninja_mask.mdl");
-		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/all_class/xcom_flattop_soldier.mdl");
+		NpcColourCosmetic_ViaPaint(npc.m_iWearable2, 2452877);
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_minja_vest/short2014_minja_vest.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/soldier/dec23_trench_warefarer/dec23_trench_warefarer.mdl");
 		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_scout.mdl");
-		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/soldier/sum25_jarhead_style3/sum25_jarhead_style3.mdl");
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(3);
+		SetVariantInt(10);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -159,6 +166,52 @@ static void ClotThink(int iNPC)
 	
 	npc.m_flNextThinkTime = gameTime + 0.1;
 
+	if(!npc.Anger && npc.m_iOverlordComboAttack <= 5)
+	{
+		for(int i; i < i_MaxcountNpcTotal; i++)
+		{
+			int orb = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
+			if(IsValidEntity(orb))
+			{
+				char npc_classname[60];
+				NPC_GetPluginById(i_NpcInternalId[orb], npc_classname, sizeof(npc_classname));
+
+				if(orb != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_spirit_orb") && IsEntityAlive(orb))) // look for an unclaimed orb alive then grab it
+				{
+					OshimunoSpiritOrb npcOther = view_as<OshimunoSpiritOrb>(orb);
+					if(!IsValidEntity(npcOther.m_iTargetAlly))
+					{
+						CPrintToChatAll("DEBUG: FOUND ORB");
+						npcOther.m_iTargetAlly = npc.index; // orb sets this npc as its owner
+						npc.m_iTargetAlly = orb; //set orb as target
+						npc.m_iOverlordComboAttack++;
+						npc.m_flSpiritAbsorb = gameTime + ORB_ABSORB_CD;
+						npc.Anger = true;
+						break;
+					}
+				}
+			}
+		}
+	}
+	if(npc.Anger && npc.m_flSpiritAbsorb < gameTime)
+	{
+		npc.Anger = false;
+	}
+	float healing = float(ReturnEntityMaxHealth(npc.index) / 5);
+	if(IsValidAlly(npc.index, npc.m_iTargetAlly))
+	{
+		CPrintToChatAll("DEBUG: ABSORBED");
+		SmiteNpcToDeath(npc.m_iTargetAlly);
+		b_DoGibThisNpc[npc.m_iTargetAlly] = false;
+		b_NoKillFeed[npc.m_iTargetAlly] = true;
+		b_NpcForcepowerupspawn[npc.m_iTargetAlly] = 0;
+
+		SetEntPropFloat(npc.m_iWearable1, Prop_Send, "m_flModelScale", GetEntPropFloat(npc.m_iWearable1, Prop_Send, "m_flModelScale") * 1.2);
+		SetEntityModel(npc.m_iWearable1, "models/weapons/c_models/c_claidheamohmor/c_claidheamohmor.mdl");
+		CPrintToChatAll("DEBUG: %f size scale", GetEntPropFloat(npc.m_iWearable1, Prop_Send, "m_flModelScale"));
+		HealEntityGlobal(npc.index, npc.index, healing, 1.0, 0.0, HEAL_SELFHEAL);
+	}
+
 	int target = npc.m_iTarget;
 	if(i_Target[npc.index] != -1 && !IsValidEnemy(npc.index, target))
 		i_Target[npc.index] = -1;
@@ -187,6 +240,7 @@ static void ClotThink(int iNPC)
 		}
 		OshimunoFloggerSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
+	
 	npc.PlayIdleSound();
 }
 
@@ -203,9 +257,10 @@ void OshimunoFloggerSelfDefense(OshimunoFlogger npc, float distance, float vecTa
 			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
 			{
 				int target = TR_GetEntityIndex(swingTrace);
+				float extradamage = 1.0 + float(npc.m_iOverlordComboAttack) * 0.2;
 				if(target > 0)
 				{
-					float damage = 105.0;
+					float damage = 105.0 * extradamage;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -215,7 +270,7 @@ void OshimunoFloggerSelfDefense(OshimunoFlogger npc, float distance, float vecTa
 		}
 	}
 
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) && npc.m_flNextMeleeAttack < gameTime)
+	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 1.2 * float(npc.m_iOverlordComboAttack + 1) && npc.m_flNextMeleeAttack < gameTime)
 	{
 		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
 		if(IsValidEnemy(npc.index, target, false, true))
@@ -226,23 +281,11 @@ void OshimunoFloggerSelfDefense(OshimunoFlogger npc, float distance, float vecTa
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.45;
+			npc.m_flNextMeleeAttack = gameTime + 1.05;
 		}
 	}
 }
 
-static Action OshimunoFloggerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
-{	
-	OshimunoFlogger npc = view_as<OshimunoFlogger>(victim);
-	if((ReturnEntityMaxHealth(npc.index)/2) >= GetEntProp(npc.index, Prop_Data, "m_iHealth") && !npc.Anger) //enrage below 50% hp
-	{
-		npc.Anger = true;
-		fl_TotalArmor[npc.index] = 0.66;
-		EmitSoundToAll("player/pl_scout_dodge_can_drink.wav", npc.index, SNDCHAN_STATIC, 120, _, 0.9);
-	}
-
-	return Plugin_Changed;
-}
 static void ClotDeath(int entity) 
 {
 	OshimunoFlogger npc = view_as<OshimunoFlogger>(entity);

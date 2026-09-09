@@ -1295,9 +1295,12 @@ void NPC_ConfigSetup()
 	OshimunoAvengerOnMapStart();
 	OshimunoAvengerEliteOnMapStart();
 	OshimunoForerunnerOnMapStart();
+	OshimunoForerunnerEliteOnMapStart();
 	OshimunoSmokebombOnMapStart();
+	OshimunoSmokebombEliteOnMapStart();
 	OshimunoBartenderOnMapStart();
 	OshimunoNinjaOnMapStart();
+	OshimunoNinjaEliteOnMapStart();
 	OshimunoPowdermanOnMapStart();
 	OshimunoOccultistOnMapStart();
 	OshimunoTricksterOnMapStart();
@@ -2837,9 +2840,11 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_tree.sp"
 #include "npc/oshimuno/npc_oshimuno_farmer.sp"
 #include "npc/oshimuno/npc_oshimuno_ninja.sp"
+#include "npc/oshimuno/npc_oshimuno_ninja_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_dancer.sp"
 #include "npc/oshimuno/npc_oshimuno_arsonist.sp"
 #include "npc/oshimuno/npc_oshimuno_forerunner.sp"
+#include "npc/oshimuno/npc_oshimuno_forerunner_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_chef.sp"
 #include "npc/oshimuno/npc_oshimuno_drunkard.sp"
 #include "npc/oshimuno/npc_oshimuno_spiritualist.sp"
@@ -2854,6 +2859,7 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_agent.sp"
 #include "npc/oshimuno/npc_oshimuno_agent_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_smokebomb.sp"
+#include "npc/oshimuno/npc_oshimuno_smokebomb_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_trash_man.sp"
 #include "npc/oshimuno/npc_oshimuno_powderman.sp"
 #include "npc/oshimuno/npc_oshimuno_occultist.sp"

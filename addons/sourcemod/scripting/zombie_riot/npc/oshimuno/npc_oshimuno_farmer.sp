@@ -41,6 +41,24 @@ static const char g_MeleeAttackSounds[][] =
 #define INITIAL_TREE_SPAWN_COOLDOWN 10.0
 #define TREE_SPAWN_COOLDOWN 25.0
 
+#define FARMER_LINE_WIDTH 100.0
+#define FARMER_LINE_LENGTH 800.0
+#define FARMER_LINE_GAP 100.0
+#define FARMER_LINE_START 50.0
+#define FARMER_LINE_TIME 1.8
+#define FARMER_LINE_SWING_LEAD 0.75
+#define FARMER_LINE_SWING_DELAY 0.1953
+#define FARMER_LINE_IMPACT_DELAY (-0.04)
+#define FARMER_LINE_FADE_TIME 0.15
+#define FARMER_LINE_SPREAD 75.0
+#define FARMER_LINE_FADE_STEP 0.045
+#define FARMER_LINE_DAMAGE 100.0
+#define FARMER_LINE_SWINGS 5
+
+static int g_FarmerLineLaser = -1;
+static const char g_FarmerLineWindUpSound[] = "misc/halloween/strongman_fast_swing_01.wav";
+static const char g_FarmerLineImpactSound[] = "misc/halloween/strongman_fast_impact_01.wav";
+
 void OshimunoFarmerOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
@@ -48,6 +66,9 @@ void OshimunoFarmerOnMapStart()
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
+	g_FarmerLineLaser = PrecacheModel("sprites/laserbeam.vmt");
+	PrecacheSound(g_FarmerLineWindUpSound);
+	PrecacheSound(g_FarmerLineImpactSound);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Sakurawa");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_farmer");
@@ -85,6 +106,31 @@ methodmap OshimunoFarmer < CClotBody
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][3]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][3] = TempValueForProperty; }
+	}
+	property float m_flLineAoeDetonate
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][4]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][4] = TempValueForProperty; }
+	}
+	property float m_flLineAoeYaw
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][5]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][5] = TempValueForProperty; }
+	}
+	property float m_flMeleeSwingCount
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][6]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][6] = TempValueForProperty; }
+	}
+	property float m_flLineAoeFade
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][7]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][7] = TempValueForProperty; }
+	}
+	property float m_flLineAoeFadeDraw
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][8]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][8] = TempValueForProperty; }
 	}
 	public void PlayIdleSound()
 	{
@@ -130,10 +176,25 @@ methodmap OshimunoFarmer < CClotBody
 		RaidAllowLastman = true;
 		b_thisNpcIsARaid[npc.index] = true;
 		b_ThisNpcIsImmuneToNuke[npc.index] = true;
+		for(int client_check=1; client_check<=MaxClients; client_check++)
+		{
+			if(IsClientInGame(client_check) && !IsFakeClient(client_check))
+			{
+				LookAtTarget(client_check, npc.index);
+				SetGlobalTransTarget(client_check);
+				ShowGameText(client_check, "item_armor", 1, "%s", "Sakurawa arrives");
+			}
+		}
+
 		npc.Anger = false;
 		npc.m_flNextChargeSpecialAttack = gameTime + 25.0;
 		npc.m_flSuperSlash = gameTime + 15.0;
 		npc.m_flTreeCooldown = gameTime + INITIAL_TREE_SPAWN_COOLDOWN;
+		npc.m_flLineAoeDetonate = 0.0;
+		npc.m_flLineAoeYaw = 0.0;
+		npc.m_flMeleeSwingCount = 0.0;
+		npc.m_flLineAoeFade = 0.0;
+		npc.m_flLineAoeFadeDraw = 0.0;
 
 		func_NPCDeath[npc.index] = ClotDeath;
 		func_NPCOnTakeDamage[npc.index] = FarmerOnTakeDamage;
@@ -142,7 +203,6 @@ methodmap OshimunoFarmer < CClotBody
 		npc.m_flSpeed = 300.0;
 		npc.m_flMeleeArmor = 1.25;
 		
-
 		char buffers[3][64];
 		ExplodeString(data, ";", buffers, sizeof(buffers), sizeof(buffers[]));
 		//the very first and 2nd char are SC for scaling
@@ -213,6 +273,11 @@ methodmap OshimunoFarmer < CClotBody
 	}
 }
 
+static void NPCTalkMessage(int entity, const char[] message)
+{
+	PrintNPCMessageWithPrefixes(entity, "crimson", message);
+}
+
 static int GetTreeCount(int entity)
 {
 	int TreeCount;
@@ -250,6 +315,31 @@ static void ClotThink(int iNPC)
 		return;
 	
 	npc.m_flNextThinkTime = gameTime + 0.1;
+
+	if(npc.m_flLineAoeDetonate)
+	{
+		if(npc.m_flLineAoeDetonate > gameTime)
+		{
+			OshimunoFarmerLineAoeDraw(npc, gameTime);
+		}
+		else
+		{
+			OshimunoFarmerLineAoeDetonate(npc);
+			npc.m_flLineAoeDetonate = 0.0;
+			npc.m_flLineAoeFade = gameTime + FARMER_LINE_FADE_TIME;
+			npc.m_flLineAoeFadeDraw = gameTime + FARMER_LINE_FADE_STEP;
+			int color[4];
+			color[0] = 255;
+			color[1] = 0;
+			color[2] = 0;
+			color[3] = 255;
+			OshimunoFarmerLineAoeDrawRects(npc, 0.0, color, 0.1);
+			RequestFrame(FarmerLineFadeFrame, EntIndexToEntRef(npc.index));
+			npc.StartPathing();
+			npc.m_bisWalking = true;
+		}
+		return;
+	}
 
 	int target = npc.m_iTarget;
 	if(i_Target[npc.index] != -1 && !IsValidEnemy(npc.index, target))
@@ -364,7 +454,195 @@ void OshimunoFarmerSelfDefense(OshimunoFarmer npc, float distance, float vecTarg
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
 			npc.m_flNextMeleeAttack = gameTime + 0.75;
+
+			npc.m_flMeleeSwingCount += 1.0;
+			if(npc.m_flMeleeSwingCount >= float(FARMER_LINE_SWINGS))
+			{
+				npc.m_flMeleeSwingCount = 0.0;
+				OshimunoFarmerLineAoeStart(npc, gameTime);
+			}
 		}
+	}
+}
+
+static void OshimunoFarmerLineAoeStart(OshimunoFarmer npc, float gameTime)
+{
+	npc.m_flAttackHappens = 0.0;
+	npc.m_flLineAoeDetonate = gameTime + FARMER_LINE_TIME;
+	CreateTimer(FARMER_LINE_TIME - FARMER_LINE_SWING_LEAD + FARMER_LINE_SWING_DELAY, Timer_FarmerLineSwing, EntIndexToEntRef(npc.index), TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(FARMER_LINE_TIME + FARMER_LINE_IMPACT_DELAY, Timer_FarmerLineImpact, EntIndexToEntRef(npc.index), TIMER_FLAG_NO_MAPCHANGE);
+
+	float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+	float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+	float yawRad = ang[1] * FLOAT_PI / 180.0;
+	pos[0] += Cosine(yawRad) * FARMER_LINE_START;
+	pos[1] += Sine(yawRad) * FARMER_LINE_START;
+	f3_NpcSavePos[npc.index] = pos;
+	npc.m_flLineAoeYaw = ang[1];
+
+	npc.StopPathing();
+	npc.m_bisWalking = false;
+	OshimunoFarmerLineAoeDraw(npc, gameTime);
+}
+
+static Action Timer_FarmerLineSwing(Handle timer, any ref)
+{
+	int entity = EntRefToEntIndex(ref);
+	if(entity <= MaxClients || !IsValidEntity(entity))
+		return Plugin_Handled;
+
+	OshimunoFarmer npc = view_as<OshimunoFarmer>(entity);
+	if(!npc.m_flLineAoeDetonate)
+		return Plugin_Handled;
+
+	npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
+	EmitSoundToAll(g_FarmerLineWindUpSound, npc.index, SNDCHAN_STATIC, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
+	return Plugin_Handled;
+}
+
+static Action Timer_FarmerLineImpact(Handle timer, any ref)
+{
+	int entity = EntRefToEntIndex(ref);
+	if(entity <= MaxClients || !IsValidEntity(entity))
+		return Plugin_Handled;
+
+	EmitSoundToAll(g_FarmerLineImpactSound, entity, SNDCHAN_STATIC, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
+	return Plugin_Handled;
+}
+
+static void OshimunoFarmerLineAoeDraw(OshimunoFarmer npc, float gameTime)
+{
+	float remaining = npc.m_flLineAoeDetonate - gameTime;
+	if(remaining < 0.0)
+		remaining = 0.0;
+
+	int color[4];
+	color[0] = 255;
+	color[1] = RoundToNearest(255.0 * (remaining / FARMER_LINE_TIME));
+	color[2] = 0;
+	color[3] = 255;
+
+	OshimunoFarmerLineAoeDrawRects(npc, 0.0, color, 0.15);
+}
+
+static void OshimunoFarmerLineAoeDrawRects(OshimunoFarmer npc, float expand, const int color[4], float life)
+{
+	float yawRad = npc.m_flLineAoeYaw * FLOAT_PI / 180.0;
+	float fwdX = Cosine(yawRad);
+	float fwdY = Sine(yawRad);
+	float leftX = -fwdY;
+	float leftY = fwdX;
+
+	float anchor[3];
+	anchor = f3_NpcSavePos[npc.index];
+	anchor[2] += 4.0;
+	anchor[0] -= fwdX * expand;
+	anchor[1] -= fwdY * expand;
+
+	float length = FARMER_LINE_LENGTH + (expand * 2.0);
+	float halfWidth = (FARMER_LINE_WIDTH * 0.5) + expand;
+	for(int line = -1; line <= 1; line++)
+	{
+		float off = float(line) * (FARMER_LINE_GAP + FARMER_LINE_WIDTH);
+		float c1[3], c2[3], c3[3], c4[3];
+		c1[0] = anchor[0] + (leftX * (off + halfWidth));
+		c1[1] = anchor[1] + (leftY * (off + halfWidth));
+		c1[2] = anchor[2];
+		c2[0] = anchor[0] + (leftX * (off - halfWidth));
+		c2[1] = anchor[1] + (leftY * (off - halfWidth));
+		c2[2] = anchor[2];
+		c3[0] = c1[0] + (fwdX * length);
+		c3[1] = c1[1] + (fwdY * length);
+		c3[2] = anchor[2];
+		c4[0] = c2[0] + (fwdX * length);
+		c4[1] = c2[1] + (fwdY * length);
+		c4[2] = anchor[2];
+
+		TE_SetupBeamPoints(c1, c2, g_FarmerLineLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+		TE_SendToAll();
+		TE_SetupBeamPoints(c1, c3, g_FarmerLineLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+		TE_SendToAll();
+		TE_SetupBeamPoints(c2, c4, g_FarmerLineLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+		TE_SendToAll();
+		TE_SetupBeamPoints(c3, c4, g_FarmerLineLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+		TE_SendToAll();
+	}
+}
+
+static void FarmerLineFadeFrame(any ref)
+{
+	int entity = EntRefToEntIndex(ref);
+	if(entity <= MaxClients || !IsValidEntity(entity))
+		return;
+
+	OshimunoFarmer npc = view_as<OshimunoFarmer>(entity);
+	float gameTime = GetGameTime(npc.index);
+	if(!npc.m_flLineAoeFade)
+		return;
+
+	if(npc.m_flLineAoeFade <= gameTime)
+	{
+		npc.m_flLineAoeFade = 0.0;
+		return;
+	}
+
+	if(gameTime >= npc.m_flLineAoeFadeDraw)
+	{
+		npc.m_flLineAoeFadeDraw = gameTime + FARMER_LINE_FADE_STEP;
+
+		float frac = 1.0 - ((npc.m_flLineAoeFade - gameTime) / FARMER_LINE_FADE_TIME);
+		if(frac < 0.0)
+			frac = 0.0;
+
+		int color[4];
+		color[0] = 255;
+		color[1] = 0;
+		color[2] = 0;
+		color[3] = RoundToNearest(255.0 * (1.0 - frac));
+
+		OshimunoFarmerLineAoeDrawRects(npc, FARMER_LINE_SPREAD * frac, color, 0.1);
+	}
+	RequestFrame(FarmerLineFadeFrame, ref);
+}
+
+static void OshimunoFarmerLineAoeDetonate(OshimunoFarmer npc)
+{
+	float yawRad = npc.m_flLineAoeYaw * FLOAT_PI / 180.0;
+	float fwdX = Cosine(yawRad);
+	float fwdY = Sine(yawRad);
+	float leftX = -fwdY;
+	float leftY = fwdX;
+
+	float anchor[3];
+	anchor = f3_NpcSavePos[npc.index];
+
+	float halfWidth = (FARMER_LINE_WIDTH * 0.5) + 24.0;
+	float off = FARMER_LINE_GAP + FARMER_LINE_WIDTH;
+	for(int client = 1; client <= MaxClients; client++)
+	{
+		if(!IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) != TFTeam_Red)
+			continue;
+
+		float pos[3];
+		GetClientAbsOrigin(client, pos);
+		float dx = pos[0] - anchor[0];
+		float dy = pos[1] - anchor[1];
+		float dz = pos[2] - anchor[2];
+		if(dz > 120.0 || dz < -120.0)
+			continue;
+
+		float fwdDist = (dx * fwdX) + (dy * fwdY);
+		if(fwdDist < -24.0 || fwdDist > (FARMER_LINE_LENGTH + 24.0))
+			continue;
+
+		float leftDist = (dx * leftX) + (dy * leftY);
+		if(FloatAbs(leftDist) > halfWidth && FloatAbs(leftDist - off) > halfWidth && FloatAbs(leftDist + off) > halfWidth)
+			continue;
+
+		float at[3];
+		WorldSpaceCenter(client, at);
+		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], client, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
+		SDKHooks_TakeDamage(client, npc.index, npc.index, FARMER_LINE_DAMAGE, DMG_CLUB, -1, _, at);
 	}
 }
 
@@ -419,131 +697,3 @@ static void ClotDeath(int entity)
 	if(IsValidEntity(npc.m_iWearable6))
 		RemoveEntity(npc.m_iWearable6);
 }
-/*
-#define FARMER_MELEE_SIZE 75
-#define FARMER_MELEE_SIZE_F 50.0
-
-bool Farmer_SuperHit(int iNPC)
-{
-	OshimunoFarmer npc = view_as<OshimunoFarmer>(iNPC);
-	if(npc.m_flSuperSlashInAbility)
-	{
-		if(npc.m_flSuperSlashInAbility > GetGameTime(npc.index))
-		{
-			npc.m_iTarget = GetClosestTarget(npc.index);
-			int EnemyTarget = npc.m_iTarget;
-			if(IsValidEnemy(npc.index, EnemyTarget))
-			{
-				npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE");//He will SMACK you
-				float vecTarget[3];
-				b_TryToAvoidTraverse[npc.index] = false;
-				PredictSubjectPosition(npc, EnemyTarget,_,_, vecTarget);
-				vecTarget = GetBehindTarget(EnemyTarget, 60.0 ,vecTarget);
-				b_TryToAvoidTraverse[npc.index] = true;
-
-				int red = 244;
-				int green = 182;
-				int blue = 255;
-				int Alpha = 255;
-
-				int colorLayer4[4];
-				float diameter = float(FARMER_MELEE_SIZE * 4);
-				SetColorRGBA(colorLayer4, red, green, blue, Alpha);
-				//we set colours of the differnet laser effects to give it more of an effect
-				int colorLayer1[4];
-				SetColorRGBA(colorLayer1, colorLayer4[0] * 5 + 765 / 8, colorLayer4[1] * 5 + 765 / 8, colorLayer4[2] * 5 + 765 / 8, Alpha);
-				int glowColor[4];
-				float VectorStart[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", VectorStart);
-				f3_NpcSavePos[npc.index] = vecTarget;
-				npc.FaceTowards(vecTarget, 20000.0);
-				float damage = 40.0;
-				damage *= RaidModeScaling;
-
-				float vecForward[3], Angles[3];
-				GetVectorAnglesTwoPoints(VectorStart, vecTarget, Angles);
-				GetAngleVectors(Angles, vecForward, NULL_VECTOR, NULL_VECTOR);				
-				DataPack pack = new DataPack();
-				pack.WriteCell(EntIndexToEntRef(npc.index));
-				pack.WriteFloat(VectorStart[0]);
-				pack.WriteFloat(VectorStart[1]);
-				pack.WriteFloat(VectorStart[2]);
-				pack.WriteFloat(vecTarget[0]);
-				pack.WriteFloat(vecTarget[1]);
-				pack.WriteFloat(vecTarget[2]);
-				pack.WriteFloat(damage);
-				pack.WriteCell(0);
-				// 66.6 assumes normal tickrate.
-				int i_FrameCount = RoundToNearest(0.5 * 66.6);
-				RequestFrames(BobInitiatePunch_DamagePart, i_FrameCount, pack);
-				for(int BeamCube = 0; BeamCube < 4 ; BeamCube++)
-				{
-					float OffsetFromMiddle[3];
-					switch(BeamCube)
-					{
-						case 0:
-						{
-							OffsetFromMiddle = {0.0, FARMER_MELEE_SIZE_F,FARMER_MELEE_SIZE_F};
-						}
-						case 1:
-						{
-							OffsetFromMiddle = {0.0, -FARMER_MELEE_SIZE_F,-FARMER_MELEE_SIZE_F};
-						}
-						case 2:
-						{
-							OffsetFromMiddle = {0.0, FARMER_MELEE_SIZE_F,-FARMER_MELEE_SIZE_F};
-						}
-						case 3:
-						{
-							OffsetFromMiddle = {0.0, -FARMER_MELEE_SIZE_F,FARMER_MELEE_SIZE_F};
-						}
-					}
-					float AnglesEdit[3];
-					AnglesEdit[0] = Angles[0];
-					AnglesEdit[1] = Angles[1];
-					AnglesEdit[2] = Angles[2];
-
-					float VectorStartEdit[3];
-					VectorStartEdit[0] = VectorStart[0];
-					VectorStartEdit[1] = VectorStart[1];
-					VectorStartEdit[2] = VectorStart[2];
-					float VectorStartEdit2[3];
-					VectorStartEdit2[0] = f3_NpcSavePos[npc.index][0];
-					VectorStartEdit2[1] = f3_NpcSavePos[npc.index][1];
-					VectorStartEdit2[2] = f3_NpcSavePos[npc.index][2];
-
-					GetBeamDrawStartPoint_Stock(npc.index, VectorStartEdit,OffsetFromMiddle, AnglesEdit);
-					GetBeamDrawStartPoint_Stock(npc.index, VectorStartEdit2,OffsetFromMiddle, AnglesEdit);
-
-					SetColorRGBA(glowColor, red, green, blue, Alpha);
-					TE_SetupBeamPoints(VectorStartEdit, VectorStartEdit2, Shared_BEAM_Laser, 0, 0, 0, 0.5, ClampBeamWidth(diameter * 0.1), ClampBeamWidth(diameter * 0.1), 0, 0.0, glowColor, 0);
-					TE_SendToAll(0.0);
-				}
-			}
-
-		}
-		else
-		{
-			npc.m_flSuperSlashInAbilityDo = 0.0;
-			npc.m_flSuperSlashInAbility = 0.0;
-			if(IsValidEntity(npc.m_iWearable8))
-				RemoveEntity(npc.m_iWearable8);
-			npc.StartPathing();
-			npc.m_bisWalking = true;
-		}
-		return true;
-	}
-	if(npc.m_flSuperSlash > GetGameTime(npc.index))
-		return false;
-
-	npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE");//He will SMACK you
-	npc.m_iWearable8 = Trail_Attach(npc.index, ARROW_TRAIL, 255, 1.0, 60.0, 3.0, 5);
-	SetEntityRenderColor(npc.m_iWearable8, 0, 0, 0, 255);
-	npc.m_flSuperSlashInAbility = GetGameTime(npc.index) + 4.0;
-	npc.m_flSuperSlashInAbilityDo = 0.0;
-	npc.m_flSuperSlash = GetGameTime(npc.index) + 20.0;
-	npc.StopPathing();
-	npc.m_bisWalking = false;
-	return true;
-	
-}
-*/

@@ -1,48 +1,47 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-static const char g_DeathSounds[][] = 
+static const char g_DeathSounds[][] =
 {
-	"vo/heavy_paincrticialdeath01.mp3",
-	"vo/heavy_paincrticialdeath02.mp3",
-	"vo/heavy_paincrticialdeath03.mp3"
+	"vo/scout_paincrticialdeath01.mp3",
+	"vo/scout_paincrticialdeath02.mp3",
+	"vo/scout_paincrticialdeath03.mp3",
 };
 
-static const char g_HurtSounds[][] = 
+static const char g_HurtSounds[][] =
 {
-	"vo/heavy_painsharp01.mp3",
-	"vo/heavy_painsharp02.mp3",
-	"vo/heavy_painsharp03.mp3",
-	"vo/heavy_painsharp04.mp3",
-	"vo/heavy_painsharp05.mp3"
+	"vo/scout_painsharp01.mp3",
+	"vo/scout_painsharp02.mp3",
+	"vo/scout_painsharp03.mp3",
+	"vo/scout_painsharp04.mp3",
+	"vo/scout_painsharp05.mp3",
+	"vo/scout_painsharp06.mp3",
+	"vo/scout_painsharp07.mp3",
+	"vo/scout_painsharp08.mp3",
 };
 
-
-static const char g_IdleAlertedSounds[][] = 
+static const char g_IdleAlertedSounds[][] =
 {
-	"vo/taunts/heavy_taunts16.mp3",
-	"vo/taunts/heavy_taunts18.mp3",
-	"vo/taunts/heavy_taunts19.mp3"
+	"vo/scout_battlecry01.mp3",
+	"vo/scout_battlecry03.mp3",
+	"vo/scout_battlecry04.mp3",
+	"vo/scout_battlecry05.mp3",
 };
 
 static const char g_MeleeHitSounds[][] =
 {
-	"weapons/cleaver_hit_02.wav",
-	"weapons/cleaver_hit_03.wav",
-	"weapons/cleaver_hit_05.wav",
-	"weapons/cleaver_hit_06.wav",
-	"weapons/cleaver_hit_07.wav",
+	"weapons/cbar_hit1.wav",
+	"weapons/cbar_hit2.wav"
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
 	"weapons/pickaxe_swing1.wav",
 	"weapons/pickaxe_swing2.wav",
-	"weapons/pickaxe_swing3.wav",
+	"weapons/pickaxe_swing3.wav"
 };
 
-
-void OshimunoEssenceHarvesterOnMapStart()
+void OshimunoSmokebombEliteOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -50,9 +49,9 @@ void OshimunoEssenceHarvesterOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Essence Harvester");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_essence_harvester");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_shotgunner");
+	strcopy(data.Name, sizeof(data.Name), "Tarakeno Elite Smokebomb");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_smokebomb_elite");
+	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -62,16 +61,12 @@ void OshimunoEssenceHarvesterOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoEssenceHarvester(vecPos, vecAng, team);
+	return OshimunoSmokebombElite(vecPos, vecAng, team);
 }
 
-methodmap OshimunoEssenceHarvester < CClotBody
+methodmap OshimunoSmokebombElite < CClotBody
 {
-	property int m_iAlliesDead
-	{
-		public get()							{ return i_OverlordComboAttack[this.index]; }
-		public set(int TempValueForProperty) 	{ i_OverlordComboAttack[this.index] = TempValueForProperty; }
-	}
+
 	public void PlayIdleSound()
 	{
 		if(this.m_flNextIdleSound > GetGameTime(this.index))
@@ -96,13 +91,14 @@ methodmap OshimunoEssenceHarvester < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	public OshimunoEssenceHarvester(float vecPos[3], float vecAng[3], int ally)
+	
+	public OshimunoSmokebombElite(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoEssenceHarvester npc = view_as<OshimunoEssenceHarvester>(CClotBody(vecPos, vecAng, "models/player/heavy.mdl", "1.0", "1000", ally));
-
-		i_NpcWeight[npc.index] = 2;
-		npc.SetActivity("ACT_MP_RUN_MELEE_ALLCLASS");
-		KillFeed_SetKillIcon(npc.index, "skullbat");
+		OshimunoSmokebombElite npc = view_as<OshimunoSmokebombElite>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "1000", ally));
+		
+		i_NpcWeight[npc.index] = 1;
+		npc.SetActivity("ACT_MP_RUN_MELEE");
+		KillFeed_SetKillIcon(npc.index, "wrap_assassin");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -110,23 +106,22 @@ methodmap OshimunoEssenceHarvester < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = OshimunoSmokebombEliteOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
-		func_NPCDeathForward[npc.index] = OshimunoEssenceHarvesterAllyDeath;
 		
-		npc.m_flSpeed = 250.0;
+		npc.m_flSpeed = 290.0;
+		
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_xms_giftwrap/c_xms_giftwrap.mdl");
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_skullbat/c_skullbat.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/scout/short2014_minja_vest/short2014_minja_vest.mdl");
+		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/all_class/halloweenjacket/halloweenjacket_heavy.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/spy/skullmask/skullmask.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/short2014_all_mercs_mask/short2014_all_mercs_mask_heavy.mdl");
-		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
-
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2021_bone_cone/hwn2021_bone_cone_heavy.mdl");
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2015_dino_hoodie/hwn2015_dino_hoodie_scout.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/heavy/dec22_heavy_heating_style3/dec22_heavy_heating_style3.mdl");
+		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2024_spider_sights/hwn2024_spider_sights_scout.mdl");
 		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
@@ -140,7 +135,7 @@ methodmap OshimunoEssenceHarvester < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoEssenceHarvester npc = view_as<OshimunoEssenceHarvester>(iNPC);
+	OshimunoSmokebombElite npc = view_as<OshimunoSmokebombElite>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -187,22 +182,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoEssenceHarvesterSelfDefense(npc, distance, vecTarget, gameTime);
+		OshimunoSmokebombEliteSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
-	if(npc.m_iAlliesDead == 5 && !npc.Anger)
-	{
-		float flPos[3], flAng[3];
-		npc.GetAttachment("eyes", flPos, flAng);
-		
-		npc.m_iWearable8 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_parent", npc.index, "eyes", {0.0,0.0,0.0});
-
-		npc.m_iWearable9 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_sparkles", npc.index, "eyes", {0.0,0.0,0.0});
-		npc.Anger = true;
-	}
 	npc.PlayIdleSound();
 }
-void OshimunoEssenceHarvesterSelfDefense(OshimunoEssenceHarvester npc, float distance, float vecTarget[3], float gameTime)
+
+void OshimunoSmokebombEliteSelfDefense(OshimunoSmokebombElite npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -217,8 +203,8 @@ void OshimunoEssenceHarvesterSelfDefense(OshimunoEssenceHarvester npc, float dis
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 150.0;
-					StatusEffects_SpiritFireAddStuff(target, npc.m_iAlliesDead, 3.0);
+					float damage = 60.0;
+					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}
@@ -234,55 +220,52 @@ void OshimunoEssenceHarvesterSelfDefense(OshimunoEssenceHarvester npc, float dis
 		{
 			npc.m_iTarget = target;
 
-			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE_ALLCLASS",_,_,_, 0.85);
+			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 1.1;
+			npc.m_flNextMeleeAttack = gameTime + 0.75;
 		}
 	}
 }
 
-public void OshimunoEssenceHarvesterAllyDeath(int self, int ally)
-{
-	OshimunoEssenceHarvester npc = view_as<OshimunoEssenceHarvester>(self);
-
-	if(GetTeam(ally) != GetTeam(self))
+static Action OshimunoSmokebombEliteOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{	
+	OshimunoSmokebombElite npc = view_as<OshimunoSmokebombElite>(victim);
+	if((ReturnEntityMaxHealth(npc.index)/2) >= GetEntProp(npc.index, Prop_Data, "m_iHealth") && !npc.Anger) //enrage below 50% hp
 	{
-		return;
-	}
-	float AllyPos[3];
-	GetEntPropVector(ally, Prop_Data, "m_vecAbsOrigin", AllyPos);
-	float SelfPos[3];
-	GetEntPropVector(self, Prop_Data, "m_vecAbsOrigin", SelfPos);
-	float flDistanceToTarget = GetVectorDistance(SelfPos, AllyPos, true);
-	if(flDistanceToTarget < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 24.0))
-	{
-		if(npc.m_iAlliesDead <= 4)
-			npc.m_iAlliesDead += 1;
-	}
-}
+		npc.Anger = true;
+		float pos[3];
+		WorldSpaceCenter(npc.index, pos);
+		ParticleEffectAt(pos, "grenade_smoke", 2.0);
 
-static void ClotDeath(int entity) 
-{
-	OshimunoEssenceHarvester npc = view_as<OshimunoEssenceHarvester>(entity);
-
-	for(int i = 0; i < npc.m_iAlliesDead; i++)
-	{
-		float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-		float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-		int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", -1, pos, ang, GetTeam(npc.index));
-		int health = RoundToNearest(ReturnEntityMaxHealth(npc.index) * 1.5);
-		if(orb > MaxClients)
+		for(int entitycount; entitycount<MAXENTITIES; entitycount++) //Check for npcs
 		{
-			if(GetTeam(npc.index) != TFTeam_Red)
-				NpcAddedToZombiesLeftCurrently(orb, true);
-
-			SetEntProp(orb, Prop_Data, "m_iHealth", health);
-			SetEntProp(orb, Prop_Data, "m_iMaxHealth", health);
+			if(IsValidEntity(entitycount) && entitycount != npc.index && (!b_NpcHasDied[entitycount])) //Cannot buff self like this.
+			{
+				if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount))
+				{
+					float pos1[3];
+					GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);
+					static float pos2[3];
+					GetEntPropVector(entitycount, Prop_Data, "m_vecAbsOrigin", pos2);
+					if(GetVectorDistance(pos1, pos2, true) < (500 * 500))
+					{
+						if(!Can_I_See_Ally(npc.index, entitycount))
+							continue;
+						ApplyStatusEffect(npc.index, entitycount, "Smoke Screen", 10.0);
+					}
+				}
+			}
 		}
 	}
 
+	return Plugin_Changed;
+}
+
+static void ClotDeath(int entity)
+{
+	OshimunoSmokebombElite npc = view_as<OshimunoSmokebombElite>(entity);
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
 	
@@ -301,6 +284,27 @@ static void ClotDeath(int entity)
 	if(IsValidEntity(npc.m_iWearable5))
 		RemoveEntity(npc.m_iWearable5);
 	
-	CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable8, TIMER_FLAG_NO_MAPCHANGE);
-	CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable9, TIMER_FLAG_NO_MAPCHANGE);
+	float flPosDeath[3];
+	WorldSpaceCenter(npc.index, flPosDeath);
+	ParticleEffectAt(flPosDeath, "grenade_smoke", 2.0);
+
+	for(int entitycount; entitycount<MAXENTITIES; entitycount++) //Check for npcs
+	{
+		if(IsValidEntity(entitycount) && entitycount != npc.index && (!b_NpcHasDied[entitycount])) //Cannot buff self like this.
+		{
+			if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount))
+			{
+				float pos1[3];
+				GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);
+				static float pos2[3];
+				GetEntPropVector(entitycount, Prop_Data, "m_vecAbsOrigin", pos2);
+				if(GetVectorDistance(pos1, pos2, true) < (500 * 500))
+				{
+					if(!Can_I_See_Ally(npc.index, entitycount))
+						continue;
+					ApplyStatusEffect(npc.index, entitycount, "Smoke Screen", 10.0);
+				}
+			}
+		}
+	}
 }

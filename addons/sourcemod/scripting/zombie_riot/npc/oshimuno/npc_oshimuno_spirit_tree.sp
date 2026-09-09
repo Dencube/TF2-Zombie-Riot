@@ -135,11 +135,15 @@ static void ClotThink(int iNPC)
 			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 			float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
 			int entity = NPC_CreateByName("npc_oshimuno_spirit_orb", -1, pos, ang, GetTeam(npc.index));
+			int health = ReturnEntityMaxHealth(npc.index) / 5;
 			if(entity > MaxClients)
 			{
 				
 				if(GetTeam(npc.index) != TFTeam_Red)
-				NpcAddedToZombiesLeftCurrently(entity, true);
+					NpcAddedToZombiesLeftCurrently(entity, true);
+
+				SetEntProp(entity, Prop_Data, "m_iHealth", health);
+				SetEntProp(entity, Prop_Data, "m_iMaxHealth", health);
 			}
 			npc.m_flOrbCooldown = gameTime + ORB_SPAWN_COOLDOWN;
 		}

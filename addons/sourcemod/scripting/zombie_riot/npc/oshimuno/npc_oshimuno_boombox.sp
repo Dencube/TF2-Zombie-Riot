@@ -60,7 +60,6 @@ methodmap OshimunoBoombox < CClotBody
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 0.0;
-		SetMoraleDoAlmina(npc.index, 100.0);
 		npc.m_flNextMeleeAttack = gameTime + 4.0;
 		b_NoHealthbar[npc.index] = 1;
 		npc.m_bDissapearOnDeath = true;
@@ -96,7 +95,7 @@ static void ClotThink(int iNPC)
 
 		spawnRing_Vectors(VecSelfNpc, BOOMBOX_RANGE, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 50, 225, 225, 175, 1, 0.5, 6.0, 0.1, 1, 640.0);
 		Explode_Logic_Custom(150.0, -1, npc.index, -1, VecSelfNpc, BOOMBOX_RANGE, _, 0.75, false, _, false);
-		AlminaMoraleGivingDo(npc.index, GetGameTime(npc.index), false, BOOMBOX_RANGE);
+		ExpidonsaGroupHeal(npc.index, BOOMBOX_RANGE, 5000, 500.0, 1.0, false, OshimunoBoomboxStatusEffectApply);
 		npc.PlayExplosionSound();
 	}
 
@@ -113,12 +112,36 @@ static void ClotThink(int iNPC)
 
 }
 
+void OshimunoBoomboxStatusEffectApply(int entity, int victim)
+{
+	if(i_NpcIsABuilding[victim])
+		return;
+	if(GetTeam(entity) != GetTeam(victim))
+		return;
+
+	ApplyStatusEffect(entity, victim, "Adoration", 5.0);
+}
+
 static Action BoomboxOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {	
 	OshimunoBoombox npc = view_as<OshimunoBoombox>(victim);
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flKnockbackCooldown < gameTime)
 	{
+		if(attacker <= MaxClients)
+		{
+			//counters too hard, no fun.
+			if(TeutonType[attacker] != TEUTON_NONE)
+			{
+				damage = 0.0;
+				return Plugin_Changed;
+			}
+			if(dieingstate[attacker] != 0)
+			{
+				damage = 0.0;
+				return Plugin_Changed;
+			}
+		}
 		if((damagetype & (DMG_CLUB)) &&! (i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED)) // take knockback from direct melee hits
 		{
 			Custom_Knockback(attacker, npc.index, 460.0, true, true);

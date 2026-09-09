@@ -137,7 +137,7 @@ methodmap OshimunoVessel < CClotBody
 		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		SetVariantInt(2);
+		SetVariantInt(3);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
 
 		npc.StartPathing();
@@ -161,19 +161,6 @@ static void ClotThink(int iNPC)
 		npc.AddGesture("ACT_MP_GESTURE_FLINCH_CHEST", false);
 		npc.PlayHurtSound();
 		npc.m_blPlayHurtAnimation = false;
-
-		int maxhealth = ReturnEntityMaxHealth(npc.index);
-		int health = GetEntProp(npc.index, Prop_Data, "m_iHealth");
-		
-		if(health < (maxhealth * npc.m_iOverlordComboAttack / 8))
-		{
-			npc.m_iOverlordComboAttack--;
-			npc.PlayAngerSound();
-
-			float vecMe[3]; WorldSpaceCenter(npc.index, vecMe);
-			spawnRing_Vectors(vecMe, VESSEL_RANGE, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 50, 225, 225, 175, 1, 0.5, 6.0, 0.1, 1, 720.0);
-			Explode_Logic_Custom(150.0, -1, npc.index, -1, vecMe, VESSEL_RANGE, _, 0.75, false, _, false, _, VesselOnExplodePost);
-		}
 	}
 	
 	if(npc.m_flNextThinkTime > gameTime)
@@ -214,6 +201,10 @@ static void ClotThink(int iNPC)
 		float healing = float(ReturnEntityMaxHealth(npc.index) / 50); // heal 2% of max health every time
 		HealEntityGlobal(npc.index, npc.index, healing, 1.0, 0.0, HEAL_SELFHEAL);
 		npc.m_flLastDamageTaken = gameTime + 0.5;
+		int maxhealth = ReturnEntityMaxHealth(npc.index);
+		int health = GetEntProp(npc.index, Prop_Data, "m_iHealth");
+		
+		if(health > (maxhealth * npc.m_iOverlordComboAttack / 8))
 	}
 	npc.PlayIdleSound();
 }
@@ -265,15 +256,28 @@ static Action OshimunoVesselOnTakeDamage(int victim, int &attacker, int &inflict
 	float gameTime = GetGameTime(npc.index);
 	if(attacker <= 0)
 		return Plugin_Continue;
-
+	if(attacker <= MaxClients)
+	{
+		if(TeutonType[attacker] != TEUTON_NONE)
+		return Plugin_Continue;
+	}
 	if((i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED)) // reset from any non-debuff or teuton damage
 		return Plugin_Continue;
-
-	if(TeutonType[attacker] != TEUTON_NONE)
-		return Plugin_Continue;
-
+	
 	npc.m_flLastDamageTaken = gameTime + 8.0;
-	CPrintToChatAll("DEBUG: RESET HEALING");
+
+	int maxhealth = ReturnEntityMaxHealth(npc.index);
+	int health = GetEntProp(npc.index, Prop_Data, "m_iHealth");
+		
+	if(health < (maxhealth * npc.m_iOverlordComboAttack / 8))
+	{
+		npc.m_iOverlordComboAttack--;
+		npc.PlayAngerSound();
+
+		float vecMe[3]; WorldSpaceCenter(npc.index, vecMe);
+		spawnRing_Vectors(vecMe, VESSEL_RANGE, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 50, 225, 225, 175, 1, 0.5, 6.0, 0.1, 1, 720.0);
+		Explode_Logic_Custom(150.0, -1, npc.index, -1, vecMe, VESSEL_RANGE, _, 0.75, false, _, false, _, VesselOnExplodePost);
+	}
 	return Plugin_Changed;
 }
 
@@ -285,6 +289,12 @@ public void VesselOnExplodePost(int attacker, int victim, float damage, int weap
 static void ClotDeath(int entity)
 {
 	OshimunoVessel npc = view_as<OshimunoVessel>(entity);
+
+	npc.PlayAngerSound();
+
+	float vecMe[3]; WorldSpaceCenter(npc.index, vecMe);
+	spawnRing_Vectors(vecMe, VESSEL_RANGE, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 50, 225, 225, 175, 1, 0.5, 6.0, 0.1, 1, 720.0);
+	Explode_Logic_Custom(150.0, -1, npc.index, -1, vecMe, VESSEL_RANGE, _, 0.75, false, _, false, _, VesselOnExplodePost);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

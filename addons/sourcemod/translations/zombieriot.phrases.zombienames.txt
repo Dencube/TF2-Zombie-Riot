@@ -8445,11 +8445,11 @@
 	{
 		"en" 	"Weaponized Spirit Fire to melt down the strongest of fighters.\n-Wields a flamethrower that applies lots of Spirit Fire Potency."
 	}
-	"Spirit Kamikaze"
+	"Spirit Powderman"
 	{
-		"en" 	"Spirit Kamikaze"
+		"en" 	"Spirit Powderman"
 	}
-	"Spirit Kamikaze Desc"
+	"Spirit Powderman Desc"
 	{
 		"en" 	"A deranged explosives expert living in the woods.\n-Starts out shooting arcing pipes.\n-Enters a frenzied charge with an ullapool caber applying Spirit Fire on hit."
 	}
@@ -8468,5 +8468,21 @@
 	"Spirit Vessel Desc"
 	{
 		"en" 	"A bodybuilder who tried using Spirits to grow his muscles and instead became possessed.\n-Explodes with Spirit Fire every time it loses enough hp. \n-Heals rapidly after taking no non-debuff/teuton damage for a period of time"
+	}
+	"Spirit Flogger"
+	{
+		"en" 	"Spirit Flogger"
+	}
+	"Spirit Flogger Desc"
+	{
+		"en" 	"Delivers oblivion to Spirit Orbs that cross his path.\n-Occasionally absorbs a Spirit Orb on the map to grow stronger.\n-His weapon grows in size and range the stronger he is."
+	}
+	"Essence Harvester"
+	{
+		"en" 	"Essence Harvester"
+	}
+	"Essence Harvester Desc"
+	{
+		"en" 	"Stores Spirits for future endeavors.\n-Stores the Spirit Essence of nearby dead allies.\n-Inflicts Spirie Fire on hit and on death spawns up to 5 Spirit Orbs based on how much Spirit Essence was stored."
 	}
 }

@@ -757,4 +757,12 @@
 		"en" 		 "Agent Smith Arrived"
 		"ko" 		 "스미스 요원이 모습을 드러냅니다."
 	}
+	"Sakurawa arrives"
+	{
+		"en" 		 "Sakurawa arrives"
+	}
+	"The forest grows rapidly"
+	{
+		"en"	"The forest grows rapidly"
+	}
 }

@@ -177,7 +177,7 @@ static void ClotThink(int iNPC)
 
 					if(orb != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_spirit_orb") && IsEntityAlive(orb))) // look for an unclaimed orb alive then grab it
 					{
-						OshimunSpiritOrb npcOther = view_as<OshimunSpiritOrb>(orb);
+						OshimunoSpiritOrb npcOther = view_as<OshimunoSpiritOrb>(orb);
 						if(!IsValidEntity(npcOther.m_iTargetAlly))
 						{
 							npcOther.m_iTargetAlly = npc.index; // orb sets this npc as its owner
@@ -194,13 +194,14 @@ static void ClotThink(int iNPC)
 			float vecTarget[3]; WorldSpaceCenter(npc.m_iTargetAlly, vecTarget);
 			float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
 			float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);
-			
+
 			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 			float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
 			float healing = float(ReturnEntityMaxHealth(npc.index) / 4);
+			int health = ReturnEntityMaxHealth(npc.index) / 2;
 			if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED))
 			{
-				//touched the spirit orb we now spawn a random npc ||TODO: figure out how much health the summons should have
+				//touched the spirit orb we now spawn a random npc
 				npc.m_iState = 0;
 				HealEntityGlobal(npc.index, npc.index, healing, 1.5, 0.0, HEAL_SELFHEAL);
 				npc.m_flSpiritCalling = gameTime + CALLING_DELAY;
@@ -219,6 +220,10 @@ static void ClotThink(int iNPC)
 						{	
 							if(GetTeam(npc.index) != TFTeam_Red)
 								NpcAddedToZombiesLeftCurrently(entity, true);
+
+							SetEntProp(entity, Prop_Data, "m_iHealth", health);
+							SetEntProp(entity, Prop_Data, "m_iMaxHealth", health);
+							
 						}	
 					}
 					case 1:
@@ -228,6 +233,9 @@ static void ClotThink(int iNPC)
 						{	
 							if(GetTeam(npc.index) != TFTeam_Red)
 								NpcAddedToZombiesLeftCurrently(entity, true);
+
+							SetEntProp(entity, Prop_Data, "m_iHealth", health);
+							SetEntProp(entity, Prop_Data, "m_iMaxHealth", health);
 						}	
 					}
 					case 2:
@@ -237,6 +245,9 @@ static void ClotThink(int iNPC)
 						{	
 							if(GetTeam(npc.index) != TFTeam_Red)
 							NpcAddedToZombiesLeftCurrently(entity, true);
+
+							SetEntProp(entity, Prop_Data, "m_iHealth", health);
+							SetEntProp(entity, Prop_Data, "m_iMaxHealth", health);
 						}	
 					}
 				}

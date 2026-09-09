@@ -1,6 +1,6 @@
 #pragma semicolon 1
 #pragma newdecls required
-
+//TODO: find a way to count how many debuffs the kaiju has then reduce resists based on that
 static const char g_DeathSounds[][] = 
 {
 	"vo/pyro_paincrticialdeath01.mp3",
@@ -425,7 +425,7 @@ void OshimunoKaijuSelfDefense(OshimunoKaiju npc, float distance, float vecTarget
 }
 static Action KaijuOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
-	//TODO: make the kaiju take less damage from weapons and increase how much it takes from debuffs OR even make it take increasingly more damage from every debuff
+	//TODO: find a way to count how many debuffs the kaiju has then reduce resists based on that
 	if((i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED))
 	{
 		damage *= 1.2;
