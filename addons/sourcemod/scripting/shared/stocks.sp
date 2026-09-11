@@ -5969,6 +5969,7 @@ enum
 	RedMist_WasInAbnorm = 9,
 	DontUpdateHudClient = 10,
 	KillAssist = 11,
+	RicochetEnemy = 12,
 }
 
 enum struct HitDetectionEnum

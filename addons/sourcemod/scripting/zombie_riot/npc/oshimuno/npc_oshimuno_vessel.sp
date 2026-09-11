@@ -196,15 +196,11 @@ static void ClotThink(int iNPC)
 		}
 		OshimunoVesselSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-	if(npc.m_flLastDamageTaken < gameTime)
+	if(npc.m_flLastDamageTaken < gameTime) //start healing if no one hits me for a period of time || idk if i should make it regain explosion charges when it heals
 	{
 		float healing = float(ReturnEntityMaxHealth(npc.index) / 50); // heal 2% of max health every time
 		HealEntityGlobal(npc.index, npc.index, healing, 1.0, 0.0, HEAL_SELFHEAL);
 		npc.m_flLastDamageTaken = gameTime + 0.5;
-		int maxhealth = ReturnEntityMaxHealth(npc.index);
-		int health = GetEntProp(npc.index, Prop_Data, "m_iHealth");
-		
-		if(health > (maxhealth * npc.m_iOverlordComboAttack / 8))
 	}
 	npc.PlayIdleSound();
 }
@@ -224,7 +220,7 @@ void OshimunoVesselSelfDefense(OshimunoVessel npc, float distance, float vecTarg
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 90.0;
+					float damage = 120.0;
 				
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);

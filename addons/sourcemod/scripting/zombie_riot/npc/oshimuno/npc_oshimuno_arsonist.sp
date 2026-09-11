@@ -234,17 +234,18 @@ int OshimunoArsonistSelfDefense(OshimunoArsonist npc, bool &SpinSound)
 			npc.PlayMinigunSound(true);
 			SpinSound = false;
 			npc.FaceTowards(vecTarget, 20000.0);
-			float ProjectileSpeed = 1000.0;
+			float damage = 20.0;
+			float ProjectileSpeed = 1100.0;
 
 			int projectile;
-			projectile = npc.FireParticleRocket(vecTarget, 20.0, ProjectileSpeed, 150.0, "superrare_burning1", true);
+			projectile = npc.FireParticleRocket(vecTarget, damage, ProjectileSpeed, 150.0, "flaregun_energyfield_blue", true);
 
 			SDKUnhook(projectile, SDKHook_StartTouch, Rocket_Particle_StartTouch);
 			int particle = EntRefToEntIndex(i_WandParticle[projectile]);
 			CreateTimer(0.5, Timer_RemoveEntity, EntIndexToEntRef(projectile), TIMER_FLAG_NO_MAPCHANGE);
 			CreateTimer(0.5, Timer_RemoveEntity, EntIndexToEntRef(particle), TIMER_FLAG_NO_MAPCHANGE);
 			
-			WandProjectile_ApplyFunctionToEntity(projectile, AnarchyAbomination_Rocket_Particle_StartTouch);
+			WandProjectile_ApplyFunctionToEntity(projectile, OshimunoArsonist_Rocket_Particle_StartTouch);
 		}
 		if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 3.5))
 		{
@@ -301,11 +302,11 @@ public void OshimunoArsonist_Rocket_Particle_StartTouch(int entity, int target)
 		GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", ProjectileLoc);
 		float damage = 10.0;
 
-		SDKHooks_TakeDamage(owner, target, inflictor, damage, DMG_BULLET|DMG_PREVENT_PHYSICS_FORCE, -1);	//acts like a kinetic rocket	
+		SDKHooks_TakeDamage(target, owner, inflictor, damage, DMG_BULLET|DMG_PREVENT_PHYSICS_FORCE, -1);	//acts like a kinetic rocket	
 
 		StatusEffects_SpiritFireAddStuff(target, 1, 0.3); // low spirit fire duration cuz it hits many times
 
-		NPC_Ignite(owner, target, 1.5, -1, 4.0);
+		NPC_Ignite(target, owner, 1.5, -1, 4.0);
 
 		int particle = EntRefToEntIndex(i_WandParticle[entity]);
 		if(IsValidEntity(particle))

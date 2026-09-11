@@ -65,15 +65,17 @@ methodmap OshimunoSpiritOrb < CClotBody
 		
 		npc.m_flSpeed = 200.0;
 		npc.m_bDissapearOnDeath = true;
-		npc.m_iWearable1 = npc.EquipItemSeperate("models/weapons/w_models/w_baseball.mdl" ,_,_, 1.75, 30.0, false);
-		SetEntityRenderColor(npc.m_iWearable1, 0, 255, 255, 100); // cyan
 
 		float flPos[3], flAng[3];
-		npc.GetAttachment("eyes", flPos, flAng);
-		
-		npc.m_iWearable8 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_parent", npc.index, "eyes", {0.0,0.0,40.0});
+		npc.GetAttachment("head", flPos, flAng);
 
-		npc.m_iWearable9 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_sparkles", npc.index, "eyes", {0.0,0.0,40.0});
+		npc.m_iWearable1 = ParticleEffectAt_Parent(flPos, "flaregun_energyfield_blue", npc.index, "head", {0.0,0.0,30.0});
+		/*npc.m_iWearable1 = npc.EquipItemSeperate("models/weapons/w_models/w_baseball.mdl" ,_,_, 1.75, 30.0, false);
+		SetEntityRenderColor(npc.m_iWearable1, 0, 255, 255, 100); */ // cyan 
+		
+		npc.m_iWearable8 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_parent", npc.index, "head", {0.0,0.0,35.0});
+
+		npc.m_iWearable9 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_sparkles", npc.index, "head", {0.0,0.0,35.0});
 
 		npc.StartPathing();
 		return npc;
@@ -181,19 +183,8 @@ static void ClotDeath(int entity)
 	
 	if(IsValidEntity(npc.m_iWearable1))
 		RemoveEntity(npc.m_iWearable1);
-	
-	if(IsValidEntity(npc.m_iWearable2))
-		RemoveEntity(npc.m_iWearable2);
-	
-	if(IsValidEntity(npc.m_iWearable3))
-		RemoveEntity(npc.m_iWearable3);
-	
-	if(IsValidEntity(npc.m_iWearable4))
-		RemoveEntity(npc.m_iWearable4);
-	
-	if(IsValidEntity(npc.m_iWearable5))
-		RemoveEntity(npc.m_iWearable5);
 
+	CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable1, TIMER_FLAG_NO_MAPCHANGE);
 	CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable8, TIMER_FLAG_NO_MAPCHANGE);
 	CreateTimer(0.1, Timer_RemoveEntityParticle, npc.m_iWearable9, TIMER_FLAG_NO_MAPCHANGE);
 }

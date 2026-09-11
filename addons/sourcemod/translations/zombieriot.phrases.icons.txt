@@ -765,4 +765,8 @@
 	{
 		"en"	"The forest grows rapidly"
 	}
+	"Antayoto arrives"
+	{
+		"en" 		 "Antayoto arrives"
+	}
 }

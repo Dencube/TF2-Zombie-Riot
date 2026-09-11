@@ -12260,7 +12260,7 @@ static void SpiritFireEnd(int entity, StatusEffect Apply_MasterStatusEffect, E_S
 			{
 				float pos[3]; GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", pos);
 				float ang[3]; GetEntPropVector(entity, Prop_Data, "m_angRotation", ang);
-				int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", entity, pos, ang, TFTeam_Blue);
+				int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", entity, pos, ang, TFTeam_Blue); //TODO: make the orbs spawn on the opposite team of the victim
 				if(orb > MaxClients)
 				{
 					if(GetTeam(orb) != TFTeam_Red)
@@ -12276,7 +12276,7 @@ static void SpiritFireEnd(int entity, StatusEffect Apply_MasterStatusEffect, E_S
 		{	
 			float pos[3]; GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", pos);
 			float ang[3]; GetEntPropVector(entity, Prop_Data, "m_angRotation", ang);
-			int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", entity, pos, ang, TFTeam_Blue); 
+			int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", entity, pos, ang, TFTeam_Blue); //TODO: make the orbs spawn on the opposite team of the victim
 			if(orb > MaxClients)
 			{
 				if(GetTeam(orb) != TFTeam_Red)

@@ -1265,6 +1265,7 @@ void NPC_ConfigSetup()
 	ConeSwingTest_OnMapStart_NPC(); //TODO: test npc remove later
 
 	OshimunoTaishimoOnMapStart();
+	OshimunoAntayotoOnMapStart();
 	OshimunoTrashManOnMapStart();
 	OshimunoPopstarOnMapStart();
 	OshimunoBackupDancerOnMapStart();
@@ -1309,6 +1310,7 @@ void NPC_ConfigSetup()
 	OshimunoFloggerOnMapStart();
 	OshimunoEssenceHarvesterOnMapStart();
 	OshimunoVesselOnMapStart();
+	OshimunoRicochetOnMapStart();
 }
 
 void NPC_MapEnd()
@@ -2830,7 +2832,8 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/construction/npc_dungeon_loot.sp"
 
 #include "npc/oshimuno/npc_cone_swing_standalone.sp" //TODO:REMOVE LATER
-#include "npc/oshimuno/npc_taishimo.sp"
+#include "npc/oshimuno/npc_oshimuno_taishimo.sp"
+#include "npc/oshimuno/npc_oshimuno_antayoto.sp"
 #include "npc/oshimuno/npc_oshimuno_bouncer.sp"
 #include "npc/oshimuno/npc_oshimuno_bartender.sp"
 #include "npc/oshimuno/npc_oshimuno_boombox.sp"
@@ -2875,3 +2878,4 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_flogger.sp"
 #include "npc/oshimuno/npc_oshimuno_essence_harvester.sp"
 #include "npc/oshimuno/npc_oshimuno_vessel.sp"
+#include "npc/oshimuno/npc_oshimuno_ricochet.sp"

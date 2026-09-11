@@ -28,22 +28,23 @@ static const char g_IdleAlertedSounds[][] =
 	"vo/taunts/soldier_taunts18.mp3"
 };
 
-
 static const char g_RangedAttackSounds[][] = 
 {
 	"weapons/rocket_shoot.wav",
 };
 
-void OshimunoMobsterEliteOnMapStart()
+ArrayList TargetsAlreadyHit[MAXENTITIES];
+static int HitsLeft[MAXENTITIES]={0, ...};
+void OshimunoRicochetOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_RangedAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Tarakeno Elite Mobster");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_mobster_elite");
-	strcopy(data.Icon, sizeof(data.Icon), "soldier");
+	strcopy(data.Name, sizeof(data.Name), "Tarakeno Ricochet");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_ricochet");
+	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -53,10 +54,10 @@ void OshimunoMobsterEliteOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoMobsterElite(vecPos, vecAng, team);
+	return OshimunoRicochet(vecPos, vecAng, team);
 }
 
-methodmap OshimunoMobsterElite < CClotBody
+methodmap OshimunoRicochet < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -79,9 +80,9 @@ methodmap OshimunoMobsterElite < CClotBody
 		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 	}
 	
-	public OshimunoMobsterElite(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoRicochet(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoMobsterElite npc = view_as<OshimunoMobsterElite>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "1000", ally));
+		OshimunoRicochet npc = view_as<OshimunoRicochet>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "1000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_PRIMARY");
@@ -109,9 +110,6 @@ methodmap OshimunoMobsterElite < CClotBody
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2022_onimann/hwn2022_onimann_soldier.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2024_spider_sights/hwn2024_spider_sights_soldier.mdl");
-		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 1);
-		
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(2);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
@@ -123,7 +121,7 @@ methodmap OshimunoMobsterElite < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoMobsterElite npc = view_as<OshimunoMobsterElite>(iNPC);
+	OshimunoRicochet npc = view_as<OshimunoRicochet>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -169,47 +167,175 @@ static void ClotThink(int iNPC)
 		float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
 		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
 		float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);	
-		
-		if(distance < npc.GetLeadRadius())
+		int SetGoalVectorIndex = 0;
+		SetGoalVectorIndex = OshimunoRicochetSelfDefense(npc, distance, vecTarget, gameTime, npc.m_iTarget); 
+
+		switch(SetGoalVectorIndex)
 		{
-			float vPredictedPos[3]; PredictSubjectPosition(npc, target,_,_, vPredictedPos);
-			npc.SetGoalVector(vPredictedPos);
+			case 0:
+			{
+				npc.m_bAllowBackWalking = false;
+				//Get the normal prediction code.
+				if(distance < npc.GetLeadRadius()) 
+				{
+					float vPredictedPos[3];
+					PredictSubjectPosition(npc, npc.m_iTarget,_,_, vPredictedPos);
+					npc.SetGoalVector(vPredictedPos);
+				}
+				else 
+				{
+					npc.SetGoalEntity(npc.m_iTarget);
+				}
+			}
+			case 1:
+			{
+				npc.m_bAllowBackWalking = true;
+				float vBackoffPos[3];
+				BackoffFromOwnPositionAndAwayFromEnemy(npc, npc.m_iTarget,_,vBackoffPos);
+				npc.SetGoalVector(vBackoffPos, true); //update more often, we need it
+			}
 		}
-		else 
-		{
-			npc.SetGoalEntity(target);
-		}
-		OshimunoMobsterEliteSelfDefense(npc, distance, vecTarget, gameTime); 
+	}
+	else
+	{
+		npc.m_flGetClosestTargetTime = 0.0;
+		npc.m_iTarget = GetClosestTarget(npc.index);
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoMobsterEliteSelfDefense(OshimunoMobsterElite npc, float distance, float vecTarget[3], float gameTime)
+int OshimunoRicochetSelfDefense(OshimunoRicochet npc, float distance, float vecTarget[3], float gameTime, int target)
 {
 	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 11.0 && npc.m_flNextRangedAttack < gameTime)
 	{
-		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
 		if(IsValidEnemy(npc.index, target, false, true))
 		{
 			npc.m_iTarget = target;
-			
 				
 			npc.FaceTowards(vecTarget, 20000.0);
 			npc.AddGesture("ACT_MP_ATTACK_STAND_PRIMARY");
 			npc.PlayRangedSound();
 			
-			int projectile = npc.FireRocket(vecTarget, 60.0, 800.0);
-			static float ang_Look[3];
-			Initiate_HomingProjectile(projectile, npc.index, 60.0, 4.0, true, true, ang_Look, target);
+			int projectile;
+			float damage = 50.0;
+			float ProjectileSpeed = 750.0;
+			projectile = npc.FireParticleRocket(vecTarget, damage, ProjectileSpeed, 150.0, "flaregun_energyfield_blue", true);
+
+			SDKUnhook(projectile, SDKHook_StartTouch, Rocket_Particle_StartTouch);
+			int particle = EntRefToEntIndex(i_WandParticle[projectile]);
+			CreateTimer(10.0, Timer_RemoveEntity, EntIndexToEntRef(projectile), TIMER_FLAG_NO_MAPCHANGE);
+			CreateTimer(10.0, Timer_RemoveEntity, EntIndexToEntRef(particle), TIMER_FLAG_NO_MAPCHANGE);
+			
+			HitsLeft[projectile] = 5;
+			WandProjectile_ApplyFunctionToEntity(projectile, OshimunoRicochet_Particle_StartTouch);
+			float ang[3];
+			GetEntPropVector(projectile, Prop_Data, "m_angRotation", ang);
+			Initiate_HomingProjectile(projectile, npc.index, 180.0, 180.0, true, true, ang);
 			TriggerTimerHoming(projectile);
-			npc.m_flNextRangedAttack = gameTime + 1.2;
+			npc.m_flNextRangedAttack = gameTime + 1.4;
 		}
 	}
+	if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 10.0))
+	{
+		//target is too far, try to close in
+		return 0;
+	}
+	else if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 5.0))
+	{
+		if(Can_I_See_Enemy_Only(npc.index, target))
+		{
+			//target is too close, try to keep distance
+			return 1;
+		}
+	}
+	return 0;
 }
+
+public void OshimunoRicochet_Particle_StartTouch(int entity, int target) //TODO: this code is ass doesn't work properly || wo suggested making an array to prevent hitting the same target
+{
+	if(target > 0 && target < MAXENTITIES && !IsIn_HitDetectionCooldown(entity, target, RicochetEnemy))	//did we hit something???
+	{
+		int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+		if(!IsValidEntity(owner))
+		{
+			owner = 0;
+		}		
+		
+		int inflictor = h_ArrowInflictorRef[entity];
+		if(inflictor != -1)
+			inflictor = EntRefToEntIndex(h_ArrowInflictorRef[entity]);
+
+		if(inflictor == -1)
+			inflictor = owner;
+			
+		float ProjectileLoc[3];
+		GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", ProjectileLoc);
+
+		float damage = 100.0;
+		CPrintToChatAll("DEBUG: HIT");
+		SDKHooks_TakeDamage(target, owner, inflictor, damage, DMG_BULLET|DMG_PREVENT_PHYSICS_FORCE, -1);	//acts like a kinetic rocket
+		Set_HitDetectionCooldown(entity, target, FAR_FUTURE, RicochetEnemy);
+
+		if(HitsLeft[entity] > 0)
+		{
+			HitsLeft[entity]--;
+			//we can still hit new targets, cycle through the closest enemy!
+			int NewTarget = GetClosestTarget(entity,true, 1000.0,true,false,-1, _,true,_,_,true, _,
+			view_as<Function>(Ricochet_ValidTargetCheck));
+			if(!IsValidEntity(NewTarget))
+			{
+				CPrintToChatAll("DEBUG: ERROR NO TARGET");
+				int particle = EntRefToEntIndex(i_WandParticle[entity]);
+				if(IsValidEntity(particle))
+				{
+					RemoveEntity(particle);
+				}
+				RemoveEntity(entity);
+			}
+			else
+			{
+				CPrintToChatAll("DEBUG: FOUND NEW TARGET");
+				float ang[3];
+				Initiate_HomingProjectile(entity, owner, 180.0, 180.0, true, true, ang, NewTarget);
+				TriggerTimerHoming(entity);
+			}
+		}
+		else
+		{
+			int particle = EntRefToEntIndex(i_WandParticle[entity]);
+			if(IsValidEntity(particle))
+			{
+				RemoveEntity(particle);
+			}
+			RemoveEntity(entity);
+		}
+	}
+	else
+	{
+		int particle = EntRefToEntIndex(i_WandParticle[entity]);
+		//we uhh, missed?
+		if(IsValidEntity(particle))
+		{
+			RemoveEntity(particle);
+		}
+		RemoveEntity(entity);
+	}
+}
+
+bool Ricochet_ValidTargetCheck(int projectile, int target)
+{
+	if(IsIn_HitDetectionCooldown(projectile, Target, RicochetEnemy))
+	{
+		return false;
+		//we have already hit this target, skip.
+	}
+	return true;
+}
+
 static void ClotDeath(int entity) 
 {
-	OshimunoMobsterElite npc = view_as<OshimunoMobsterElite>(entity);
+	OshimunoRicochet npc = view_as<OshimunoRicochet>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();
