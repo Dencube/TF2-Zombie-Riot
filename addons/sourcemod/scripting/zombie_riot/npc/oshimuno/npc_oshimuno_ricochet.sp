@@ -33,7 +33,7 @@ static const char g_RangedAttackSounds[][] =
 	"weapons/rocket_shoot.wav",
 };
 
-ArrayList TargetsAlreadyHit[MAXENTITIES];
+/*ArrayList TargetsAlreadyHit[MAXENTITIES];*/
 static int HitsLeft[MAXENTITIES]={0, ...};
 void OshimunoRicochetOnMapStart()
 {
@@ -325,7 +325,7 @@ public void OshimunoRicochet_Particle_StartTouch(int entity, int target) //TODO:
 
 bool Ricochet_ValidTargetCheck(int projectile, int target)
 {
-	if(IsIn_HitDetectionCooldown(projectile, Target, RicochetEnemy))
+	if(IsIn_HitDetectionCooldown(projectile, target, RicochetEnemy))
 	{
 		return false;
 		//we have already hit this target, skip.

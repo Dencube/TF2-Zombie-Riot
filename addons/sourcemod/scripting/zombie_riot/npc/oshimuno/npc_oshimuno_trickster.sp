@@ -49,7 +49,7 @@ static int g_ConeLaser = -1;
 #define CONE_FILL_MAT "laststand/fill_cone.vmt"
 #define CONE_RADIUS 250.0
 #define CONE_MELEE_ARC 90.0			// punch hit radius
-#define CONE_HALFANGLE 30.0	    	// angle based on relative north, 22.5 = a 45 degree cone
+#define CONE_HALFANGLE 80.0	    	// angle based on relative north, 22.5 = a 45 degree cone
 #define CONE_LIFESPAN 0.3	    	// how long the cone lasts before disappearing
 #define CONE_OUTLINE_ALPHA 200
 #define CONE_FILL_ALPHA 90			// 0 disables the pie sheet entirely

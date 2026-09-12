@@ -53,7 +53,7 @@ void OshimunoAntayotoOnMapStart()
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
-	/*PrecacheSoundCustom("#zombiesurvival/aprilfools/reteptheme_1.mp3");*/
+	PrecacheSoundCustom("#zombiesurvival/aprilfools/reteptheme_1.mp3");
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Antayoto");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_antayoto");
@@ -72,27 +72,22 @@ static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team, co
 
 methodmap OshimunoAntayoto < CClotBody
 {
-	property float m_flTransformIn
+	property float m_flConeWindUp
 	{
 		public get()							{ return fl_NextChargeSpecialAttack[this.index]; }
 		public set(float TempValueForProperty) 	{ fl_NextChargeSpecialAttack[this.index] = TempValueForProperty; }
 	}
-	property int m_iSaiyanState
-	{
-		public get()							{ return i_State[this.index]; }
-		public set(int TempValueForProperty) 	{ i_State[this.index] = TempValueForProperty; }
-	}
-	property float m_flPowAbilityCD
+	property float m_flConeSlashCD
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
-	property float m_flCongaFastDo
+	property float m_flBombThrowCD
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
 	}
-	property float m_flJumpAtEnemy
+	property float m_flTeleportAwayCD
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][2]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][2] = TempValueForProperty; }
@@ -269,7 +264,8 @@ methodmap OshimunoAntayoto < CClotBody
 			amount_of_people = 1.0;
 		
 		RaidModeScaling *= amount_of_people; //More then 9 and he raidboss gets some troubles, bufffffffff
-		/*npc.m_flPowAbilityCD = GetGameTime() + 5.0;
+		npc.m_flConeSlashCD = gameTime + 5.0;
+		/*
 		npc.m_flCongaFastDo = GetGameTime() + 20.0;
 		npc.m_flJumpAtEnemy = GetGameTime() + 10.0;
 
@@ -296,6 +292,7 @@ static void NPCTalkMessage(int entity, const char[] message)
 static void OshimunoAntayoto_Think(int iNPC)
 {
 	OshimunoAntayoto npc = view_as<OshimunoAntayoto>(iNPC);
+	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > GetGameTime(npc.index))
 	{
 		return;
@@ -375,7 +372,6 @@ static void OshimunoAntayoto_Think(int iNPC)
 			f_AttackSpeedNpcIncrease[npc.index] *= 0.65;
 		}
 		npc.Anger = true;
-		npc.m_iSaiyanState = 999;
 		RaidModeTime = FAR_FUTURE;
 		f_AttackSpeedNpcIncrease[npc.index] *= 0.85;
 		RaidModeScaling *= 1.5;
@@ -468,110 +464,11 @@ static Action OshimunoAntayoto_OnTakeDamage(int victim, int &attacker, int &infl
 	if(attacker <= 0)
 		return Plugin_Continue;
 
-	if (npc.m_flHeadshotCooldown < GetGameTime(npc.index))
+	if(npc.m_flHeadshotCooldown < GetGameTime(npc.index))
 	{
 		npc.m_flHeadshotCooldown = GetGameTime(npc.index) + DEFAULT_HURTDELAY;
 		npc.m_blPlayHurtAnimation = true;
-	}		
-
-	if(!npc.Anger)
-	{
-		if((ReturnEntityMaxHealth(npc.index)/4) >= GetEntProp(npc.index, Prop_Data, "m_iHealth")) //npc.Anger after half hp/400 hp
-		{
-			RaidModeTime += 70.0;
-			npc.PlayAngerSound();
-			npc.Anger = true; //	>:(
-			npc.m_flNextIdleSound = 0.0;
-			npc.m_flTransformIn = GetGameTime() + 5.0;
-			NPCTalkMessage(npc.index, "{crimson}RAHHHHHHHH!!! I WILL NOT LET YOU DESTROY MY WOORLD!!!!!!!!!!!");
-			NpcSpeechBubble(npc.index, "RAHHHHHHHH!!! I WILL NOT LET YOU DESTROY MY WOORLD!!!!!!!!!!!", 35, {255,0,0,255}, {0.0,0.0,200.0}, "");
-			npc.m_iWhatAbilityDo = 0;
-			npc.m_flDoingAnimation = 0.0;
-			npc.m_iChanged_WalkCycle = 0;
-			/*
-			b_RageAnimated[npc.index] = false;
-			RaidModeTime += 60.0;
-			npc.m_bisWalking = false;
-			if(IsValidEntity(npc.m_iWearable7))
-			{
-				RemoveEntity(npc.m_iWearable7);
-			}
-			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-			pos[2] += 5.0;
-			ParticleEffectAt(pos, "utaunt_electricity_cloud1_WY", 3.0);
-			*/
-		}
 	}
-	else
-	{
-		if(npc.m_iSaiyanState == 1 && (ReturnEntityMaxHealth(npc.index)/8) >= GetEntProp(npc.index, Prop_Data, "m_iHealth"))
-		{
-			strcopy(c_NpcName[npc.index], sizeof(c_NpcName[]), "Super Saiyan 2 Black Heavy Soul");
-			npc.m_iSaiyanState = 2;
-			HealEntityGlobal(npc.index, npc.index, ReturnEntityMaxHealth(npc.index) / 3.0, _, 4.0, HEAL_ABSOLUTE);
-			RaidModeTime += 70.0;
-			fl_Extra_Speed[npc.index] *= 1.05;
-			fl_TotalArmor[npc.index] *= 0.65;
-			RaidModeScaling *= 1.05;
-			f_AttackSpeedNpcIncrease[npc.index] *= 0.85;
-			ApplyStatusEffect(npc.index, npc.index, "Infinite Will", 3.0);
-			npc.PlayAngerSoundShort();			
-			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-			pos[2] += 10.0;
-			float flPos[3]; // original
-			npc.GetAttachment("", flPos, NULL_VECTOR);
-			npc.m_iWearable6 = ParticleEffectAt_Parent(flPos, "utaunt_elebound_yellow_parent", npc.index, "", {0.0,0.0,0.0});
-			TE_Particle("Explosion_ShockWave_01", pos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
-			TE_Particle("grenade_smoke_cycle", pos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
-			TE_Particle("hammer_bell_ring_shockwave", pos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
-			CreateEarthquake(pos, 1.0, 2000.0, 16.0, 255.0);
-			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1, /*duration*/ 1.0, 80.0, 4.0, 1, 5000.0);	
-			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1, /*duration*/ 2.0, 80.0, 4.0, 1, 5000.0);	
-			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1, /*duration*/ 3.0, 80.0, 4.0, 1, 5000.0);	
-			Explode_Logic_Custom(50.0, 0, npc.index, -1, pos ,1000.0, 1.0, _, true, .FunctionToCallOnHit = SsjBlackHeavy_KnockbackDo);
-		}
-		if(npc.m_iSaiyanState == 2 && (ReturnEntityMaxHealth(npc.index)/16) >= GetEntProp(npc.index, Prop_Data, "m_iHealth"))
-		{
-			strcopy(c_NpcName[npc.index], sizeof(c_NpcName[]), "Super Saiyan 3 Black Heavy Soul");
-			npc.m_iSaiyanState = 3;
-			RaidModeScaling *= 1.05;
-			b_NpcUnableToDie[npc.index] = false;
-			ApplyStatusEffect(npc.index, npc.index, "Infinite Will", 3.0);
-			HealEntityGlobal(npc.index, npc.index, ReturnEntityMaxHealth(npc.index) / 3.0, _, 4.0, HEAL_ABSOLUTE);
-			RaidModeTime += 70.0;
-			fl_Extra_Speed[npc.index] *= 1.05;
-			fl_TotalArmor[npc.index] *= 0.65;	
-			f_AttackSpeedNpcIncrease[npc.index] *= 0.85;
-			if(IsValidEntity(npc.m_iWearable2))
-				RemoveEntity(npc.m_iWearable2);
-			npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/medic/hwn2023_power_spike/hwn2023_power_spike.mdl",_,_, 1.0);
-			SetEntityRenderColor(npc.m_iWearable2, 255, 255, 0, 255);
-			NpcColourCosmetic_ViaPaint(npc.m_iWearable2, 15185211);
-			if(IsValidEntity(npc.m_iWearable3))
-				RemoveEntity(npc.m_iWearable3);
-			npc.m_iWearable3 = npc.EquipItemSeperate("models/workshop_partner/player/items/all_class/brutal_hair/brutal_hair_heavy.mdl",_,_, 1.75, 75.0, true);
-			SetEntityRenderColor(npc.m_iWearable3, 255, 255, 0, 255);
-			NpcColourCosmetic_ViaPaint(npc.m_iWearable3, 15185211);
-			npc.PlayAngerSoundShort();			
-			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-			pos[2] += 10.0;
-			TE_Particle("Explosion_ShockWave_01", pos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
-			TE_Particle("grenade_smoke_cycle", pos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
-			TE_Particle("hammer_bell_ring_shockwave", pos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
-			CreateEarthquake(pos, 1.0, 2000.0, 16.0, 255.0);
-			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1, /*duration*/ 1.0, 80.0, 4.0, 1, 5000.0);	
-			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1, /*duration*/ 2.0, 80.0, 4.0, 1, 5000.0);	
-			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1, /*duration*/ 3.0, 80.0, 4.0, 1, 5000.0);	
-			Explode_Logic_Custom(50.0, 0, npc.index, -1, pos ,1000.0, 1.0, _, true, .FunctionToCallOnHit = SsjBlackHeavy_KnockbackDo);
-			
-			TE_SetupParticleEffect("unusual_uber_gold_outline_glow", PATTACH_ABSORIGIN_FOLLOW, npc.m_iWearable3);
-			TE_WriteNum("m_bControlPoint1", npc.m_iWearable3);	
-			TE_SendToAll();
-		}
-		
-	}
-
-	
 	return Plugin_Changed;
 }
 public void OshimunoAntayoto_Win(int entity)
@@ -719,7 +616,7 @@ int OshimunoAntayoto_SelfDefense(OshimunoAntayoto npc, float gameTime, int targe
 	return 0;
 }
 
-
+/*
 bool OshimunoAntayoto_Transform(OshimunoAntayoto npc)
 {
 	if(!npc.m_flTransformIn)
@@ -772,9 +669,9 @@ bool OshimunoAntayoto_Transform(OshimunoAntayoto npc)
 			TE_Particle("grenade_smoke_cycle", pos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
 			TE_Particle("hammer_bell_ring_shockwave", pos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
 			CreateEarthquake(pos, 1.0, 2000.0, 16.0, 255.0);
-			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1, /*duration*/ 1.0, 80.0, 4.0, 1, 5000.0);	
-			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1, /*duration*/ 2.0, 80.0, 4.0, 1, 5000.0);	
-			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1, /*duration*/ 3.0, 80.0, 4.0, 1, 5000.0);	
+			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1, 1.0, 80.0, 4.0, 1, 5000.0);
+			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1,=2.0, 80.0, 4.0, 1, 5000.0);	
+			spawnRing_Vectors(pos, 0.0, 0.0, 0.0, 0.0, "materials/sprites/combineball_trail_black_1.vmt", 185, 80, 185, 255, 1,= 3.0, 80.0, 4.0, 1, 5000.0);	
 			if(IsValidEntity(npc.m_iWearable2))
 				RemoveEntity(npc.m_iWearable2);
 			npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/medic/hwn2023_power_spike/hwn2023_power_spike.mdl",_,_, 1.5);
@@ -810,7 +707,6 @@ bool OshimunoAntayoto_Transform(OshimunoAntayoto npc)
 				SetMusicTimer(client, GetTime() + 5);
 			}
 		}
-
 		npc.m_bisWalking = false;
 		npc.m_iChanged_WalkCycle = 100;
 		npc.StopPathing();
@@ -827,7 +723,7 @@ bool OshimunoAntayoto_Transform(OshimunoAntayoto npc)
 	}	
 	return true;
 }
-/*
+
 void SsjBlackHeavy_KnockbackDo(int entity, int victim, float damage, int weapon)
 {
 	float VecMe[3]; WorldSpaceCenter(entity, VecMe);
@@ -847,28 +743,42 @@ void SsjBlackHeavy_KnockbackDo(int entity, int victim, float damage, int weapon)
 }
 */
 
+//cone stuff
+static int CONE_COLOR[3] = { 0, 255, 255 };
+static bool g_ConeFillOk = false;
+static int g_ConeLaser = -1;
 
+#define CONE_FILL_MAT "laststand/fill_cone.vmt"
+#define CONE_RADIUS 500.0
+#define CONE_MELEE_ARC 150.0			// punch hit radius
+#define CONE_HALFANGLE 30.0	    	// angle based on relative north, 22.5 = a 45 degree cone
+#define CONE_LIFESPAN 0.5	    	// how long the cone lasts before disappearing
+#define CONE_OUTLINE_ALPHA 200
+#define CONE_FILL_ALPHA 90			// 0 disables the pie sheet entirely
+#define CONE_ANIM_MIN_RATE 1.0
+#define CONE_ANIM_STILL_SPEED 40.0  // HU/S under which the floor applies
+#define CONE_FILL_FWD 0.7071
+#define CONE_FILL_LEFT 0.0
 
-//Wwalk Cycle offset is 200
-bool OshimunoAntayoto_PowDo(OshimunoAntayoto npc, float gameTime)
+//walk Cycle offset is 200
+bool OshimunoAntayoto_ConeSlash(OshimunoAntayoto npc, float gameTime)
 {
 	if(npc.m_iWhatAbilityDo != 1 && npc.m_iWhatAbilityDo != 0)
 		return false;
 	if(npc.m_flDoingAnimation < gameTime)
 	{
-
-		if(npc.m_flPowAbilityCD < gameTime)
+		if(npc.m_flConeSlashCD < gameTime)
 		{
 			if(!IsValidEnemy(npc.index, npc.m_iTarget))
 				return false;
 			if(!Can_I_See_Enemy_Only(npc.index, npc.m_iTarget))
 				return false;
-			npc.m_flPowAbilityCD = gameTime + 25.0;
-			npc.m_flDoingAnimation = gameTime + 2.0;
+			npc.m_flConeSlashCD = gameTime + 25.0;
+			npc.m_flDoingAnimation = gameTime + 1.5;
 			npc.m_bisWalking = false;
 			npc.StopPathing();
 			npc.m_iChanged_WalkCycle = 200;
-			npc.AddActivityViaSequence("taunt03");
+			npc.AddActivityViaSequence("secondrate_sorcery_demo")
 			npc.SetPlaybackRate(0.65);
 			npc.SetCycle(0.05);
 			npc.m_iWhatAbilityDo = 1;
@@ -891,26 +801,145 @@ bool OshimunoAntayoto_PowDo(OshimunoAntayoto npc, float gameTime)
 		npc.m_iChanged_WalkCycle++;
 		if(IsValidEnemy(npc.index, npc.m_iTarget))
 		{
-			float vecTarget[3]; WorldSpaceCenter(npc.m_iTarget, vecTarget );
-			float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
-			float ProjectileSpeed = 1500.0;
-			PredictSubjectPositionForProjectiles(npc, npc.m_iTarget, ProjectileSpeed, _, vecTarget);
-
-			npc.FaceTowards(vecTarget, 20000.0);
-			int entity = npc.FireRocket(vecTarget, 25.0 * RaidModeScaling, ProjectileSpeed, "models/weapons/w_bullet.mdl", 5.0);	
-			int trail = Trail_Attach(entity, ARROW_TRAIL_RED, 175, 0.25, 20.0, 20.0, 5);
-			i_WandParticle[entity] = EntIndexToEntRef(trail);
-			CreateTimer(4.0, Timer_RemoveEntity, EntIndexToEntRef(trail), TIMER_FLAG_NO_MAPCHANGE);
-			SetParent(entity, trail);			
-			DataPack pack1;
-			CreateDataTimer(0.75, WhiteflowerTank_Rocket_Stand, pack1, TIMER_FLAG_NO_MAPCHANGE);
-			pack1.WriteCell(EntIndexToEntRef(entity));
-			pack1.WriteCell(EntIndexToEntRef(npc.m_iTarget));
-			npc.PlayPowGunSound();
+			float bossPos[3];
+			GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", bossPos);
+			GetClientAbsOrigin(target, targetPos);
+			float yawDeg;
+			{
+				float at[3];
+				WorldSpaceCenter(target, at);
+				float dx = at[0] - bossPos[0];
+				float dy = at[1] - bossPos[1];
+				if((dx * dx) + (dy * dy) >= 1.0)
+				{
+					yawDeg = ArcTangent2(dy, dx) * 180.0 / FLOAT_PI;
+				}
+				else
+				{
+					float ang[3];
+					GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+					yawDeg = ang[1];
+				}
+			}
+			OshimunoAntayotoResolveCone(npc, bossPos, yawDeg);
+			OshimunoTricksterDrawCone(bossPos, yawDeg);
 		}
 		npc.m_flDoingAnimation = gameTime + 0.25;
 	}
 	return true;
+}
+static void OshimunoAntayotoResolveCone(OshimunoAntayoto npc, const float apex[3], float yawDeg)
+{
+	float yawRad = yawDeg * FLOAT_PI / 180.0;
+	float halfAngle = (CONE_HALFANGLE + 6.0) * FLOAT_PI / 180.0;
+	float radiusPad = CONE_RADIUS + 24.0;
+
+	for(int client = 1; client <= MaxClients; client++)
+	{
+		if(!IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) != TFTeam_Red)
+			continue;
+
+		float pos[3];
+		GetClientAbsOrigin(client, pos);
+		float dx = pos[0] - apex[0];
+		float dy = pos[1] - apex[1];
+		float dz = pos[2] - apex[2];
+		if(((dx * dx) + (dy * dy)) > (radiusPad * radiusPad) || dz > 120.0 || dz < -120.0)
+			continue;
+
+		float diff = ArcTangent2(dy, dx) - yawRad;
+		while(diff > FLOAT_PI) diff -= FLOAT_PI * 2.0;
+		while(diff < -FLOAT_PI) diff += FLOAT_PI * 2.0;
+		if(FloatAbs(diff) > halfAngle)
+			continue;
+
+		float at[3];
+		WorldSpaceCenter(client, at);
+
+		float damage = 100.0;
+		NPC_Ignite(client, npc.index, 8.0, -1, 2.0);
+		SDKHooks_TakeDamage(client, npc.index, npc.index, damage, DMG_CLUB);
+	}
+}
+
+static void OshimunoAntayotoDrawCone(const float apex[3], float yawDeg)
+{
+	int color[4];
+	color[0] = CONE_COLOR[0];
+	color[1] = CONE_COLOR[1];
+	color[2] = CONE_COLOR[2];
+	color[3] = CONE_OUTLINE_ALPHA;
+
+	float from[3];
+	from = apex;
+	from[2] += 5.0;
+
+	float halfAngle = CONE_HALFANGLE * FLOAT_PI / 180.0;
+	float yawRad = yawDeg * FLOAT_PI / 180.0;
+	float prev[3];
+	for(int step; step <= 6; step++)
+	{
+		float ang = yawRad - halfAngle + ((halfAngle * 2.0) * (float(step) / 6.0));
+		float at[3];
+		at[0] = from[0] + (Cosine(ang) * CONE_RADIUS);
+		at[1] = from[1] + (Sine(ang) * CONE_RADIUS);
+		at[2] = from[2];
+
+		if(step == 0 || step == 6)
+		{
+			TE_SetupBeamPoints(from, at, g_ConeLaser, -1, 0, 0, CONE_LIFESPAN, 4.0, 4.0, 0, 0.0, color, 0);
+			TE_SendToAll();
+		}
+		if(step)
+		{
+			TE_SetupBeamPoints(prev, at, g_ConeLaser, -1, 0, 0, CONE_LIFESPAN, 4.0, 4.0, 0, 0.0, color, 0);
+			TE_SendToAll();
+		}
+		prev = at;
+	}
+	if(CONE_FILL_ALPHA <= 0 || !g_ConeFillOk)
+		return;
+
+	int spr = CreateEntityByName("env_sprite_oriented");
+	if(spr <= MaxClients || !IsValidEntity(spr))
+		return;
+
+	char buffer[48];
+	DispatchKeyValue(spr, "model", CONE_FILL_MAT);
+	FormatEx(buffer, sizeof(buffer), "%.3f", (CONE_RADIUS * 0.5) / 32.0);
+	DispatchKeyValue(spr, "scale", buffer);
+	DispatchKeyValue(spr, "rendermode", "1");	
+	FormatEx(buffer, sizeof(buffer), "%d %d %d", CONE_COLOR[0], CONE_COLOR[1], CONE_COLOR[2]);
+	DispatchKeyValue(spr, "rendercolor", buffer);
+	IntToString(CONE_FILL_ALPHA, buffer, sizeof(buffer));
+	DispatchKeyValue(spr, "renderamt", buffer);
+	DispatchKeyValue(spr, "spawnflags", "1");	
+	float ang[3];
+	ang[0] = 90.0;
+	ang[1] = yawDeg + 45.0;
+	FormatEx(buffer, sizeof(buffer), "%.0f %.0f 0", ang[0], ang[1]);
+	DispatchKeyValue(spr, "angles", buffer);
+	DispatchSpawn(spr);
+	float fwdRad = yawDeg * FLOAT_PI / 180.0;
+	float leftRad = (yawDeg + 90.0) * FLOAT_PI / 180.0;
+	float at[3];
+	at[0] = apex[0] + (Cosine(fwdRad) * CONE_RADIUS * CONE_FILL_FWD)
+		+ (Cosine(leftRad) * CONE_RADIUS * CONE_FILL_LEFT);
+	at[1] = apex[1] + (Sine(fwdRad) * CONE_RADIUS * CONE_FILL_FWD)
+		+ (Sine(leftRad) * CONE_RADIUS * CONE_FILL_LEFT);
+	at[2] = apex[2] + 4.0;
+	TeleportEntity(spr, at, ang, NULL_VECTOR);
+	SetEdictFlags(spr, (GetEdictFlags(spr) & ~(FL_EDICT_DONTSEND | FL_EDICT_PVSCHECK)) | FL_EDICT_ALWAYS);
+
+	CreateTimer(CONE_LIFESPAN, Timer_ConeKillFill, EntIndexToEntRef(spr));
+}
+
+public Action Timer_ConeKillFill(Handle timer, any ref)
+{
+	int spr = EntRefToEntIndex(view_as<int>(ref));
+	if(spr > MaxClients && IsValidEntity(spr))
+		RemoveEntity(spr);
+	return Plugin_Stop;
 }
 
 //Wwalk Cycle offset is 300
