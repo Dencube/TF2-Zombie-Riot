@@ -192,7 +192,10 @@ stock void GiveMorphineOnDamage(int client, int victim, float damage, int damage
 		
 	if(!(damagetype & DMG_CLUB))
 		return; //needs to be melee damage!
-
+	if(Arena_Mode())
+	{
+		damage *= 10.0;
+	}
 	if(MorphineMaxed(client))
 	{
 		MorphineCharge[client] = 0.0;
@@ -203,7 +206,14 @@ stock void GiveMorphineOnDamage(int client, int victim, float damage, int damage
 		MinCashMaxGain = 1000;
 
 	MinCashMaxGain -= 250;
+	if(Arena_Mode())
+	{
+		if(MinCashMaxGain >= 3000)
+		{
+			MinCashMaxGain = 3000;
+		}
 
+	}
 	if(MinCashMaxGain >= 100000)
 	{
 		MinCashMaxGain = 100000;
@@ -808,6 +818,11 @@ void HealPointToReinforce(int client, int healthvalue, float autoscale = 0.0)
 	if(!b_Reinforce[client])
 		return;
 
+	if(Arena_Mode())
+	{
+		healthvalue *= 2;
+		autoscale *= 2.5;
+	}
 	float Healing_Amount=Attributes_GetOnPlayer(client, 8, true, true)/2.0;
 	if(Healing_Amount<1.0)
 		Healing_Amount=1.0;
@@ -992,7 +1007,7 @@ public void Reinforce(int client, bool NoCD)
 		WritePackFloat(Reinforcement, position[0]);
 		WritePackFloat(Reinforcement, position[1]);
 		WritePackFloat(Reinforcement, position[2]);
-		WritePackFloat(Reinforcement, 50.0);
+		WritePackFloat(Reinforcement, Arena_Mode() ? 50.0 : 25.0);
 		WritePackCell(Reinforcement, false);
 		WritePackFloat(Reinforcement, 1200.0);
 		WritePackString(Reinforcement, "ZR_ReinforcePOD_");
@@ -2082,6 +2097,7 @@ public Action OnBombDrop(const char [] output, int caller, int activator, float 
 				DHook_RespawnPlayer(RandomHELLDIVER);
 				ForcePlayerCrouch(RandomHELLDIVER, false);
 				DataPack pack;
+				ReviveAllyResetCD(RandomHELLDIVER);
 				CreateDataTimer(0.5, Timer_DelayTele, pack, TIMER_FLAG_NO_MAPCHANGE);
 				Music_EndLastmann(true);
 				LastMann = false;
@@ -2185,7 +2201,7 @@ bool CanPlayerBeSummoned(int client, int summoner)
 	if(!b_AntiLateSpawn_Allow[client])
 		return false;
 
-	if(summoner==client || GetTeam(client) != TFTeam_Red)
+	if(summoner==client || GetTeam(client) != GetTeam(summoner))
 		return false;
 
 	if(!WasHereSinceStartOfWave(client))
