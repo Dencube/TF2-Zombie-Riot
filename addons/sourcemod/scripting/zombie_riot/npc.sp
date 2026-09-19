@@ -1267,10 +1267,8 @@ void NPC_ConfigSetup()
 	if(HasNTOnServer())
 		NPC_GetByPlugin("npc_nothing_there");
 	
-	ConeSwingTest_OnMapStart_NPC(); //TODO: test npc remove later
-
 	OshimunoTaishimoOnMapStart();
-	/*OshimunoAntayotoOnMapStart();*/
+	OshimunoAntayotoOnMapStart();
 	OshimunoTrashManOnMapStart();
 	OshimunoPopstarOnMapStart();
 	OshimunoBackupDancerOnMapStart();
@@ -2838,9 +2836,8 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/construction/construction2/npc_starship_beacon.sp"
 #include "npc/construction/npc_dungeon_loot.sp"
 
-#include "npc/oshimuno/npc_cone_swing_standalone.sp" //TODO:REMOVE LATER
 #include "npc/oshimuno/npc_oshimuno_taishimo.sp"
-/*#include "npc/oshimuno/npc_oshimuno_antayoto.sp"*/
+#include "npc/oshimuno/npc_oshimuno_antayoto.sp"
 #include "npc/oshimuno/npc_oshimuno_bouncer.sp"
 #include "npc/oshimuno/npc_oshimuno_bartender.sp"
 #include "npc/oshimuno/npc_oshimuno_boombox.sp"

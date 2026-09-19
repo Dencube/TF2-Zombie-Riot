@@ -108,6 +108,7 @@ methodmap OshimunoBouncer < CClotBody
 		
 		npc.m_flSpeed = 300.0;
 		npc.m_iOverlordComboAttack = 0;
+		npc.m_flRangedArmor = 0.8;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch.mdl");
 

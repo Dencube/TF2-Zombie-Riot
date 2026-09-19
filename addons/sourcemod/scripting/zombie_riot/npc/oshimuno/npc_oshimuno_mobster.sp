@@ -215,9 +215,9 @@ int OshimunoMobsterSelfDefense(OshimunoMobster npc, float distance, float vecTar
 			npc.AddGesture("ACT_MP_ATTACK_STAND_PRIMARY");
 			npc.PlayRangedSound();
 			
-			npc.FireRocket(vecTarget, 60.0, 800.0);
+			npc.FireRocket(vecTarget, 45.0, 800.0);
 			
-			npc.m_flNextRangedAttack = gameTime + 1.4;
+			npc.m_flNextRangedAttack = gameTime + 1.25;
 		}
 	}
 	if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED * 10.0))

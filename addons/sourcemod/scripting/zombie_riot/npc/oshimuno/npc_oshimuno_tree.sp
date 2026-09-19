@@ -67,9 +67,9 @@ int OshimunoTree_ID()
 	return NPCID;
 }
 
-static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
+static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team, const char[] data)
 {
-	return OshimunoTree(vecPos, vecAng, team);
+	return OshimunoTree(vecPos, vecAng, team, data);
 }
 
 methodmap OshimunoTree < CClotBody
@@ -79,12 +79,18 @@ methodmap OshimunoTree < CClotBody
 		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
-	property float m_flNextConeAttack
+	property float m_flEnrageDelay
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
 	}
-	public OshimunoTree(float vecPos[3], float vecAng[3], int ally)
+	property float m_flNextConeAttack
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][2]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][2] = TempValueForProperty; }
+	}
+	
+	public OshimunoTree(float vecPos[3], float vecAng[3], int ally, const char[] data)
 	{
 		OshimunoTree npc = view_as<OshimunoTree>(CClotBody(vecPos, vecAng, "models/props_japan/sakura_tree01.mdl", "1.5", "1000", ally));
 		SetEntityRenderColor(npc.index, 245, 180, 255);
@@ -110,6 +116,7 @@ methodmap OshimunoTree < CClotBody
 		npc.m_flMeleeArmor = 1.35;
 		npc.m_bDissapearOnDeath = true;
 		npc.m_flNextConeAttack = 0.0;
+		npc.m_flEnrageDelay = 0.0;
 
 		int Decision = TeleportDiversioToRandLocation(npc.index, true, 2000.0, 1000.0, .NeedLOSPlayer = true);
 		switch(Decision)
@@ -136,22 +143,25 @@ methodmap OshimunoTree < CClotBody
 				//todo code on what to do if random teleport is disabled
 			}
 		}
-		if(ally != TFTeam_Red)
+		if(StrContains(data, "spawn_notif") != -1)
 		{
-			if(LastSpawnDiversio < GetGameTime())
+			if(ally != TFTeam_Red)
 			{
-				EmitSoundToAll("weapons/sniper_railgun_world_reload.wav", _, _, _, _, 1.0);	
-				EmitSoundToAll("weapons/sniper_railgun_world_reload.wav", _, _, _, _, 1.0);	
-				for(int client_check=1; client_check<=MaxClients; client_check++)
+				if(LastSpawnDiversio < GetGameTime())
 				{
-					if(IsClientInGame(client_check) && !IsFakeClient(client_check))
+					EmitSoundToAll("weapons/sniper_railgun_world_reload.wav", _, _, _, _, 1.0);	
+					EmitSoundToAll("weapons/sniper_railgun_world_reload.wav", _, _, _, _, 1.0);	
+					for(int client_check=1; client_check<=MaxClients; client_check++)
 					{
-						SetGlobalTransTarget(client_check);
-						ShowGameText(client_check, "voice_player", 1, "%t", "The forest grows rapidly");
+						if(IsClientInGame(client_check) && !IsFakeClient(client_check))
+						{
+							SetGlobalTransTarget(client_check);
+							ShowGameText(client_check, "voice_player", 1, "%t", "The forest grows rapidly");
+						}
 					}
 				}
+				LastSpawnDiversio = GetGameTime() + 20.0;
 			}
-			LastSpawnDiversio = GetGameTime() + 20.0;
 		}
 		return npc;
 	}
@@ -183,14 +193,21 @@ static void ClotThink(int iNPC)
 		npc.m_iTarget = target;
 		npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
 	}
-	if(!npc.Anger) //if trees are the last thing alive get enraged and start chasing
+	if(!npc.Anger) //if trees are the last thing alive get enraged and start chasing after a delay
 	{
-		if(npc.m_flRecheckIfAlliesDead < GetGameTime())
+		if(npc.m_flRecheckIfAlliesDead < gameTime &&! npc.m_flEnrageDelay)
 		{
 			if(!IsValidAlly(npc.index, GetClosestAlly(npc.index)))
 			{
-				npc.Anger = true;
+				npc.m_flEnrageDelay = gameTime + 3.0;
 				fl_TotalArmor[npc.index] = 0.66;
+			}
+		}
+		if(npc.m_flEnrageDelay)
+		{
+			if(npc.m_flEnrageDelay < gameTime)
+			{
+				npc.Anger = true;
 				SetEntityRenderColor(npc.index, 255, 0, 0); // red because they're PISSED
 			}
 		}
@@ -617,6 +634,6 @@ static void ClotDeath(int entity)
 	if(IsValidEntity(npc.m_iWearable4))
 		RemoveEntity(npc.m_iWearable4);
 	
-	if(IsValidEntity(npc.m_iWearable5))
-		RemoveEntity(npc.m_iWearable5);
+	if(IsValidEntity(npc.m_iWearable9))
+		RemoveEntity(npc.m_iWearable9);
 }

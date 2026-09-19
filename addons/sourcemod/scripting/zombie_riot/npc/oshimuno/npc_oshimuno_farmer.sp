@@ -41,18 +41,18 @@ static const char g_MeleeAttackSounds[][] =
 #define INITIAL_TREE_SPAWN_COOLDOWN 10.0
 #define TREE_SPAWN_COOLDOWN 25.0
 
-#define FARMER_LINE_WIDTH 100.0
-#define FARMER_LINE_LENGTH 800.0
-#define FARMER_LINE_GAP 100.0
-#define FARMER_LINE_START 50.0
-#define FARMER_LINE_TIME 1.8
+#define FARMER_LINE_WIDTH 180.0
+#define FARMER_LINE_LENGTH 900.0
+#define FARMER_LINE_GAP 125.0
+#define FARMER_LINE_START 30.0
+#define FARMER_LINE_TIME 1.2
 #define FARMER_LINE_SWING_LEAD 0.75
 #define FARMER_LINE_SWING_DELAY 0.1953
 #define FARMER_LINE_IMPACT_DELAY (-0.04)
 #define FARMER_LINE_FADE_TIME 0.15
 #define FARMER_LINE_SPREAD 75.0
 #define FARMER_LINE_FADE_STEP 0.045
-#define FARMER_LINE_DAMAGE 100.0
+#define FARMER_LINE_DAMAGE 30.0
 #define FARMER_LINE_SWINGS 5
 
 static int g_FarmerLineLaser = -1;
@@ -92,45 +92,35 @@ methodmap OshimunoFarmer < CClotBody
 		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
-	property float m_flSuperSlash
+	property float m_flLineAoeDetonate
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
 	}
-	property float m_flSuperSlashInAbility
+	property float m_flLineAoeYaw
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][2]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][2] = TempValueForProperty; }
 	}
-	property float m_flSuperSlashInAbilityDo
+	property float m_flMeleeSwingCount
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][3]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][3] = TempValueForProperty; }
 	}
-	property float m_flLineAoeDetonate
+	property float m_flLineAoeFade
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][4]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][4] = TempValueForProperty; }
 	}
-	property float m_flLineAoeYaw
+	property float m_flLineAoeFadeDraw
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][5]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][5] = TempValueForProperty; }
 	}
-	property float m_flMeleeSwingCount
+	property float m_flTransformIn
 	{
-		public get()							{ return fl_AbilityOrAttack[this.index][6]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][6] = TempValueForProperty; }
-	}
-	property float m_flLineAoeFade
-	{
-		public get()							{ return fl_AbilityOrAttack[this.index][7]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][7] = TempValueForProperty; }
-	}
-	property float m_flLineAoeFadeDraw
-	{
-		public get()							{ return fl_AbilityOrAttack[this.index][8]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][8] = TempValueForProperty; }
+		public get()							{ return fl_NextChargeSpecialAttack[this.index]; }
+		public set(float TempValueForProperty) 	{ fl_NextChargeSpecialAttack[this.index] = TempValueForProperty; }
 	}
 	public void PlayIdleSound()
 	{
@@ -159,7 +149,7 @@ methodmap OshimunoFarmer < CClotBody
 	
 	public OshimunoFarmer(float vecPos[3], float vecAng[3], int ally, const char[] data)
 	{
-		OshimunoFarmer npc = view_as<OshimunoFarmer>(CClotBody(vecPos, vecAng, "models/player/engineer.mdl", "1.1", "50000", ally, false, false, true,true));
+		OshimunoFarmer npc = view_as<OshimunoFarmer>(CClotBody(vecPos, vecAng, "models/player/engineer.mdl", "1.3", "50000", ally, false, true, true,true));
 		float gameTime = GetGameTime(npc.index);
 		
 		i_NpcWeight[npc.index] = 3;
@@ -188,19 +178,20 @@ methodmap OshimunoFarmer < CClotBody
 
 		npc.Anger = false;
 		npc.m_flNextChargeSpecialAttack = gameTime + 25.0;
-		npc.m_flSuperSlash = gameTime + 15.0;
 		npc.m_flTreeCooldown = gameTime + INITIAL_TREE_SPAWN_COOLDOWN;
 		npc.m_flLineAoeDetonate = 0.0;
 		npc.m_flLineAoeYaw = 0.0;
 		npc.m_flMeleeSwingCount = 0.0;
 		npc.m_flLineAoeFade = 0.0;
 		npc.m_flLineAoeFadeDraw = 0.0;
+		npc.m_flTransformIn = 0.0;
+		npc.g_TimesSummoned = 0;
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = FarmerOnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = OshimunoFarmerOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 300.0;
+		npc.m_flSpeed = 345.0;
 		npc.m_flMeleeArmor = 1.25;
 		
 		char buffers[3][64];
@@ -258,6 +249,7 @@ methodmap OshimunoFarmer < CClotBody
 		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/engineer/sum26_standing_offer/sum26_standing_offer.mdl");
 		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/all_class/sum26_beachcombers/sum26_beachcombers_engineer.mdl");
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/engineer/dec18_wise_whiskers/dec18_wise_whiskers.mdl");
 		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/engineer/all_work_and_no_plaid/all_work_and_no_plaid.mdl");
 		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 1);
@@ -303,6 +295,15 @@ static void ClotThink(int iNPC)
 	
 	npc.m_flNextDelayTime = gameTime + DEFAULT_UPDATE_DELAY_FLOAT;
 	npc.Update();
+
+	if(LastMann)
+	{
+		if(!npc.m_fbGunout)
+		{
+			npc.m_fbGunout = true;
+			NPCTalkMessage(npc.index, "Last Noob Left.");
+		}
+	}
 
 	if(npc.m_blPlayHurtAnimation)
 	{
@@ -366,54 +367,67 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoFarmerSelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoFarmerSelfDefense(npc, distance, vecTarget, gameTime);
 	}
+	if(OshimunoFarmerTransform(npc))
+		return;
 	if(npc.m_flTreeCooldown < gameTime)// spawn trees every 25s
 	{
+		int treehealth = ReturnEntityMaxHealth(npc.index) / 10;
 		float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 		float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
 		int entity = NPC_CreateByName("npc_oshimuno_tree", -1, pos, ang, GetTeam(npc.index));
 		if(entity > MaxClients)
 		{
-			ConnectWithBeam(npc.index, entity, 245, 180, 255, 3.0, 3.0, 1.35, LASERBEAM);	
+			/*ConnectWithBeam(npc.index, entity, 245, 180, 255, 1.0, 1.0, 0.0, LASERBEAM);*/
+			view_as<CClotBody>(entity).m_iWearable9=ConnectWithBeam(npc.index, entity, 245, 180, 255, 1.0, 1.0, 0.0, LASERBEAM);
 			if(GetTeam(npc.index) != TFTeam_Red)
-			NpcAddedToZombiesLeftCurrently(entity, true);
+				NpcAddedToZombiesLeftCurrently(entity, true);
+			SetEntProp(entity, Prop_Data, "m_iHealth", treehealth);
+			SetEntProp(entity, Prop_Data, "m_iMaxHealth", treehealth);
 		}
 		npc.m_flTreeCooldown = gameTime + TREE_SPAWN_COOLDOWN;
 	}
 	if(GetTreeCount(npc.index) <= 5)// increase stats for every tree alive
 	{
-	switch(GetTreeCount(npc.index))
+		switch(GetTreeCount(npc.index))
 		{
 			case 1:
 			{
-				fl_TotalArmor[npc.index] = 0.90;
+				fl_TotalArmor[npc.index] = 0.825;
 			}
 			case 2:
 			{
-				fl_TotalArmor[npc.index] = 0.825;
+				fl_TotalArmor[npc.index] = 0.70;
 			}
 			case 3:
 			{
-				fl_TotalArmor[npc.index] = 0.75;
-				npc.m_flSpeed = 305.0;
+				fl_TotalArmor[npc.index] = 0.65;
+				npc.m_flSpeed = 350.0;
 			}
 			case 4:
 			{
-				fl_TotalArmor[npc.index] = 0.60;
-				npc.m_flSpeed = 310.0;
+				fl_TotalArmor[npc.index] = 0.50;
+				npc.m_flSpeed = 360.0;
 			}
 			case 5:
 			{
 				fl_TotalArmor[npc.index] = 0.45;
-				npc.m_flSpeed = 315.0;
+				npc.m_flSpeed = 375.0;
 			}
 		}
 	}
 	else if (GetTreeCount(npc.index) >= 6) // beyond 5 trees he gets max buffs
 	{
 		fl_TotalArmor[npc.index] = 0.33;
-		npc.m_flSpeed = 330.0;
+		npc.m_flSpeed = 400.0;
+	}
+	if(!BlockLoseSay && RaidModeTime < GetGameTime()) // time out
+	{
+		
+		RaidModeTime = FAR_FUTURE;
+		RaidModeScaling *= 1.5;
+		/*TreeCount = TreeCount + 20;*/
 	}
 	npc.PlayIdleSound();
 }
@@ -433,16 +447,39 @@ void OshimunoFarmerSelfDefense(OshimunoFarmer npc, float distance, float vecTarg
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
+					float damage = 15.0;
 					npc.PlayMeleeHitSound();
-					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
+					SDKHooks_TakeDamage(target, npc.index, npc.index, damage * RaidModeScaling, DMG_CLUB);
+					bool Knocked = false;
+					if(IsValidClient(target))
+					{
+						if(IsInvuln(target))
+						{
+							Knocked = true;
+							Custom_Knockback(npc.index, target, 700.0, true);
+							if(!NpcStats_IsEnemySilenced(npc.index))
+							{
+								TF2_AddCondition(target, TFCond_LostFooting, 0.5);
+								TF2_AddCondition(target, TFCond_AirCurrent, 0.5);
+							}
+						}
+						else
+						{
+							if(!NpcStats_IsEnemySilenced(npc.index))
+							{
+								TF2_AddCondition(target, TFCond_LostFooting, 0.5);
+								TF2_AddCondition(target, TFCond_AirCurrent, 0.5);
+							}
+						}
+					}
+					if(!Knocked)
+						Custom_Knockback(npc.index, target, 330.0, true); 
 				}
 			}
 			delete swingTrace;
 		}
 	}
-
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) && npc.m_flNextMeleeAttack < gameTime)
+	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 1.5 && npc.m_flNextMeleeAttack < gameTime)
 	{
 		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
 		if(IsValidEnemy(npc.index, target, false, true))
@@ -453,7 +490,7 @@ void OshimunoFarmerSelfDefense(OshimunoFarmer npc, float distance, float vecTarg
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_flNextMeleeAttack = gameTime + 1.0;
 
 			npc.m_flMeleeSwingCount += 1.0;
 			if(npc.m_flMeleeSwingCount >= float(FARMER_LINE_SWINGS))
@@ -642,11 +679,21 @@ static void OshimunoFarmerLineAoeDetonate(OshimunoFarmer npc)
 		float at[3];
 		WorldSpaceCenter(client, at);
 		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], client, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
-		SDKHooks_TakeDamage(client, npc.index, npc.index, FARMER_LINE_DAMAGE, DMG_CLUB, -1, _, at);
+		SDKHooks_TakeDamage(client, npc.index, npc.index, FARMER_LINE_DAMAGE * RaidModeScaling, DMG_CLUB, -1, _, at);
+		float VecMe[3]; WorldSpaceCenter(npc.index, VecMe);
+		float VecEnemy[3]; WorldSpaceCenter(client, VecEnemy);
+
+		float AngleVec[3];
+		MakeVectorFromPoints(VecMe, VecEnemy, AngleVec);
+		GetVectorAngles(AngleVec, AngleVec);
+		AngleVec[0] = -90.0;
+		Custom_Knockback(npc.index, client, 900.0, true, true, true, .OverrideLookAng = AngleVec);
+		ApplyStatusEffect(npc.index, client, "Ragdolled", 1.5);	
+		FreezeNpcInTime(client, 1.5);
 	}
 }
 
-static Action FarmerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+static Action OshimunoFarmerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {	
 	if(!b_thisNpcIsARaid[victim])
 		return Plugin_Changed;
@@ -655,22 +702,80 @@ static Action FarmerOnTakeDamage(int victim, int &attacker, int &inflictor, floa
 	if((ReturnEntityMaxHealth(npc.index)/3) >= GetEntProp(npc.index, Prop_Data, "m_iHealth") && !npc.Anger) //enrage below 33% hp
 	{
 		npc.Anger = true;
-		for(int i=0 ; i < 6 ; i++) //summon 6 trees
+		npc.m_flTransformIn = GetGameTime() + 2.5;
+		npc.m_flTreeCooldown = npc.m_flTreeCooldown + 2.5;
+	}
+	if(npc.g_TimesSummoned < 99)
+	{
+		int nextLoss = ReturnEntityMaxHealth(npc.index) * (99 - npc.g_TimesSummoned) / 100;
+		if(GetEntProp(npc.index, Prop_Data, "m_iHealth") < nextLoss)
 		{
-			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-			float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-			int entity = NPC_CreateByName("npc_oshimuno_tree", -1, pos, ang, GetTeam(npc.index));
-
-			if(entity > MaxClients)
-			{
-				ConnectWithBeam(npc.index, entity, 245, 180, 255, 3.0, 3.0, 1.35, LASERBEAM);
-				if(GetTeam(npc.index) != TFTeam_Red)
-				NpcAddedToZombiesLeftCurrently(entity, true);
-			}
+			npc.g_TimesSummoned++;
+			npc.m_flTreeCooldown -= 0.7;
 		}
 	}
 
 	return Plugin_Changed;
+}
+bool OshimunoFarmerTransform(OshimunoFarmer npc)
+{
+	if(!npc.m_flTransformIn)
+		return false;
+
+	if(npc.m_flTransformIn < GetGameTime())
+	{			
+		b_CannotBeHeadshot[npc.index] = false;
+		b_CannotBeBackstabbed[npc.index] = false;
+		b_NpcIsInvulnerable[npc.index] = false; //Special huds for invul targets
+		npc.m_bisWalking = true;
+		npc.StartPathing();
+		npc.SetActivity("ACT_MP_RUN_MELEE");
+		npc.m_flTransformIn = 0.0;
+		return false;
+	}
+	if(npc.m_flTransformIn < GetGameTime() + 0.5)
+	{
+		if(npc.m_iChanged_WalkCycle != 10)
+		{
+			RaidModeScaling *= 1.05;
+			/*fl_Extra_Speed[npc.index] *= 1.05;*/
+			for(int i=0 ; i < 6 ; i++) //summon 6 trees
+			{
+				int treehealth = ReturnEntityMaxHealth(npc.index) / 10;
+				float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+				float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+				int entity = NPC_CreateByName("npc_oshimuno_tree", -1, pos, ang, GetTeam(npc.index));
+
+				if(entity > MaxClients)
+				{
+					ConnectWithBeam(npc.index, entity, 245, 180, 255, 1.0, 1.0, 0.0, LASERBEAM);
+					if(GetTeam(npc.index) != TFTeam_Red)
+						NpcAddedToZombiesLeftCurrently(entity, true);
+					SetEntProp(entity, Prop_Data, "m_iHealth", treehealth);
+					SetEntProp(entity, Prop_Data, "m_iMaxHealth", treehealth);
+				}
+			}
+			npc.m_iChanged_WalkCycle = 10;
+		}
+		return true;
+	}
+	if(npc.m_iChanged_WalkCycle != 9)
+	{
+		npc.m_bisWalking = false;
+		npc.m_iChanged_WalkCycle = 9;
+		npc.StopPathing();
+		b_NpcIsInvulnerable[npc.index] = true; //Special huds for invul targets
+		b_CannotBeHeadshot[npc.index] = true;
+		b_CannotBeBackstabbed[npc.index] = true;
+		ApplyStatusEffect(npc.index, npc.index, "Clear Head", 3.0);	
+		ApplyStatusEffect(npc.index, npc.index, "Solid Stance", 3.0);	
+		ApplyStatusEffect(npc.index, npc.index, "Fluid Movement", 3.0);	
+		npc.AddActivityViaSequence("taunt_unleashed_rage_engineer");
+		npc.SetPlaybackRate(1.2);
+		npc.SetCycle(0.1);
+		npc.m_flAttackHappens = 0.0;
+	}	
+	return true;
 }
 static void ClotDeath(int entity)
 {

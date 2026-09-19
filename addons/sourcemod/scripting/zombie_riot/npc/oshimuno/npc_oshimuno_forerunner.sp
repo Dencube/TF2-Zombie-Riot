@@ -134,6 +134,7 @@ methodmap OshimunoForerunner < CClotBody
 		npc.m_flSpeed = 270.0;
 		npc.m_iState = 0; // 0 is for walking normally || 1 is for charging
 		npc.m_iOverlordComboAttack = 1;
+		npc.m_flMeleeArmor = 0.8;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana.mdl");
 
