@@ -274,7 +274,7 @@ static int OshimunoAvengerSelfDefense(OshimunoAvenger npc, float gameTime, int t
 
 					if(IsValidEnemy(npc.index, target))
 					{
-						float damage = 50.0 * damagebonus;
+						float damage = 75.0 * damagebonus;
 						npc.PlayRangedSound();
 						SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_BULLET, -1, _, vecHit);
 					}

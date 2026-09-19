@@ -200,7 +200,7 @@ void OshimunoSmokebombSelfDefense(OshimunoSmokebomb npc, float distance, float v
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
+					float damage = 50.0;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -221,7 +221,7 @@ void OshimunoSmokebombSelfDefense(OshimunoSmokebomb npc, float distance, float v
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_flNextMeleeAttack = gameTime + 0.55;
 		}
 	}
 }

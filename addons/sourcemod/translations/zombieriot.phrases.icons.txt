@@ -761,9 +761,13 @@
 	{
 		"en" 		 "Sakurawa arrives"
 	}
-	"The forest grows rapidly"
+	"The trees surround you"
 	{
-		"en"	"The forest grows rapidly"
+		"en"	"The trees surround you"
+	}
+	"A boombox has been setup!"
+	{
+		"en"	"A boombox has been setup!"
 	}
 	"Antayoto arrives"
 	{

@@ -199,11 +199,11 @@ void OshimunoMobsterEliteSelfDefense(OshimunoMobsterElite npc, float distance, f
 			npc.AddGesture("ACT_MP_ATTACK_STAND_PRIMARY");
 			npc.PlayRangedSound();
 			
-			int projectile = npc.FireRocket(vecTarget, 60.0, 800.0);
+			int projectile = npc.FireRocket(vecTarget, 70.0, 900.0);
 			static float ang_Look[3];
 			Initiate_HomingProjectile(projectile, npc.index, 60.0, 4.0, true, true, ang_Look, target);
 			TriggerTimerHoming(projectile);
-			npc.m_flNextRangedAttack = gameTime + 1.2;
+			npc.m_flNextRangedAttack = gameTime + 1.1;
 		}
 	}
 }

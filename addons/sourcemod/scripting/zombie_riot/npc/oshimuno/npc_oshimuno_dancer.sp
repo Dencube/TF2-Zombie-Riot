@@ -213,7 +213,7 @@ void OshimunoDancerSelfDefense(OshimunoDancer npc, float distance, float vecTarg
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 60.0;
+					float damage = 40.0;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -234,7 +234,7 @@ void OshimunoDancerSelfDefense(OshimunoDancer npc, float distance, float vecTarg
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_flNextMeleeAttack = gameTime + 0.45;
 		}
 	}
 	

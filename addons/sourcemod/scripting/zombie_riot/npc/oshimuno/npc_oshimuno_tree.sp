@@ -156,11 +156,11 @@ methodmap OshimunoTree < CClotBody
 						if(IsClientInGame(client_check) && !IsFakeClient(client_check))
 						{
 							SetGlobalTransTarget(client_check);
-							ShowGameText(client_check, "voice_player", 1, "%t", "The forest grows rapidly");
+							ShowGameText(client_check, "voice_player", 1, "%t", "The trees surround you");
 						}
 					}
 				}
-				LastSpawnDiversio = GetGameTime() + 20.0;
+				LastSpawnDiversio = GetGameTime() + 10.0;
 			}
 		}
 		return npc;
