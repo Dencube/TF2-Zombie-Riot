@@ -39,6 +39,11 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/machete_swing.wav",
 };
 
+static const char g_RangedAttackSounds[][] =
+{
+	"weapons/cleaver_throw.wav",
+};
+
 
 int OshimunoAntayotoId;
 int OshimunoAntayotoIDReturn()
@@ -47,8 +52,84 @@ int OshimunoAntayotoIDReturn()
 }
 
 static int g_AntayotoSlashLaser = -1;
-static const char g_AntayotoSlashWindUpSound[] = "misc/halloween/strongman_fast_swing_01.wav";
-static const char g_AntayotoSlashImpactSound[] = "misc/halloween/strongman_fast_impact_01.wav";
+static const char g_AntayotoAoeDetonateSound[] = "player/taunt_yeti_standee_break.wav";
+static const char g_AntayotoConePlaceSound[] = "weapons/stickybomblauncher_charge_up.wav";
+static const char g_AntayotoBombModel[] = "models/weapons/w_models/w_stickybomb.mdl";
+static const char g_AntayotoBombExplodeSound[] = "weapons/pipe_bomb1.wav";
+static float g_AntayotoRotationStart;
+static int g_AntayotoRotationStage;
+static int g_AntayotoHealthPhase;
+static bool g_AntayotoSmokePending;
+static float g_AntayotoSmokeImmuneUntil;
+static float g_AntayotoSmokeHideUntil;
+static float g_AntayotoConePlaceSoundLen;
+static float g_AntayotoLineSmokeTime;
+static int g_AntayotoKunaiThrowCount;
+
+#define ANTAYOTO_CONE_MAX 3
+static float g_AntayotoConeYawDir[ANTAYOTO_CONE_MAX];
+static float g_AntayotoConeDetTime[ANTAYOTO_CONE_MAX];
+static int g_AntayotoConeTotal;
+static int g_AntayotoConeIndex;
+static float g_AntayotoConePlaceTime;
+static float g_AntayotoConeTeleDraw;
+static char g_AntayotoConeSwingAnim[64];
+
+#define ANTAYOTO_LINE_SLOTS 3
+static bool g_AntayotoLineSlotChosen[ANTAYOTO_LINE_SLOTS][MAXPLAYERS + 1];
+static bool g_AntayotoLineSlotActive[ANTAYOTO_LINE_SLOTS];
+static float g_AntayotoLineSlotYaw[ANTAYOTO_LINE_SLOTS];
+static float g_AntayotoLineSlotLen[ANTAYOTO_LINE_SLOTS];
+static int g_AntayotoLineSlotCount;
+
+static float OshimunoAntayotoWavDuration(const char[] soundPath)
+{
+	char fullPath[PLATFORM_MAX_PATH];
+	FormatEx(fullPath, sizeof(fullPath), "sound/%s", soundPath);
+	File file = OpenFile(fullPath, "rb", true);
+	if(file == null)
+		return 0.0;
+
+	int header[3];
+	if(file.Read(header, 3, 4) != 3 || header[0] != 0x46464952 || header[2] != 0x45564157)
+	{
+		delete file;
+		return 0.0;
+	}
+
+	int byteRate = 0;
+	int dataSize = 0;
+	int chunk[2];
+	while(file.Read(chunk, 2, 4) == 2)
+	{
+		if(chunk[0] == 0x20746D66)
+		{
+			if(chunk[1] < 16)
+				break;
+
+			int fmt[4];
+			if(file.Read(fmt, 4, 4) != 4)
+				break;
+
+			byteRate = fmt[2];
+			file.Seek(chunk[1] - 16 + (chunk[1] & 1), SEEK_CUR);
+		}
+		else if(chunk[0] == 0x61746164)
+		{
+			dataSize = chunk[1];
+			break;
+		}
+		else
+		{
+			file.Seek(chunk[1] + (chunk[1] & 1), SEEK_CUR);
+		}
+	}
+	delete file;
+	if(byteRate <= 0 || dataSize <= 0)
+		return 0.0;
+
+	return float(dataSize) / float(byteRate);
+}
 
 void OshimunoAntayotoOnMapStart()
 {
@@ -57,8 +138,18 @@ void OshimunoAntayotoOnMapStart()
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
+	PrecacheSoundArray(g_RangedAttackSounds);
+	PrecacheSound(g_AntayotoAoeDetonateSound);
+	PrecacheSound(g_AntayotoConePlaceSound);
+	PrecacheSound(g_AntayotoBombExplodeSound);
+	g_AntayotoConePlaceSoundLen = OshimunoAntayotoWavDuration(g_AntayotoConePlaceSound);
+	if(g_AntayotoConePlaceSoundLen <= 0.0)
+	{
+		LogMessage("Antayoto: could not read wav length for %s; cone place sound plays at normal pitch and is only cut at detonation.", g_AntayotoConePlaceSound);
+	}
 	PrecacheSoundCustom("#zombiesurvival/aprilfools/reteptheme_1.mp3");
 	g_AntayotoSlashLaser = PrecacheModel("sprites/laserbeam.vmt");
+	PrecacheModel(g_AntayotoBombModel);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Antayoto");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_antayoto");
@@ -81,11 +172,6 @@ methodmap OshimunoAntayoto < CClotBody
 	{
 		public get()							{ return fl_NextChargeSpecialAttack[this.index]; }
 		public set(float TempValueForProperty) 	{ fl_NextChargeSpecialAttack[this.index] = TempValueForProperty; }
-	}
-	property float m_flConeSlashCD
-	{
-		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
-		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
 	property float m_flSlashAoeDetonate
 	{
@@ -147,10 +233,39 @@ methodmap OshimunoAntayoto < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
+	public void PlayRangedSound()
+	{
+		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
+	}
+
 	public OshimunoAntayoto(float vecPos[3], float vecAng[3], int ally, const char[] data)
 	{
 		OshimunoAntayoto npc = view_as<OshimunoAntayoto>(CClotBody(vecPos, vecAng, "models/player/spy.mdl", "1.15", "40000", ally, false, true, true,true)); //giant!
 		float gameTime = GetGameTime(npc.index);
+
+		g_AntayotoRotationStart = gameTime;
+		g_AntayotoRotationStage = 0;
+		g_AntayotoHealthPhase = 0;
+		g_AntayotoSmokePending = false;
+		g_AntayotoSmokeImmuneUntil = 0.0;
+		g_AntayotoSmokeHideUntil = 0.0;
+		g_AntayotoLineSmokeTime = 0.0;
+		g_AntayotoKunaiThrowCount = 0;
+		g_AntayotoConeTotal = 0;
+		g_AntayotoConeIndex = 0;
+		g_AntayotoLineSlotCount = 1;
+		OshimunoAntayotoBombsReset();
+		for(int slot_wipe = 0; slot_wipe < ANTAYOTO_LINE_SLOTS; slot_wipe++)
+		{
+			g_AntayotoLineSlotActive[slot_wipe] = false;
+			for(int client_wipe = 1; client_wipe <= MaxClients; client_wipe++)
+			{
+				g_AntayotoLineSlotChosen[slot_wipe][client_wipe] = false;
+			}
+		}
+		b_NoHealthbar[npc.index] = false;
+		b_NpcIsInvulnerable[npc.index] = false;
+		b_ThisEntityIgnoredBeingCarried[npc.index] = false;
 
 		i_NpcWeight[npc.index] = 3;
 		KillFeed_SetKillIcon(npc.index, "back_scratcher");
@@ -230,7 +345,7 @@ methodmap OshimunoAntayoto < CClotBody
 			{
 				LookAtTarget(client_check, npc.index);
 				SetGlobalTransTarget(client_check);
-				ShowGameText(client_check, "item_armor", 1, "%t", "Antayoto Arrived");
+				ShowGameText(client_check, "item_armor", 1, "Antayoto Arrived");
 			}
 		}
 		char buffers[3][64];
@@ -287,7 +402,6 @@ methodmap OshimunoAntayoto < CClotBody
 			amount_of_people = 1.0;
 		
 		RaidModeScaling *= amount_of_people; //More then 9 and he raidboss gets some troubles, bufffffffff
-		npc.m_flConeSlashCD = gameTime + 5.0;
 		return npc;
 	}
 }
@@ -308,6 +422,8 @@ static void OshimunoAntayoto_Think(int iNPC)
 	npc.m_flNextDelayTime =gameTime + DEFAULT_UPDATE_DELAY_FLOAT;
 	npc.Update();
 
+	OshimunoAntayoto_BombsThink(npc, gameTime);
+
 	if(LastMann)
 	{
 		if(!npc.m_fbGunout)
@@ -319,6 +435,7 @@ static void OshimunoAntayoto_Think(int iNPC)
 	if(i_RaidGrantExtra[npc.index] == RAIDITEM_INDEX_WIN_COND)
 	{
 		npc.m_bisWalking = false;
+		OshimunoAntayotoSetInvisible(npc, false);
 		npc.AddActivityViaSequence("selectionMenu_Idle");
 		npc.SetCycle(0.01);
 		func_NPCThink[npc.index] = INVALID_FUNCTION;
@@ -337,7 +454,7 @@ static void OshimunoAntayoto_Think(int iNPC)
 		npc.m_iTarget = target;
 		npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
 	}
-	if(OshimunoAntayoto_ConeSlash(npc, gameTime))
+	if(OshimunoAntayoto_Rotation(npc, gameTime))
 	{
 		return;
 	}
@@ -404,6 +521,12 @@ static Action OshimunoAntayoto_OnTakeDamage(int victim, int &attacker, int &infl
 {
 	OshimunoAntayoto npc = view_as<OshimunoAntayoto>(victim);
 		
+	if(npc.m_iWhatAbilityDo == 5 || npc.m_iWhatAbilityDo == 6 || g_AntayotoSmokeImmuneUntil != 0.0)
+	{
+		damage = 0.0;
+		return Plugin_Handled;
+	}
+
 	if(attacker <= 0)
 		return Plugin_Continue;
 
@@ -424,6 +547,13 @@ public void OshimunoAntayoto_Win(int entity)
 static void OshimunoAntayoto_Death(int entity)
 {
 	RaidBossActive = INVALID_ENT_REFERENCE;
+	OshimunoAntayotoBombsReset();
+	g_AntayotoSmokeImmuneUntil = 0.0;
+	g_AntayotoSmokeHideUntil = 0.0;
+	StopSound(entity, SNDCHAN_STATIC, g_AntayotoConePlaceSound);
+	b_NoHealthbar[entity] = false;
+	b_NpcIsInvulnerable[entity] = false;
+	b_ThisEntityIgnoredBeingCarried[entity] = false;
 	if(BlockLoseSay)
 		return;
 
@@ -560,21 +690,6 @@ int OshimunoAntayoto_SelfDefense(OshimunoAntayoto npc, float gameTime, int targe
 
 //cone stuff
 
-static int CONE_COLOR[3] = { 0, 255, 255 };
-static bool g_ConeFillOk = false;
-
-#define CONE_FILL_MAT "laststand/fill_cone.vmt"
-#define SLASH_CONE_RADIUS 500.0
-#define CONE_MELEE_ARC 90.0			// punch hit radius
-#define CONE_HALFANGLE 80.0	    	// angle based on relative north, 22.5 = a 45 degree cone
-#define SLASH_CONE_LIFESPAN 0.5	    	// how long the cone lasts before disappearing
-#define CONE_OUTSlash_ALPHA 200
-#define CONE_FILL_ALPHA 90			// 0 disables the pie sheet entirely
-#define CONE_ANIM_MIN_RATE 1.0
-#define CONE_ANIM_STILL_SPEED 40.0  // HU/S under which the floor applies
-#define CONE_FILL_FWD 0.7071
-#define CONE_FILL_LEFT 0.0
-
 #define ANTAYOTO_SLASH_WIDTH 100.0
 #define ANTAYOTO_SLASH_LENGTH 800.0
 #define ANTAYOTO_SLASH_GAP 100.0
@@ -587,138 +702,720 @@ static bool g_ConeFillOk = false;
 #define ANTAYOTO_SLASH_SPREAD 75.0
 #define ANTAYOTO_SLASH_FADE_STEP 0.045
 #define ANTAYOTO_SLASH_DAMAGE 100.0
-//walk Cycle offset is 200
-bool OshimunoAntayoto_ConeSlash(OshimunoAntayoto npc, float gameTime)
+
+#define ANTAYOTO_ROTATION_STEP 10.0
+#define ANTAYOTO_THROW_STATE_DURATION 2.0
+#define ANTAYOTO_INITIAL_THROW 0.5
+#define ANTAYOTO_KUNAI_THROW_COOLDOWN 0.3
+#define ANTAYOTO_KUNAI_DAMAGE 35.0
+#define ANTAYOTO_KUNAI_SPEED 1000.0
+#define ANTAYOTO_KUNAI_LEAD 150.0
+#define ANTAYOTO_CONE_ANIM_TIME 0.5
+#define ANTAYOTO_CONE_HOLD_TIME 2.0
+#define ANTAYOTO_CONE_LENGTH 800.0
+#define ANTAYOTO_CONE_HALF_ANGLE 45.0
+#define ANTAYOTO_CONE_DAMAGE 500.0
+#define ANTAYOTO_CONE_FADE_TIME 0.15
+#define ANTAYOTO_CONE_SPREAD 75.0
+#define ANTAYOTO_CONE_TELEGRAPH_ALPHA 255
+#define ANTAYOTO_CONE_STAGGER 2.0
+#define ANTAYOTO_CONE_ANIM_RATE 1.0
+#define ANTAYOTO_CONE_ANIM_RATE2 1.2
+#define ANTAYOTO_LINE_DETONATE_TIME 1.0
+#define ANTAYOTO_LINE_MIN_LENGTH 800.0
+#define ANTAYOTO_LINE_PADDING 300.0
+#define ANTAYOTO_LINE_SMOKE_PERIOD 0.75
+#define ANTAYOTO_LINE_SMOKE_LIFE 0.75
+#define ANTAYOTO_LINE_SMOKE_WINDDOWN 3
+#define ANTAYOTO_BOMB_COUNT 4
+#define ANTAYOTO_BOMB_DISTANCE 300.0
+#define ANTAYOTO_BOMB_SPEED 800.0
+#define ANTAYOTO_BOMB_FUSE 3.0
+#define ANTAYOTO_BOMB_RADIUS 200.0
+#define ANTAYOTO_BOMB_DAMAGE 100.0
+#define ANTAYOTO_BOMB_SCALE 3.0
+#define ANTAYOTO_SMOKE_HIDE_TIME 4.0
+#define ANTAYOTO_SMOKE_CLEAR_LEAD 3.0
+
+static int g_AntayotoBombState[ANTAYOTO_BOMB_COUNT];
+static int g_AntayotoBombProp[ANTAYOTO_BOMB_COUNT] = { -1, ... };
+static float g_AntayotoBombPos[ANTAYOTO_BOMB_COUNT][3];
+static float g_AntayotoBombTime[ANTAYOTO_BOMB_COUNT];
+static float g_AntayotoBombDraw[ANTAYOTO_BOMB_COUNT];
+static bool OshimunoAntayoto_Rotation(OshimunoAntayoto npc, float gameTime)
 {
-	if(npc.m_iWhatAbilityDo != 1 && npc.m_iWhatAbilityDo != 0)
-		return false;
-	if(npc.m_flDoingAnimation < gameTime)
+	int health = GetEntProp(npc.index, Prop_Data, "m_iHealth");
+	int maxHealth = GetEntProp(npc.index, Prop_Data, "m_iMaxHealth");
+	if(g_AntayotoHealthPhase == 0 && float(health) <= (float(maxHealth) * 0.66))
 	{
-		if(npc.m_flConeSlashCD < gameTime)
+		g_AntayotoHealthPhase = 1;
+		g_AntayotoSmokePending = true;
+	}
+	else if(g_AntayotoHealthPhase == 1 && float(health) <= (float(maxHealth) * 0.33))
+	{
+		g_AntayotoHealthPhase = 2;
+		g_AntayotoSmokePending = true;
+	}
+	switch(npc.m_iWhatAbilityDo)
+	{
+		case 3:
 		{
-			if(!IsValidEnemy(npc.index, npc.m_iTarget))
-				return false;
-			if(!Can_I_See_Enemy_Only(npc.index, npc.m_iTarget))
-				return false;
-			npc.m_flConeSlashCD = gameTime + 20.0;
-			npc.m_flSlashAoeDetonate = gameTime + ANTAYOTO_SLASH_TIME;
-			npc.m_iWhatAbilityDo = 1;
-			npc.m_flDoingAnimation = gameTime + 1.5;
-			CreateTimer(ANTAYOTO_SLASH_TIME - ANTAYOTO_SLASH_SWING_LEAD + ANTAYOTO_SLASH_SWING_DELAY, Timer_AntayotoSlashSwing, EntIndexToEntRef(npc.index), TIMER_FLAG_NO_MAPCHANGE);
-			CreateTimer(ANTAYOTO_SLASH_TIME + ANTAYOTO_SLASH_IMPACT_DELAY, Timer_AntayotoSlashImpact, EntIndexToEntRef(npc.index), TIMER_FLAG_NO_MAPCHANGE);
-			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-			float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-			float yawRad = ang[1] * FLOAT_PI / 180.0;
-			pos[0] += Cosine(yawRad) * ANTAYOTO_SLASH_START;
-			pos[1] += Sine(yawRad) * ANTAYOTO_SLASH_START;
-			f3_NpcSavePos[npc.index] = pos;
-			npc.m_flSlashAoeYaw = ang[1];
-			CPrintToChatAll("DEBUG: slashing start 1");
-			/*
-			npc.m_bisWalking = false;
-			npc.StopPathing();
-			npc.m_iChanged_WalkCycle = 200;
-			npc.AddActivityViaSequence("secondrate_sorcery_spy")
-			npc.SetPlaybackRate(0.65);
-			npc.SetCycle(0.05);
-			*/
-			OshimunoAntayotoSlashAoeDraw(npc, gameTime);
-			
+			return OshimunoAntayoto_KunaiJump(npc, gameTime);
+		}
+		case 4:
+		{
+			return OshimunoAntayoto_ConeNuke(npc, gameTime);
+		}
+		case 5:
+		{
+			return OshimunoAntayoto_LinePhase(npc, gameTime);
+		}
+		case 6:
+		{
+			return OshimunoAntayoto_SmokeHide(npc, gameTime);
 		}
 	}
-	if(npc.m_iWhatAbilityDo != 1)
+	if(npc.m_iWhatAbilityDo != 0)
 		return false;
+	if(g_AntayotoSmokePending)
+	{
+		OshimunoAntayoto_SmokeEscape(npc, gameTime);
+		return true;
+	}
+	if(!IsValidEnemy(npc.index, npc.m_iTarget))
+		return false;
+	float elapsed = gameTime - g_AntayotoRotationStart;
+	switch(g_AntayotoRotationStage)
+	{
+		case 0:
+		{
+			if(elapsed >= (ANTAYOTO_ROTATION_STEP * 1.0))
+			{
+				g_AntayotoRotationStage = 1;
+				OshimunoAntayoto_KunaiJumpStart(npc, gameTime);
+				return true;
+			}
+		}
+		case 1:
+		{
+			if(elapsed >= (ANTAYOTO_ROTATION_STEP * 2.0))
+			{
+				g_AntayotoRotationStage = 2;
+				OshimunoAntayoto_ConeNukeStart(npc, gameTime);
+				return true;
+			}
+		}
+		case 2:
+		{
+			if(elapsed >= (ANTAYOTO_ROTATION_STEP * 3.0))
+			{
+				g_AntayotoRotationStage = 3;
+				OshimunoAntayoto_KunaiJumpStart(npc, gameTime);
+				return true;
+			}
+		}
+		case 3:
+		{
+			if(elapsed >= (ANTAYOTO_ROTATION_STEP * 4.0))
+			{
+				g_AntayotoRotationStage = 4;
+				OshimunoAntayoto_ConeNukeStart(npc, gameTime);
+				return true;
+			}
+		}
+		case 4:
+		{
+			if(elapsed >= (ANTAYOTO_ROTATION_STEP * 5.0))
+			{
+				g_AntayotoRotationStage = 5;
+				OshimunoAntayoto_KunaiJumpStart(npc, gameTime);
+				return true;
+			}
+		}
+		case 5:
+		{
+			if(elapsed >= (ANTAYOTO_ROTATION_STEP * 6.0))
+			{
+				g_AntayotoRotationStage = 6;
+				OshimunoAntayoto_LinePhaseStart(npc, gameTime);
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+static void OshimunoAntayotoKunaiAimAt(int target, float aimPos[3])
+{
+	WorldSpaceCenter(target, aimPos);
+	float vecLead[3];
+	GetEntPropVector(target, Prop_Data, "m_vecAbsVelocity", vecLead);
+	if(GetVectorLength(vecLead, true) > 1.0)
+	{
+		NormalizeVector(vecLead, vecLead);
+		aimPos[0] += vecLead[0] * ANTAYOTO_KUNAI_LEAD;
+		aimPos[1] += vecLead[1] * ANTAYOTO_KUNAI_LEAD;
+		aimPos[2] += vecLead[2] * ANTAYOTO_KUNAI_LEAD;
+	}
+}
+
+static void OshimunoAntayotoThrowKunai(OshimunoAntayoto npc, float aimPos[3])
+{
+	int projectile = npc.FireArrow(aimPos, ANTAYOTO_KUNAI_DAMAGE, ANTAYOTO_KUNAI_SPEED, "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl", 1.5);
+	int trail = Trail_Attach(projectile, ARROW_TRAIL, 80, 0.16, 15.0, 6.0, 1);
+	i_WandParticle[projectile] = EntIndexToEntRef(trail);
+	CreateTimer(6.0, Timer_RemoveEntity, EntIndexToEntRef(trail), TIMER_FLAG_NO_MAPCHANGE);
+	SetParent(projectile, trail);
+}
+
+static void OshimunoAntayoto_KunaiJumpStart(OshimunoAntayoto npc, float gameTime)
+{
+	float vBackoffPos[3];
+	BackoffFromOwnPositionAndAwayFromEnemy(npc, npc.m_iTarget,_,vBackoffPos);
+	vBackoffPos[2] += 275.0;
+	PluginBot_Jump(npc.index, vBackoffPos);
+	npc.m_iWhatAbilityDo = 3;
+	npc.m_iChanged_WalkCycle = 600;
+	g_AntayotoKunaiThrowCount = 0;
+	npc.m_flTeleportAwayCD = gameTime + ANTAYOTO_THROW_STATE_DURATION;
+	npc.m_flBombThrowCD = gameTime + ANTAYOTO_INITIAL_THROW;
+	npc.m_flNextMeleeAttack = gameTime + ANTAYOTO_THROW_STATE_DURATION;
+}
+
+static bool OshimunoAntayoto_KunaiJump(OshimunoAntayoto npc, float gameTime)
+{
+	if(npc.m_flTeleportAwayCD < gameTime)
+	{
+		npc.m_iWhatAbilityDo = 0;
+		npc.m_iChanged_WalkCycle = 0;
+		return false;
+	}
+	if(npc.m_flBombThrowCD < gameTime && IsValidEnemy(npc.index, npc.m_iTarget))
+	{
+		float EnemyPos[3];
+		OshimunoAntayotoKunaiAimAt(npc.m_iTarget, EnemyPos);
+		npc.FaceTowards(EnemyPos, 15000.0);
+		float VecSelfNpc[3];
+		WorldSpaceCenter(npc.index, VecSelfNpc);
+		float vecThrowDir[3];
+		SubtractVectors(EnemyPos, VecSelfNpc, vecThrowDir);
+		float vecThrowAng[3];
+		GetVectorAngles(vecThrowDir, vecThrowAng);
+		float vecSetAng[3];
+		GetEntPropVector(npc.index, Prop_Data, "m_angRotation", vecSetAng);
+		vecSetAng[1] = vecThrowAng[1];
+		TeleportEntity(npc.index, NULL_VECTOR, vecSetAng, NULL_VECTOR);
+		OshimunoAntayotoThrowKunai(npc, EnemyPos);
+		g_AntayotoKunaiThrowCount++;
+		bool sideVolley = false;
+		if(g_AntayotoHealthPhase >= 2)
+		{
+			sideVolley = (g_AntayotoKunaiThrowCount == 1 || g_AntayotoKunaiThrowCount == 3 || g_AntayotoKunaiThrowCount == 5);
+		}
+		else if(g_AntayotoHealthPhase >= 1)
+		{
+			sideVolley = (g_AntayotoKunaiThrowCount == 1 || g_AntayotoKunaiThrowCount == 4);
+		}
+		if(sideVolley)
+		{
+			for(int client = 1; client <= MaxClients; client++)
+			{
+				if(client == npc.m_iTarget)
+					continue;
+				if(!IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) != TFTeam_Red)
+					continue;
+				float sidePos[3];
+				OshimunoAntayotoKunaiAimAt(client, sidePos);
+				OshimunoAntayotoThrowKunai(npc, sidePos);
+			}
+		}
+		npc.m_flBombThrowCD = gameTime + ANTAYOTO_KUNAI_THROW_COOLDOWN;
+		npc.PlayRangedSound();
+	}
+	if(npc.m_flDoingAnimation < gameTime)
+	{
+		OshimunoAntayotoAnimationChange(npc);
+	}
+	return true;
+}
+
+static void OshimunoAntayoto_ConeNukeStart(OshimunoAntayoto npc, float gameTime)
+{
+	float vecTarget[3];
+	WorldSpaceCenter(npc.m_iTarget, vecTarget);
+	npc.FaceTowards(vecTarget, 15000.0);
+	npc.m_iWhatAbilityDo = 4;
+	npc.m_iChanged_WalkCycle = 500;
+	npc.m_bisWalking = false;
+	npc.StopPathing();
+	OshimunoAntayotoSetKunaiVisible(npc, false);
+	strcopy(g_AntayotoConeSwingAnim, sizeof(g_AntayotoConeSwingAnim), "layer_secondrate_sorcery_spy");
+	npc.AddActivityViaSequence(g_AntayotoConeSwingAnim);
+	npc.SetPlaybackRate(ANTAYOTO_CONE_ANIM_RATE);
+	npc.SetCycle(0.01);
+	npc.m_flDoingAnimation = gameTime + ANTAYOTO_CONE_ANIM_TIME;
+	npc.m_flConeWindUp = 0.0;
+	npc.PlayMeleeSound();
+}
+
+static void OshimunoAntayotoConePlayAnim(OshimunoAntayoto npc, float rate)
+{
+	npc.AddActivityViaSequence(g_AntayotoConeSwingAnim);
+	npc.SetPlaybackRate(rate);
+	npc.SetCycle(0.01);
+}
+
+static bool OshimunoAntayoto_ConeNuke(OshimunoAntayoto npc, float gameTime)
+{
+	if(npc.m_iChanged_WalkCycle == 500)
+	{
+		npc.SetPlaybackRate(ANTAYOTO_CONE_ANIM_RATE);
+		if(IsValidEnemy(npc.index, npc.m_iTarget))
+		{
+			float vecTarget[3];
+			WorldSpaceCenter(npc.m_iTarget, vecTarget);
+			npc.FaceTowards(vecTarget, 15000.0);
+		}
+		if(npc.m_flDoingAnimation < gameTime)
+		{
+			npc.m_iChanged_WalkCycle = 501;
+			npc.m_flConeWindUp = gameTime + ANTAYOTO_CONE_HOLD_TIME;
+			npc.m_flSlashAoeFadeDraw = 0.0;
+			int placePitch = 100;
+			if(g_AntayotoConePlaceSoundLen > 0.0)
+			{
+				float pitchF = 100.0 * g_AntayotoConePlaceSoundLen / ANTAYOTO_CONE_HOLD_TIME;
+				if(pitchF < 50.0)
+					pitchF = 50.0;
+				if(pitchF > 255.0)
+					pitchF = 255.0;
+				placePitch = RoundToNearest(pitchF);
+			}
+			EmitSoundToAll(g_AntayotoConePlaceSound, npc.index, SNDCHAN_STATIC, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, placePitch);
+			float pos[3];
+			GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+			float ang[3];
+			GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+			f3_NpcSavePos[npc.index] = pos;
+			npc.m_flSlashAoeYaw = ang[1];
+			g_AntayotoConePlaceTime = gameTime;
+			g_AntayotoConeTeleDraw = 0.0;
+			g_AntayotoConeIndex = 0;
+			g_AntayotoConeTotal = 1;
+			g_AntayotoConeYawDir[0] = ang[1];
+			g_AntayotoConeDetTime[0] = gameTime + ANTAYOTO_CONE_HOLD_TIME;
+			if(g_AntayotoHealthPhase >= 1)
+			{
+				g_AntayotoConeTotal = 2;
+				g_AntayotoConeYawDir[1] = ang[1] + 180.0;
+				g_AntayotoConeDetTime[1] = g_AntayotoConeDetTime[0] + ANTAYOTO_CONE_STAGGER;
+			}
+			if(g_AntayotoHealthPhase >= 2)
+			{
+				g_AntayotoConeTotal = 3;
+				g_AntayotoConeYawDir[2] = ang[1] + (GetRandomInt(0, 1) == 0 ? 90.0 : -90.0);
+				g_AntayotoConeDetTime[2] = g_AntayotoConeDetTime[1] + ANTAYOTO_CONE_STAGGER;
+			}
+		}
+		return true;
+	}
+
+	OshimunoAntayotoConeDrawPending(npc, gameTime);
+
+	if(npc.m_iChanged_WalkCycle == 501)
+	{
+		npc.SetPlaybackRate(ANTAYOTO_CONE_ANIM_RATE);
+		if(g_AntayotoConeDetTime[0] > gameTime)
+			return true;
+		OshimunoAntayotoConeDetonateIndex(npc, 0, gameTime);
+		g_AntayotoConeIndex = 1;
+		if(g_AntayotoConeIndex >= g_AntayotoConeTotal)
+		{
+			OshimunoAntayotoConeFinish(npc);
+			return false;
+		}
+		OshimunoAntayotoConeFaceYaw(npc, g_AntayotoConeYawDir[g_AntayotoConeIndex]);
+		OshimunoAntayotoConePlayAnim(npc, ANTAYOTO_CONE_ANIM_RATE2);
+		npc.m_iChanged_WalkCycle = 502;
+		return true;
+	}
+	if(npc.m_iChanged_WalkCycle == 502)
+	{
+		int cone = g_AntayotoConeIndex;
+		OshimunoAntayotoConeFaceYaw(npc, g_AntayotoConeYawDir[cone]);
+		npc.SetPlaybackRate(ANTAYOTO_CONE_ANIM_RATE2);
+		if(g_AntayotoConeDetTime[cone] > gameTime)
+			return true;
+		OshimunoAntayotoConeDetonateIndex(npc, cone, gameTime);
+		g_AntayotoConeIndex++;
+		if(g_AntayotoConeIndex >= g_AntayotoConeTotal)
+		{
+			OshimunoAntayotoConeFinish(npc);
+			return false;
+		}
+		OshimunoAntayotoConeFaceYaw(npc, g_AntayotoConeYawDir[g_AntayotoConeIndex]);
+		OshimunoAntayotoConePlayAnim(npc, ANTAYOTO_CONE_ANIM_RATE2);
+		return true;
+	}
+	return false;
+}
+
+static void OshimunoAntayotoConeDetonate(OshimunoAntayoto npc, float yawDeg)
+{
+	StopSound(npc.index, SNDCHAN_STATIC, g_AntayotoConePlaceSound);
+	float yawRad = yawDeg * FLOAT_PI / 180.0;
+	float fwdX = Cosine(yawRad);
+	float fwdY = Sine(yawRad);
+	float anchor[3];
+	anchor = f3_NpcSavePos[npc.index];
+	float minDot = Cosine(ANTAYOTO_CONE_HALF_ANGLE * FLOAT_PI / 180.0);
+	bool PlaySound = false;
+	for(int client = 1; client <= MaxClients; client++)
+	{
+		if(!IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) != TFTeam_Red)
+			continue;
+
+		float pos[3];
+		GetClientAbsOrigin(client, pos);
+		float dx = pos[0] - anchor[0];
+		float dy = pos[1] - anchor[1];
+		float dz = pos[2] - anchor[2];
+		if(dz > 120.0 || dz < -120.0)
+			continue;
+
+		float flatDist = SquareRoot((dx * dx) + (dy * dy));
+		if(flatDist > ANTAYOTO_CONE_LENGTH)
+			continue;
+
+		if(flatDist > 1.0)
+		{
+			float dot = ((dx * fwdX) + (dy * fwdY)) / flatDist;
+			if(dot < minDot)
+				continue;
+		}
+
+		float maxHealth = float(SDKCall_GetMaxHealth(client));
+		float missing = 0.0;
+		if(maxHealth > 0.0)
+		{
+			missing = 1.0 - (float(GetClientHealth(client)) / maxHealth);
+		}
+		if(missing < 0.0)
+			missing = 0.0;
+
+		float damage = ANTAYOTO_CONE_DAMAGE * (1.0 + missing);
+		float at[3];
+		WorldSpaceCenter(client, at);
+		PlaySound = true;
+		SDKHooks_TakeDamage(client, npc.index, npc.index, damage, DMG_CLUB, -1, _, at);
+	}
+	EmitSoundToAll(g_AntayotoAoeDetonateSound, npc.index, SNDCHAN_STATIC, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
+	if(PlaySound)
+	{
+		npc.PlayMeleeHitSound();
+	}
+}
+
+static void OshimunoAntayotoConeDrawPending(OshimunoAntayoto npc, float gameTime)
+{
+	if(g_AntayotoConeTeleDraw > gameTime)
+		return;
+
+	g_AntayotoConeTeleDraw = gameTime + 0.1;
+	for(int cone = g_AntayotoConeIndex; cone < g_AntayotoConeTotal; cone++)
+	{
+		float total = g_AntayotoConeDetTime[cone] - g_AntayotoConePlaceTime;
+		float remaining = g_AntayotoConeDetTime[cone] - gameTime;
+		if(remaining < 0.0)
+			remaining = 0.0;
+
+		int color[4];
+		color[0] = 255;
+		color[1] = (total > 0.0) ? RoundToNearest(255.0 * (remaining / total)) : 0;
+		color[2] = 0;
+		color[3] = ANTAYOTO_CONE_TELEGRAPH_ALPHA;
+		OshimunoAntayotoConeDrawShape(npc, g_AntayotoConeYawDir[cone], 0.0, color, 0.15);
+	}
+}
+
+static void OshimunoAntayotoConeDetonateIndex(OshimunoAntayoto npc, int cone, float gameTime)
+{
+	OshimunoAntayotoConeDetonate(npc, g_AntayotoConeYawDir[cone]);
+	npc.m_flSlashAoeYaw = g_AntayotoConeYawDir[cone];
+	npc.m_flSlashAoeFade = gameTime + ANTAYOTO_CONE_FADE_TIME;
+	npc.m_flSlashAoeFadeDraw = 0.0;
+	int color[4];
+	color[0] = 255;
+	color[1] = 0;
+	color[2] = 0;
+	color[3] = 255;
+	OshimunoAntayotoConeDrawShape(npc, g_AntayotoConeYawDir[cone], 0.0, color, 0.1);
+	RequestFrame(OshimunoAntayotoConeFadeFrame, EntIndexToEntRef(npc.index));
+}
+
+static void OshimunoAntayotoConeFaceYaw(OshimunoAntayoto npc, float yawDeg)
+{
+	float yawRad = yawDeg * FLOAT_PI / 180.0;
+	float facePos[3];
+	facePos = f3_NpcSavePos[npc.index];
+	facePos[0] += Cosine(yawRad) * 200.0;
+	facePos[1] += Sine(yawRad) * 200.0;
+	npc.FaceTowards(facePos, 15000.0);
+}
+
+static void OshimunoAntayotoConeFinish(OshimunoAntayoto npc)
+{
+	OshimunoAntayotoSetKunaiVisible(npc, true);
+	npc.SetPlaybackRate(1.0);
+	npc.m_iChanged_WalkCycle = 0;
+	npc.m_iWhatAbilityDo = 0;
+	npc.m_flConeWindUp = 0.0;
+	npc.m_flDoingAnimation = 0.0;
+	npc.StartPathing();
+	npc.m_bisWalking = true;
+}
+
+static void OshimunoAntayotoConeDrawShape(OshimunoAntayoto npc, float yawDeg, float expand, const int color[4], float life)
+{
+	float anchor[3];
+	anchor = f3_NpcSavePos[npc.index];
+	anchor[2] += 4.0;
+	float bisectRad = yawDeg * FLOAT_PI / 180.0;
+	anchor[0] -= Cosine(bisectRad) * expand;
+	anchor[1] -= Sine(bisectRad) * expand;
+	float length = ANTAYOTO_CONE_LENGTH + (expand * 2.0);
+	float halfAngle = ANTAYOTO_CONE_HALF_ANGLE + ((expand / ANTAYOTO_CONE_LENGTH) * (180.0 / FLOAT_PI));
+	float startYaw = yawDeg - halfAngle;
+	float prev[3];
+	for(int segment = 0; segment <= 8; segment++)
+	{
+		float yawRad = (startYaw + ((halfAngle * 2.0) * (float(segment) / 8.0))) * FLOAT_PI / 180.0;
+		float point[3];
+		point[0] = anchor[0] + (Cosine(yawRad) * length);
+		point[1] = anchor[1] + (Sine(yawRad) * length);
+		point[2] = anchor[2];
+		if(segment == 0 || segment == 8)
+		{
+			TE_SetupBeamPoints(anchor, point, g_AntayotoSlashLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+			TE_SendToAll();
+		}
+		if(segment > 0)
+		{
+			TE_SetupBeamPoints(prev, point, g_AntayotoSlashLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+			TE_SendToAll();
+		}
+		prev = point;
+	}
+}
+
+static void OshimunoAntayotoConeFadeFrame(any ref)
+{
+	int entity = EntRefToEntIndex(ref);
+	if(entity <= MaxClients || !IsValidEntity(entity))
+		return;
+
+	OshimunoAntayoto npc = view_as<OshimunoAntayoto>(entity);
+	float gameTime = GetGameTime(npc.index);
+	if(!npc.m_flSlashAoeFade)
+		return;
+
+	if(npc.m_flSlashAoeFade <= gameTime)
+	{
+		npc.m_flSlashAoeFade = 0.0;
+		return;
+	}
+
+	if(gameTime >= npc.m_flSlashAoeFadeDraw)
+	{
+		npc.m_flSlashAoeFadeDraw = gameTime + ANTAYOTO_SLASH_FADE_STEP;
+
+		float frac = 1.0 - ((npc.m_flSlashAoeFade - gameTime) / ANTAYOTO_CONE_FADE_TIME);
+		if(frac < 0.0)
+			frac = 0.0;
+		if(frac > 1.0)
+			frac = 1.0;
+
+		int color[4];
+		color[0] = RoundToNearest(255.0 * (1.0 - frac));
+		color[1] = 0;
+		color[2] = 0;
+		color[3] = RoundToNearest(255.0 * (1.0 - frac));
+
+		OshimunoAntayotoConeDrawShape(npc, npc.m_flSlashAoeYaw, ANTAYOTO_CONE_SPREAD * frac, color, 0.1);
+	}
+	RequestFrame(OshimunoAntayotoConeFadeFrame, ref);
+}
+
+static void OshimunoAntayoto_LinePhaseStart(OshimunoAntayoto npc, float gameTime)
+{
+	npc.m_iWhatAbilityDo = 5;
+	npc.m_iChanged_WalkCycle = 700;
+	npc.m_bisWalking = false;
+	npc.StopPathing();
+	npc.m_flSlashAoeDetonate = 0.0;
+	npc.m_flDoingAnimation = 0.0;
+	g_AntayotoLineSmokeTime = 0.0;
+	g_AntayotoLineSlotCount = 1;
+	if(g_AntayotoHealthPhase >= 2)
+	{
+		g_AntayotoLineSlotCount = 3;
+	}
+	else if(g_AntayotoHealthPhase >= 1)
+	{
+		g_AntayotoLineSlotCount = 2;
+	}
+	for(int slot = 0; slot < ANTAYOTO_LINE_SLOTS; slot++)
+	{
+		g_AntayotoLineSlotActive[slot] = false;
+		for(int client_wipe = 1; client_wipe <= MaxClients; client_wipe++)
+		{
+			g_AntayotoLineSlotChosen[slot][client_wipe] = false;
+		}
+	}
+	OshimunoAntayotoSetInvisible(npc, true);
+	ApplyStatusEffect(npc.index, npc.index, "Intangible", 999999.0);
+	f_CheckIfStuckPlayerDelay[npc.index] = FAR_FUTURE;
+	b_ThisEntityIgnoredBeingCarried[npc.index] = true;
+	b_NoHealthbar[npc.index] = true;
+}
+
+static bool OshimunoAntayoto_LinePhase(OshimunoAntayoto npc, float gameTime)
+{
+	if(g_AntayotoLineSmokeTime < gameTime)
+	{
+		g_AntayotoLineSmokeTime = gameTime + ANTAYOTO_LINE_SMOKE_PERIOD;
+		float smokePos[3];
+		WorldSpaceCenter(npc.index, smokePos);
+		ParticleEffectAt(smokePos, "grenade_smoke", ANTAYOTO_LINE_SMOKE_LIFE);
+	}
 	if(npc.m_flSlashAoeDetonate)
 	{
 		if(npc.m_flSlashAoeDetonate > gameTime)
 		{
-			OshimunoAntayotoSlashAoeDraw(npc, gameTime);
-			CPrintToChatAll("DEBUG: slashing start 2");
+			OshimunoAntayotoLineDraw(npc, gameTime);
 		}
 		else
 		{
-			OshimunoAntayotoSlashAoeDetonate(npc);
+			for(int slot = 0; slot < g_AntayotoLineSlotCount; slot++)
+			{
+				if(g_AntayotoLineSlotActive[slot])
+				{
+					OshimunoAntayotoLineDetonate(npc, slot);
+				}
+			}
+			EmitSoundToAll(g_AntayotoAoeDetonateSound, _, _, _, _, 1.0);
 			npc.m_flSlashAoeDetonate = 0.0;
 			npc.m_flSlashAoeFade = gameTime + ANTAYOTO_SLASH_FADE_TIME;
-			npc.m_flSlashAoeFadeDraw = gameTime + ANTAYOTO_SLASH_FADE_STEP;
+			npc.m_flSlashAoeFadeDraw = 0.0;
 			int color[4];
 			color[0] = 255;
 			color[1] = 0;
 			color[2] = 0;
 			color[3] = 255;
-			OshimunoAntayotoSlashDrawShape(npc, 0.0, color, 0.1);
-			RequestFrame(OshimunoAntayotoSlashFadeFrame, EntIndexToEntRef(npc.index));
-			npc.StartPathing();
-			npc.m_bisWalking = true;
-			CPrintToChatAll("DEBUG: slashing start 3");
-			return false;
-		}
-	}
-	/*
-	if(npc.m_flDoingAnimation < gameTime)
-	{
-		npc.SetPlaybackRate(2.5);
-		npc.SetCycle(0.38);
-		npc.m_flDoingAnimation = gameTime + 0.8;
-		if(IsValidEnemy(npc.index, npc.m_iTarget))
-		{
-			float bossPos[3];
-			GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", bossPos);
-			GetClientAbsOrigin(target, targetPos);
-			float yawDeg;
+			for(int slot = 0; slot < g_AntayotoLineSlotCount; slot++)
 			{
-				float at[3];
-				WorldSpaceCenter(target, at);
-				float dx = at[0] - bossPos[0];
-				float dy = at[1] - bossPos[1];
-				if((dx * dx) + (dy * dy) >= 1.0)
+				if(g_AntayotoLineSlotActive[slot])
 				{
-					yawDeg = ArcTangent2(dy, dx) * 180.0 / FLOAT_PI;
-				}
-				else
-				{
-					float ang[3];
-					GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-					yawDeg = ang[1];
+					OshimunoAntayotoLineDrawShape(npc, slot, 0.0, color, 0.1);
 				}
 			}
-			OshimunoAntayotoResolveCone(npc, bossPos, yawDeg);
-			OshimunoAntayotoDrawCone(bossPos, yawDeg);
+			RequestFrame(OshimunoAntayotoLineFadeFrame, EntIndexToEntRef(npc.index));
+			npc.m_flDoingAnimation = gameTime + (ANTAYOTO_SLASH_FADE_TIME * 2.0);
 		}
+		return true;
+	}
+	if(npc.m_flDoingAnimation > gameTime)
+		return true;
+
+	float pos[3];
+	GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+	f3_NpcSavePos[npc.index] = pos;
+
+	bool anyPicked = false;
+	int maxCount = 0;
+	for(int slot = 0; slot < g_AntayotoLineSlotCount; slot++)
+	{
+		g_AntayotoLineSlotActive[slot] = false;
+
+		int candidates[MAXPLAYERS + 1];
+		int count = 0;
+		for(int client = 1; client <= MaxClients; client++)
+		{
+			if(g_AntayotoLineSlotChosen[slot][client])
+				continue;
+			if(!IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) != TFTeam_Red)
+				continue;
+			candidates[count] = client;
+			count++;
+		}
+		if(count <= 0)
+			continue;
+
+		if(count > maxCount)
+			maxCount = count;
+
+		int pick = candidates[GetRandomInt(0, count - 1)];
+		g_AntayotoLineSlotChosen[slot][pick] = true;
+
+		float at[3];
+		GetClientAbsOrigin(pick, at);
+		float dx = at[0] - pos[0];
+		float dy = at[1] - pos[1];
+		float length = SquareRoot((dx * dx) + (dy * dy)) + ANTAYOTO_LINE_PADDING;
+		if(length < ANTAYOTO_LINE_MIN_LENGTH)
+		{
+			length = ANTAYOTO_LINE_MIN_LENGTH;
+		}
+		g_AntayotoLineSlotLen[slot] = length;
+
+		float yawDeg;
+		if(((dx * dx) + (dy * dy)) >= 1.0)
+		{
+			yawDeg = ArcTangent2(dy, dx) * 180.0 / FLOAT_PI;
+		}
+		else
+		{
+			float ang[3];
+			GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+			yawDeg = ang[1];
+		}
+		g_AntayotoLineSlotYaw[slot] = yawDeg;
+		g_AntayotoLineSlotActive[slot] = true;
+		anyPicked = true;
+	}
+	if(!anyPicked)
+	{
+		OshimunoAntayoto_LinePhaseEnd(npc, gameTime);
 		return false;
 	}
-	*/
+
+	if(maxCount <= ANTAYOTO_LINE_SMOKE_WINDDOWN)
+	{
+		g_AntayotoLineSmokeTime = FAR_FUTURE;
+	}
+
+	npc.m_flSlashAoeDetonate = gameTime + ANTAYOTO_LINE_DETONATE_TIME;
+	OshimunoAntayotoLineDraw(npc, gameTime);
 	return true;
 }
 
-static Action Timer_AntayotoSlashSwing(Handle timer, any ref)
+static void OshimunoAntayoto_LinePhaseEnd(OshimunoAntayoto npc, float gameTime)
 {
-	int entity = EntRefToEntIndex(ref);
-	if(entity <= MaxClients || !IsValidEntity(entity))
-		return Plugin_Handled;
-
-	OshimunoAntayoto npc = view_as<OshimunoAntayoto>(entity);
-	if(!npc.m_flSlashAoeDetonate)
-		return Plugin_Handled;
-
-	npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
-	EmitSoundToAll(g_AntayotoSlashWindUpSound, npc.index, SNDCHAN_STATIC, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
-	CPrintToChatAll("DEBUG: slashing sound 1");
-	return Plugin_Handled;
+	OshimunoAntayotoSetInvisible(npc, false);
+	RemoveSpecificBuff(npc.index, "Intangible");
+	f_CheckIfStuckPlayerDelay[npc.index] = 1.0;
+	b_ThisEntityIgnoredBeingCarried[npc.index] = false;
+	b_NoHealthbar[npc.index] = false;
+	npc.m_iWhatAbilityDo = 0;
+	npc.m_iChanged_WalkCycle = 0;
+	npc.m_flDoingAnimation = 0.0;
+	npc.StartPathing();
+	npc.m_bisWalking = true;
+	g_AntayotoRotationStage = 0;
+	g_AntayotoRotationStart = gameTime;
 }
 
-static Action Timer_AntayotoSlashImpact(Handle timer, any ref)
-{
-	int entity = EntRefToEntIndex(ref);
-	if(entity <= MaxClients || !IsValidEntity(entity))
-		return Plugin_Handled;
-
-	EmitSoundToAll(g_AntayotoSlashImpactSound, entity, SNDCHAN_STATIC, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
-	CPrintToChatAll("DEBUG: slashing sound 2");
-	return Plugin_Handled;
-}
-
-static void OshimunoAntayotoSlashAoeDraw(OshimunoAntayoto npc, float gameTime)
+static void OshimunoAntayotoLineDraw(OshimunoAntayoto npc, float gameTime)
 {
 	float remaining = npc.m_flSlashAoeDetonate - gameTime;
 	if(remaining < 0.0)
@@ -726,16 +1423,22 @@ static void OshimunoAntayotoSlashAoeDraw(OshimunoAntayoto npc, float gameTime)
 
 	int color[4];
 	color[0] = 255;
-	color[1] = RoundToNearest(255.0 * (remaining / ANTAYOTO_SLASH_TIME));
+	color[1] = RoundToNearest(255.0 * (remaining / ANTAYOTO_LINE_DETONATE_TIME));
 	color[2] = 0;
 	color[3] = 255;
 
-	OshimunoAntayotoSlashDrawShape(npc, 0.0, color, 0.15);
+	for(int slot = 0; slot < g_AntayotoLineSlotCount; slot++)
+	{
+		if(g_AntayotoLineSlotActive[slot])
+		{
+			OshimunoAntayotoLineDrawShape(npc, slot, 0.0, color, 0.15);
+		}
+	}
 }
 
-static void OshimunoAntayotoSlashDrawShape(OshimunoAntayoto npc, float expand, const int color[4], float life)
+static void OshimunoAntayotoLineDrawShape(OshimunoAntayoto npc, int slot, float expand, const int color[4], float life)
 {
-	float yawRad = npc.m_flSlashAoeYaw * FLOAT_PI / 180.0;
+	float yawRad = g_AntayotoLineSlotYaw[slot] * FLOAT_PI / 180.0;
 	float fwdX = Cosine(yawRad);
 	float fwdY = Sine(yawRad);
 	float leftX = -fwdY;
@@ -747,37 +1450,73 @@ static void OshimunoAntayotoSlashDrawShape(OshimunoAntayoto npc, float expand, c
 	anchor[0] -= fwdX * expand;
 	anchor[1] -= fwdY * expand;
 
-	float length = ANTAYOTO_SLASH_LENGTH + (expand * 2.0);
+	float length = g_AntayotoLineSlotLen[slot] + (expand * 2.0);
 	float halfWidth = (ANTAYOTO_SLASH_WIDTH * 0.5) + expand;
-	for(int Slash = -1; Slash <= 1; Slash++)
-	{
-		float off = float(Slash) * (ANTAYOTO_SLASH_GAP + ANTAYOTO_SLASH_WIDTH);
-		float c1[3], c2[3], c3[3], c4[3];
-		c1[0] = anchor[0] + (leftX * (off + halfWidth));
-		c1[1] = anchor[1] + (leftY * (off + halfWidth));
-		c1[2] = anchor[2];
-		c2[0] = anchor[0] + (leftX * (off - halfWidth));
-		c2[1] = anchor[1] + (leftY * (off - halfWidth));
-		c2[2] = anchor[2];
-		c3[0] = c1[0] + (fwdX * length);
-		c3[1] = c1[1] + (fwdY * length);
-		c3[2] = anchor[2];
-		c4[0] = c2[0] + (fwdX * length);
-		c4[1] = c2[1] + (fwdY * length);
-		c4[2] = anchor[2];
+	float c1[3], c2[3], c3[3], c4[3];
+	c1[0] = anchor[0] + (leftX * halfWidth);
+	c1[1] = anchor[1] + (leftY * halfWidth);
+	c1[2] = anchor[2];
+	c2[0] = anchor[0] - (leftX * halfWidth);
+	c2[1] = anchor[1] - (leftY * halfWidth);
+	c2[2] = anchor[2];
+	c3[0] = c1[0] + (fwdX * length);
+	c3[1] = c1[1] + (fwdY * length);
+	c3[2] = anchor[2];
+	c4[0] = c2[0] + (fwdX * length);
+	c4[1] = c2[1] + (fwdY * length);
+	c4[2] = anchor[2];
 
-		TE_SetupBeamPoints(c1, c2, g_AntayotoSlashLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
-		TE_SendToAll();
-		TE_SetupBeamPoints(c1, c3, g_AntayotoSlashLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
-		TE_SendToAll();
-		TE_SetupBeamPoints(c2, c4, g_AntayotoSlashLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
-		TE_SendToAll();
-		TE_SetupBeamPoints(c3, c4, g_AntayotoSlashLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
-		TE_SendToAll();
+	TE_SetupBeamPoints(c1, c2, g_AntayotoSlashLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+	TE_SendToAll();
+	TE_SetupBeamPoints(c1, c3, g_AntayotoSlashLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+	TE_SendToAll();
+	TE_SetupBeamPoints(c2, c4, g_AntayotoSlashLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+	TE_SendToAll();
+	TE_SetupBeamPoints(c3, c4, g_AntayotoSlashLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+	TE_SendToAll();
+}
+
+static void OshimunoAntayotoLineDetonate(OshimunoAntayoto npc, int slot)
+{
+	float yawRad = g_AntayotoLineSlotYaw[slot] * FLOAT_PI / 180.0;
+	float fwdX = Cosine(yawRad);
+	float fwdY = Sine(yawRad);
+	float leftX = -fwdY;
+	float leftY = fwdX;
+
+	float anchor[3];
+	anchor = f3_NpcSavePos[npc.index];
+
+	float halfWidth = (ANTAYOTO_SLASH_WIDTH * 0.5) + 24.0;
+	for(int client = 1; client <= MaxClients; client++)
+	{
+		if(!IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) != TFTeam_Red)
+			continue;
+
+		float pos[3];
+		GetClientAbsOrigin(client, pos);
+		float dx = pos[0] - anchor[0];
+		float dy = pos[1] - anchor[1];
+		float dz = pos[2] - anchor[2];
+		if(dz > 120.0 || dz < -120.0)
+			continue;
+
+		float fwdDist = (dx * fwdX) + (dy * fwdY);
+		if(fwdDist < -24.0 || fwdDist > (g_AntayotoLineSlotLen[slot] + 24.0))
+			continue;
+
+		float leftDist = (dx * leftX) + (dy * leftY);
+		if(FloatAbs(leftDist) > halfWidth)
+			continue;
+
+		float at[3];
+		WorldSpaceCenter(client, at);
+		npc.PlayMeleeHitSound();
+		SDKHooks_TakeDamage(client, npc.index, npc.index, ANTAYOTO_SLASH_DAMAGE, DMG_CLUB, -1, _, at);
 	}
 }
 
-static void OshimunoAntayotoSlashFadeFrame(any ref)
+static void OshimunoAntayotoLineFadeFrame(any ref)
 {
 	int entity = EntRefToEntIndex(ref);
 	if(entity <= MaxClients || !IsValidEntity(entity))
@@ -803,55 +1542,290 @@ static void OshimunoAntayotoSlashFadeFrame(any ref)
 			frac = 0.0;
 
 		int color[4];
-		color[0] = 255;
+		color[0] = RoundToNearest(255.0 * (1.0 - frac));
 		color[1] = 0;
 		color[2] = 0;
 		color[3] = RoundToNearest(255.0 * (1.0 - frac));
 
-		OshimunoAntayotoSlashDrawShape(npc, ANTAYOTO_SLASH_SPREAD * frac, color, 0.1);
+		for(int slot = 0; slot < g_AntayotoLineSlotCount; slot++)
+		{
+			if(g_AntayotoLineSlotActive[slot])
+			{
+				OshimunoAntayotoLineDrawShape(npc, slot, ANTAYOTO_SLASH_SPREAD * frac, color, 0.1);
+			}
+		}
 	}
-	RequestFrame(OshimunoAntayotoSlashFadeFrame, ref);
+	RequestFrame(OshimunoAntayotoLineFadeFrame, ref);
 }
 
-static void OshimunoAntayotoSlashAoeDetonate(OshimunoAntayoto npc)
+static void OshimunoAntayotoSetInvisible(OshimunoAntayoto npc, bool invisible)
 {
-	float yawRad = npc.m_flSlashAoeYaw * FLOAT_PI / 180.0;
-	float fwdX = Cosine(yawRad);
-	float fwdY = Sine(yawRad);
-	float leftX = -fwdY;
-	float leftY = fwdX;
-
-	float anchor[3];
-	anchor = f3_NpcSavePos[npc.index];
-
-	float halfWidth = (ANTAYOTO_SLASH_WIDTH * 0.5) + 24.0;
-	float off = ANTAYOTO_SLASH_GAP + ANTAYOTO_SLASH_WIDTH;
-	for(int client = 1; client <= MaxClients; client++)
+	int alpha = invisible ? 0 : 255;
+	RenderMode mode = invisible ? RENDER_TRANSCOLOR : RENDER_NORMAL;
+	SetEntityRenderMode(npc.index, mode);
+	SetEntityRenderColor(npc.index, 255, 255, 255, alpha);
+	if(IsValidEntity(npc.m_iWearable1))
 	{
-		if(!IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) != TFTeam_Red)
-			continue;
+		SetEntityRenderMode(npc.m_iWearable1, mode);
+		SetEntityRenderColor(npc.m_iWearable1, 255, 255, 255, alpha);
+	}
+	if(IsValidEntity(npc.m_iWearable2))
+	{
+		SetEntityRenderMode(npc.m_iWearable2, mode);
+		SetEntityRenderColor(npc.m_iWearable2, 255, 255, 255, alpha);
+	}
+	if(IsValidEntity(npc.m_iWearable3))
+	{
+		SetEntityRenderMode(npc.m_iWearable3, mode);
+		SetEntityRenderColor(npc.m_iWearable3, 255, 255, 255, alpha);
+	}
+	if(IsValidEntity(npc.m_iWearable4))
+	{
+		SetEntityRenderMode(npc.m_iWearable4, mode);
+		SetEntityRenderColor(npc.m_iWearable4, 255, 255, 255, alpha);
+	}
+	if(IsValidEntity(npc.m_iWearable5))
+	{
+		SetEntityRenderMode(npc.m_iWearable5, mode);
+		SetEntityRenderColor(npc.m_iWearable5, 255, 255, 255, alpha);
+	}
+	if(IsValidEntity(npc.m_iWearable6))
+	{
+		SetEntityRenderMode(npc.m_iWearable6, mode);
+		SetEntityRenderColor(npc.m_iWearable6, 255, 255, 255, alpha);
+	}
+}
 
-		float pos[3];
-		GetClientAbsOrigin(client, pos);
-		float dx = pos[0] - anchor[0];
-		float dy = pos[1] - anchor[1];
-		float dz = pos[2] - anchor[2];
-		if(dz > 120.0 || dz < -120.0)
-			continue;
+static void OshimunoAntayotoSetKunaiVisible(OshimunoAntayoto npc, bool visible)
+{
+	if(!IsValidEntity(npc.m_iWearable1))
+		return;
+	int alpha = visible ? 255 : 0;
+	RenderMode mode = visible ? RENDER_NORMAL : RENDER_TRANSCOLOR;
+	SetEntityRenderMode(npc.m_iWearable1, mode);
+	SetEntityRenderColor(npc.m_iWearable1, 255, 255, 255, alpha);
+}
 
-		float fwdDist = (dx * fwdX) + (dy * fwdY);
-		if(fwdDist < -24.0 || fwdDist > (ANTAYOTO_SLASH_LENGTH + 24.0))
-			continue;
+static void OshimunoAntayoto_SmokeEscape(OshimunoAntayoto npc, float gameTime)
+{
+	g_AntayotoSmokePending = false;
 
-		float leftDist = (dx * leftX) + (dy * leftY);
-		if(FloatAbs(leftDist) > halfWidth && FloatAbs(leftDist - off) > halfWidth && FloatAbs(leftDist + off) > halfWidth)
-			continue;
+	float flPosSmoke[3];
+	WorldSpaceCenter(npc.index, flPosSmoke);
+	ParticleEffectAt(flPosSmoke, "grenade_smoke", 2.0);
 
-		float at[3];
-		WorldSpaceCenter(client, at);
-		npc.PlayMeleeHitSound();
-		CPrintToChatAll("DEBUG: slashing hit 2");
-		SDKHooks_TakeDamage(client, npc.index, npc.index, ANTAYOTO_SLASH_DAMAGE, DMG_CLUB, -1, _, at);
+	for(int entitycount; entitycount<MAXENTITIES; entitycount++)
+	{
+		if(IsValidEntity(entitycount) && entitycount != npc.index && (!b_NpcHasDied[entitycount]))
+		{
+			if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount))
+			{
+				float pos1[3];
+				GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);
+				static float pos2[3];
+				GetEntPropVector(entitycount, Prop_Data, "m_vecAbsOrigin", pos2);
+				if(GetVectorDistance(pos1, pos2, true) < (500 * 500))
+				{
+					if(!Can_I_See_Ally(npc.index, entitycount))
+						continue;
+					ApplyStatusEffect(npc.index, entitycount, "Smoke Screen", 10.0);
+				}
+			}
+		}
+	}
+
+	float vecLaunchPos[3];
+	GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", vecLaunchPos);
+	for(int bomb; bomb < ANTAYOTO_BOMB_COUNT; bomb++)
+	{
+		float vecBombTarget[3];
+		vecBombTarget = vecLaunchPos;
+		switch(bomb)
+		{
+			case 0:
+			{
+				vecBombTarget[0] += ANTAYOTO_BOMB_DISTANCE;
+			}
+			case 1:
+			{
+				vecBombTarget[0] -= ANTAYOTO_BOMB_DISTANCE;
+			}
+			case 2:
+			{
+				vecBombTarget[1] += ANTAYOTO_BOMB_DISTANCE;
+			}
+			case 3:
+			{
+				vecBombTarget[1] -= ANTAYOTO_BOMB_DISTANCE;
+			}
+		}
+		OshimunoAntayotoBombLaunch(npc, vecLaunchPos, vecBombTarget, bomb, gameTime);
+	}
+
+	TeleportEntity(npc.index, NULL_VECTOR, NULL_VECTOR, {0.0, 0.0, 0.0});
+	g_AntayotoSmokeHideUntil = gameTime + ANTAYOTO_SMOKE_HIDE_TIME;
+	g_AntayotoSmokeImmuneUntil = g_AntayotoSmokeHideUntil;
+	g_AntayotoLineSmokeTime = 0.0;
+	npc.m_iWhatAbilityDo = 6;
+	npc.m_iChanged_WalkCycle = 800;
+	npc.m_bisWalking = false;
+	npc.StopPathing();
+	OshimunoAntayotoSetInvisible(npc, true);
+	ApplyStatusEffect(npc.index, npc.index, "Intangible", 999999.0);
+	f_CheckIfStuckPlayerDelay[npc.index] = FAR_FUTURE;
+	b_ThisEntityIgnoredBeingCarried[npc.index] = true;
+	b_NoHealthbar[npc.index] = true;
+	g_AntayotoRotationStart += ANTAYOTO_SMOKE_HIDE_TIME;
+}
+
+static bool OshimunoAntayoto_SmokeHide(OshimunoAntayoto npc, float gameTime)
+{
+	if(gameTime < g_AntayotoSmokeHideUntil)
+	{
+		if(gameTime < (g_AntayotoSmokeHideUntil - ANTAYOTO_SMOKE_CLEAR_LEAD) && g_AntayotoLineSmokeTime < gameTime)
+		{
+			g_AntayotoLineSmokeTime = gameTime + ANTAYOTO_LINE_SMOKE_PERIOD;
+			float smokePos[3];
+			WorldSpaceCenter(npc.index, smokePos);
+			ParticleEffectAt(smokePos, "grenade_smoke", ANTAYOTO_LINE_SMOKE_LIFE);
+		}
+		return true;
+	}
+
+	OshimunoAntayotoSetInvisible(npc, false);
+	RemoveSpecificBuff(npc.index, "Intangible");
+	f_CheckIfStuckPlayerDelay[npc.index] = 1.0;
+	b_ThisEntityIgnoredBeingCarried[npc.index] = false;
+	b_NoHealthbar[npc.index] = false;
+	g_AntayotoSmokeHideUntil = 0.0;
+	g_AntayotoSmokeImmuneUntil = 0.0;
+	npc.m_iWhatAbilityDo = 0;
+	npc.m_iChanged_WalkCycle = 0;
+	npc.m_flDoingAnimation = 0.0;
+	npc.StartPathing();
+	npc.m_bisWalking = true;
+	return false;
+}
+
+static bool OshimunoAntayotoTraceFilter(int entity, int contentsMask, any data)
+{
+	return entity == 0;
+}
+
+static void OshimunoAntayotoBombLaunch(OshimunoAntayoto npc, float vecLaunchPos[3], float vecBombTarget[3], int slot, float gameTime)
+{
+	float vecStart[3];
+	vecStart = vecLaunchPos;
+	vecStart[2] += 48.0;
+	float vecEnd[3];
+	vecEnd = vecBombTarget;
+	vecEnd[2] += 48.0;
+	Handle trace = TR_TraceRayFilterEx(vecStart, vecEnd, MASK_PLAYERSOLID, RayType_EndPoint, OshimunoAntayotoTraceFilter, npc.index);
+	TR_GetEndPosition(vecEnd, trace);
+	delete trace;
+
+	float vecDown[3];
+	vecDown = vecEnd;
+	vecDown[2] -= 1024.0;
+	trace = TR_TraceRayFilterEx(vecEnd, vecDown, MASK_PLAYERSOLID, RayType_EndPoint, OshimunoAntayotoTraceFilter, npc.index);
+	bool hitGround = TR_DidHit(trace);
+	float vecGround[3];
+	TR_GetEndPosition(vecGround, trace);
+	delete trace;
+	if(!hitGround)
+	{
+		vecGround = vecEnd;
+	}
+
+	float vecArrowTarget[3];
+	vecArrowTarget = vecGround;
+	vecArrowTarget[2] += 8.0;
+	npc.FireArrow(vecArrowTarget, ANTAYOTO_BOMB_DAMAGE, ANTAYOTO_BOMB_SPEED, g_AntayotoBombModel, ANTAYOTO_BOMB_SCALE);
+
+	float flight = GetVectorDistance(vecStart, vecArrowTarget) / ANTAYOTO_BOMB_SPEED;
+	g_AntayotoBombState[slot] = 1;
+	g_AntayotoBombPos[slot] = vecGround;
+	g_AntayotoBombTime[slot] = gameTime + flight;
+	g_AntayotoBombDraw[slot] = 0.0;
+}
+
+static void OshimunoAntayoto_BombsThink(OshimunoAntayoto npc, float gameTime)
+{
+	for(int bomb; bomb < ANTAYOTO_BOMB_COUNT; bomb++)
+	{
+		if(g_AntayotoBombState[bomb] == 1)
+		{
+			if(g_AntayotoBombTime[bomb] < gameTime)
+			{
+				int prop = CreateEntityByName("prop_dynamic_override");
+				if(IsValidEntity(prop))
+				{
+					DispatchKeyValue(prop, "model", g_AntayotoBombModel);
+					DispatchKeyValue(prop, "solid", "0");
+					DispatchSpawn(prop);
+					SetEntPropFloat(prop, Prop_Send, "m_flModelScale", ANTAYOTO_BOMB_SCALE);
+					float vecProp[3];
+					vecProp = g_AntayotoBombPos[bomb];
+					vecProp[2] += 2.0;
+					TeleportEntity(prop, vecProp, NULL_VECTOR, NULL_VECTOR);
+					g_AntayotoBombProp[bomb] = EntIndexToEntRef(prop);
+				}
+				g_AntayotoBombState[bomb] = 2;
+				g_AntayotoBombTime[bomb] = gameTime + ANTAYOTO_BOMB_FUSE;
+				g_AntayotoBombDraw[bomb] = 0.0;
+			}
+		}
+		else if(g_AntayotoBombState[bomb] == 2)
+		{
+			if(g_AntayotoBombTime[bomb] > gameTime)
+			{
+				if(g_AntayotoBombDraw[bomb] < gameTime)
+				{
+					g_AntayotoBombDraw[bomb] = gameTime + 0.1;
+					float vecRing[3];
+					vecRing = g_AntayotoBombPos[bomb];
+					int ringGreen = RoundToNearest(255.0 * ((g_AntayotoBombTime[bomb] - gameTime) / ANTAYOTO_BOMB_FUSE));
+					spawnRing_Vectors(vecRing, 0.1, 0.0, 0.0, 1.0, "materials/sprites/laserbeam.vmt", 255, ringGreen, 0, 255, 1, 0.2, 8.0, 1.5, 1, ANTAYOTO_BOMB_RADIUS * 2.0);
+				}
+			}
+			else
+			{
+				OshimunoAntayotoBombDetonate(npc, bomb);
+			}
+		}
+	}
+}
+
+static void OshimunoAntayotoBombDetonate(OshimunoAntayoto npc, int bomb)
+{
+	float vecPos[3];
+	vecPos = g_AntayotoBombPos[bomb];
+	Explode_Logic_Custom(ANTAYOTO_BOMB_DAMAGE, npc.index, npc.index, -1, vecPos, ANTAYOTO_BOMB_RADIUS, _, _, true);
+	float vecParticle[3];
+	vecParticle = vecPos;
+	vecParticle[2] += 45.0;
+	ParticleEffectAt(vecParticle, "ExplosionCore_MidAir", 1.0);
+	int prop = EntRefToEntIndex(g_AntayotoBombProp[bomb]);
+	if(prop > MaxClients && IsValidEntity(prop))
+	{
+		EmitSoundToAll(g_AntayotoBombExplodeSound, prop, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
+		RemoveEntity(prop);
+	}
+	g_AntayotoBombProp[bomb] = -1;
+	g_AntayotoBombState[bomb] = 0;
+}
+
+static void OshimunoAntayotoBombsReset()
+{
+	for(int bomb; bomb < ANTAYOTO_BOMB_COUNT; bomb++)
+	{
+		int prop = EntRefToEntIndex(g_AntayotoBombProp[bomb]);
+		if(prop > MaxClients && IsValidEntity(prop))
+		{
+			RemoveEntity(prop);
+		}
+		g_AntayotoBombState[bomb] = 0;
+		g_AntayotoBombProp[bomb] = -1;
 	}
 }
 /*
@@ -1004,3 +1978,4 @@ bool OshimunoAntayoto_JumpOfDeath(OshimunoAntayoto npc, float gameTime)
 	}
 	return true;
 }
+*/
