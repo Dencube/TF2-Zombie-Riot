@@ -1,5 +1,5 @@
 #pragma semicolon 1
-#pragma newdecls required //TODO: tree attacks are kinda broken when they're last || also fix their attacks activating when others are still alive
+#pragma newdecls required
 
 static const char g_DeathSounds[][] =
 {
@@ -205,6 +205,11 @@ static void ClotThink(int iNPC)
 		}
 		if(npc.m_flEnrageDelay)
 		{
+			if(IsValidAlly(npc.index, GetClosestAlly(npc.index)))
+			{
+				npc.m_flEnrageDelay = 0.0;
+				fl_TotalArmor[npc.index] = 1.0;
+			}
 			if(npc.m_flEnrageDelay < gameTime)
 			{
 				npc.Anger = true;

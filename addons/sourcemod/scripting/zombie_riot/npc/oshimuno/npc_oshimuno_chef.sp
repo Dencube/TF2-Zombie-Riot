@@ -90,7 +90,7 @@ methodmap OshimunoChef < CClotBody
 	
 	public OshimunoChef(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoChef npc = view_as<OshimunoChef>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.35", "1000", ally));
+		OshimunoChef npc = view_as<OshimunoChef>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.35", "3000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");

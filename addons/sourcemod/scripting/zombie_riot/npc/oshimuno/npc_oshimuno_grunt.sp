@@ -276,6 +276,7 @@ static Action OshimunoGruntOnTakeDamage(int victim, int &attacker, int &inflicto
 
 	return Plugin_Changed;
 }
+
 static void ClotDeath(int entity) 
 {
 	OshimunoGrunt npc = view_as<OshimunoGrunt>(entity);

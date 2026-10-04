@@ -3,50 +3,42 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/demoman_paincrticialdeath01.mp3",
-	"vo/demoman_paincrticialdeath02.mp3",
-	"vo/demoman_paincrticialdeath03.mp3",
-	"vo/demoman_paincrticialdeath04.mp3",
-	"vo/demoman_paincrticialdeath05.mp3"
+	"vo/pyro_paincrticialdeath01.mp3",
+	"vo/pyro_paincrticialdeath02.mp3",
+	"vo/pyro_paincrticialdeath03.mp3",
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/demoman_painsharp01.mp3",
-	"vo/demoman_painsharp02.mp3",
-	"vo/demoman_painsharp03.mp3",
-	"vo/demoman_painsharp04.mp3",
-	"vo/demoman_painsharp05.mp3",
-	"vo/demoman_painsharp06.mp3",
-	"vo/demoman_painsharp07.mp3"
+	"vo/pyro_painsharp01.mp3",
+	"vo/pyro_painsharp02.mp3",
+	"vo/pyro_painsharp03.mp3",
+	"vo/pyro_painsharp04.mp3",
+	"vo/pyro_painsharp05.mp3",
 };
 
 static const char g_IdleAlertedSounds[][] = 
 {
-	"vo/demoman_battlecry01.mp3",
-	"vo/demoman_battlecry02.mp3",
-	"vo/demoman_battlecry03.mp3",
-	"vo/demoman_battlecry04.mp3",
+	"vo/taunts/pyro_taunts01.mp3",
+	"vo/taunts/pyro_taunts02.mp3",
+	"vo/taunts/pyro_taunts03.mp3",
 };
 
 static char g_MeleeHitSounds[][] = 
 {
-	"weapons/samurai/tf_katana_slice_01.wav",
-	"weapons/samurai/tf_katana_slice_02.wav",
-	"weapons/samurai/tf_katana_slice_03.wav",
+	"weapons/cleaver_hit_02.wav",
+	"weapons/cleaver_hit_03.wav",
+	"weapons/cleaver_hit_05.wav",
+	"weapons/cleaver_hit_06.wav",
+	"weapons/cleaver_hit_07.wav",
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/samurai/tf_katana_01.wav",
-	"weapons/samurai/tf_katana_02.wav",
-	"weapons/samurai/tf_katana_03.wav",
-	"weapons/samurai/tf_katana_04.wav",
-	"weapons/samurai/tf_katana_05.wav",
-	"weapons/samurai/tf_katana_06.wav",
+	"weapons/machete_swing.wav",
 };
 
-void OshimunoSpiritualistOnMapStart()
+void OshimunoChefEliteOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
@@ -54,9 +46,9 @@ void OshimunoSpiritualistOnMapStart()
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
 	NPCData data;
-	strcopy(data.Name, sizeof(data.Name), "Spiritualist");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spiritualist");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Name, sizeof(data.Name), "Michelin Chef");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_chef_elite");
+	strcopy(data.Icon, sizeof(data.Icon), "pyro");
 	data.IconCustom = true;
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
@@ -66,10 +58,10 @@ void OshimunoSpiritualistOnMapStart()
 
 static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
 {
-	return OshimunoSpiritualist(vecPos, vecAng, team);
+	return OshimunoChefElite(vecPos, vecAng, team);
 }
 
-methodmap OshimunoSpiritualist < CClotBody
+methodmap OshimunoChefElite < CClotBody
 {
 	public void PlayIdleSound()
 	{
@@ -96,13 +88,13 @@ methodmap OshimunoSpiritualist < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public OshimunoSpiritualist(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoChefElite(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoSpiritualist npc = view_as<OshimunoSpiritualist>(CClotBody(vecPos, vecAng, "models/player/scout.mdl", "1.0", "1000", ally));
+		OshimunoChefElite npc = view_as<OshimunoChefElite>(CClotBody(vecPos, vecAng, "models/player/pyro.mdl", "1.35", "3000", ally));
 		
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
-		KillFeed_SetKillIcon(npc.index, "demokatana");
+		KillFeed_SetKillIcon(npc.index, "guillotine");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
@@ -115,14 +107,18 @@ methodmap OshimunoSpiritualist < CClotBody
 		
 		npc.m_flSpeed = 300.0;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_rift_fire_mace/c_rift_fire_mace.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_sd_cleaver/c_sd_cleaver.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/all_class/hw2013_stiff_buddy/hw2013_stiff_buddy_scout.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/pyro/pyro_chef_hat.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/scout/sbox2014_ticket_boy/sbox2014_ticket_boy.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/player/items/pyro/japan_hachimaki.mdl");
 		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/scout/dec15_hot_heels/dec15_hot_heels.mdl");
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/pyro/hw2013_scorched_skirt/hw2013_scorched_skirt.mdl");
+		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
+
+		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2024_spider_sights/hwn2024_spider_sights_pyro.mdl");
+		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(2);
@@ -135,7 +131,7 @@ methodmap OshimunoSpiritualist < CClotBody
 
 static void ClotThink(int iNPC)
 {
-	OshimunoSpiritualist npc = view_as<OshimunoSpiritualist>(iNPC);
+	OshimunoChefElite npc = view_as<OshimunoChefElite>(iNPC);
 
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
@@ -182,13 +178,13 @@ static void ClotThink(int iNPC)
 		{
 			npc.SetGoalEntity(target);
 		}
-		OshimunoSpiritualistSelfDefense(npc, distance, vecTarget, gameTime); 
+		OshimunoChefEliteSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
 
 	npc.PlayIdleSound();
 }
 
-void OshimunoSpiritualistSelfDefense(OshimunoSpiritualist npc, float distance, float vecTarget[3], float gameTime)
+void OshimunoChefEliteSelfDefense(OshimunoChefElite npc, float distance, float vecTarget[3], float gameTime)
 {
 	if(npc.m_flAttackHappens)
 	{
@@ -201,9 +197,14 @@ void OshimunoSpiritualistSelfDefense(OshimunoSpiritualist npc, float distance, f
 			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
 			{
 				int target = TR_GetEntityIndex(swingTrace);
+				float health = float(GetClientHealth(target));
+				float maxhealth = float(SDKCall_GetMaxHealth(target));
+				float extradamage = ((maxhealth) - (health)) / 5; //deals extra damage equal to 20.0% of the targets missing hp
+				if(extradamage < 0.0) //prevent the npc from doing LESS damage if target has overheal
+					extradamage = 0.0; 
 				if(target > 0)
 				{
-					float damage = 60.0;
+					float damage = 80.0 + extradamage;
 					
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
@@ -213,7 +214,7 @@ void OshimunoSpiritualistSelfDefense(OshimunoSpiritualist npc, float distance, f
 		}
 	}
 
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) && npc.m_flNextMeleeAttack < gameTime)
+	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 1.5 && npc.m_flNextMeleeAttack < gameTime)
 	{
 		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
 		if(IsValidEnemy(npc.index, target, false, true))
@@ -224,26 +225,13 @@ void OshimunoSpiritualistSelfDefense(OshimunoSpiritualist npc, float distance, f
 			npc.PlayMeleeSound();
 			
 			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+			npc.m_flNextMeleeAttack = gameTime + 1.3;
 		}
 	}
 }
 static void ClotDeath(int entity)
 {
-	OshimunoSpiritualist npc = view_as<OshimunoSpiritualist>(entity);
-
-	int orbhealth = ReturnEntityMaxHealth(npc.index);
-	float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-	float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-	int ent = NPC_CreateByName("npc_oshimuno_spirit_orb", -1, pos, ang, GetTeam(npc.index));
-
-	if(ent > MaxClients)
-	{
-		if(GetTeam(npc.index) != TFTeam_Red)
-			NpcAddedToZombiesLeftCurrently(ent, true);
-		SetEntProp(entity, Prop_Data, "m_iHealth", orbhealth);
-		SetEntProp(entity, Prop_Data, "m_iMaxHealth", orbhealth);
-	}
+	OshimunoChefElite npc = view_as<OshimunoChefElite>(entity);
 
 	if(!npc.m_bGib)
 		npc.PlayDeathSound();

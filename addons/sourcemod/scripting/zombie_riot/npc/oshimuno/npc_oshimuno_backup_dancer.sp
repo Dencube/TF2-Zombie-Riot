@@ -1,6 +1,8 @@
 #pragma semicolon 1
 #pragma newdecls required
 
+#define REVIVE_DURATION 12.0
+
 static const char g_DeathSounds[][] =
 {
 	"vo/heavy_paincrticialdeath01.mp3",
@@ -88,10 +90,19 @@ methodmap OshimunoBackupDancer < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	
+	property float m_flTauntLoop
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
+	}
+	property float m_flInvulDuration
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
+	}
 	public OshimunoBackupDancer(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoBackupDancer npc = view_as<OshimunoBackupDancer>(CClotBody(vecPos, vecAng, "models/player/heavy.mdl", "1.35", "5000", ally));
+		OshimunoBackupDancer npc = view_as<OshimunoBackupDancer>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.35", "5000", ally));
 		
 		i_NpcWeight[npc.index] = 3;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
@@ -103,21 +114,20 @@ methodmap OshimunoBackupDancer < CClotBody
 		
 
 		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
+		func_NPCOnTakeDamage[npc.index] = OshimunoBackupDancerOnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
 		npc.m_iOverlordComboAttack = 0;
+		npc.m_flInvulDuration = 0.0;
+		npc.m_flTauntLoop = 0.0;
 
-		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_sr3_punch/c_sr3_punch.mdl");
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/player/items/soldier/short2014_soldier_fedhair/short2014_soldier_fedhair.mdl");
 
-		npc.m_iWearable2 = npc.EquipItem("head", "models/player/items/heavy/cop_glasses.mdl");
+		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/soldier/short2014_man_in_slacks/short2014_man_in_slacks.mdl");
 
-		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/heavy/sum23_hog_heels/sum23_hog_heels.mdl");
+		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/soldier/spr18_veterans_attire/spr18_veterans_attire.mdl");
 		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
-
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/heavy/dec23_bigger_mann/dec23_bigger_mann.mdl");
-		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(2);
@@ -126,6 +136,21 @@ methodmap OshimunoBackupDancer < CClotBody
 		npc.StartPathing();
 		return npc;
 	}
+}
+
+static int GetPopstarAlive(int entity)
+{
+	int PopstarAlive;
+	int a, entity1;
+	// Count trees
+	while((entity1 = FindEntityByNPC(a)) != -1)
+	{
+		if(IsValidEntity(entity1) && i_NpcInternalId[entity1] == OshimunoPopstar_ID() && GetTeam(entity) == GetTeam(entity1))
+		{
+			PopstarAlive++;
+		}
+	}
+	return PopstarAlive;
 }
 
 static void ClotThink(int iNPC)
@@ -179,7 +204,25 @@ static void ClotThink(int iNPC)
 		}
 		OshimunoBackupDancerSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-	
+	if(npc.m_flInvulDuration)
+	{
+		if(npc.m_flInvulDuration < gameTime)
+		{
+			b_NpcIsInvulnerable[npc.index] = false;
+			npc.m_flInvulDuration = 0.0;
+			npc.StartPathing();
+		}
+		else
+		{
+			if(npc.m_flTauntLoop < gameTime) // loops the taunt
+			{
+				npc.AddActivityViaSequence("taunt_manrobic");
+				npc.SetPlaybackRate(1.2);
+				npc.SetCycle(0.0);
+				npc.m_flTauntLoop = gameTime + 3.0;
+			}
+		}
+	}
 	npc.PlayIdleSound();
 }
 
@@ -243,6 +286,24 @@ void OshimunoBackupDancerSelfDefense(OshimunoBackupDancer npc, float distance, f
 		}
 	}
 }
+
+static Action OshimunoBackupDancerOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{	
+	OshimunoBackupDancer npc = view_as<OshimunoBackupDancer>(victim);
+	float gameTime = GetGameTime(npc.index);
+	if(GetPopstarAlive(npc.index) > 0  && GetEntProp(npc.index, Prop_Data, "m_iHealth") <= 1) //enrage below 50% hp
+	{
+		b_NpcIsInvulnerable[npc.index] = true;
+		npc.StopPathing();
+		npc.m_iState = 1;
+		float healing = float(ReturnEntityMaxHealth(npc.index)); // heal to max hp over 12s
+		HealEntityGlobal(npc.index, npc.index, healing, 1.0, REVIVE_DURATION, HEAL_ABSOLUTE);
+		NPCStats_RemoveAllDebuffs(npc.index, 1.0);
+		npc.m_flInvulDuration = gameTime + REVIVE_DURATION;
+	}
+	return Plugin_Changed;
+}
+
 static void ClotDeath(int entity)
 {
 	OshimunoBackupDancer npc = view_as<OshimunoBackupDancer>(entity);

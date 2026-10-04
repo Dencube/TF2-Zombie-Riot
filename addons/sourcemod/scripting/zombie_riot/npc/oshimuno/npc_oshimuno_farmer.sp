@@ -37,6 +37,15 @@ static const char g_MeleeAttackSounds[][] =
 {
 	"weapons/machete_swing.wav",
 };
+static const char g_WindUpSounds[][] =
+{
+	"vo/taunts/engineer_taunts08.mp3",
+	"vo/taunts/engineer_taunts10.mp3"
+};
+static const char g_WindUpEndSounds[][] =
+{
+	"vo/engineer_wranglekills04.mp3"
+};
 
 #define INITIAL_TREE_SPAWN_COOLDOWN 10.0
 #define TREE_SPAWN_COOLDOWN 25.0
@@ -66,6 +75,8 @@ void OshimunoFarmerOnMapStart()
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
+	PrecacheSoundArray(g_WindUpSounds);
+	PrecacheSoundArray(g_WindUpEndSounds);
 	g_FarmerLineLaser = PrecacheModel("sprites/laserbeam.vmt");
 	PrecacheSound(g_FarmerLineWindUpSound);
 	PrecacheSound(g_FarmerLineImpactSound);
@@ -146,6 +157,14 @@ methodmap OshimunoFarmer < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
+	public void PlayWindUpSounds()
+	{
+		EmitSoundToAll(g_WindUpSounds[GetRandomInt(0, sizeof(g_WindUpSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
+	}
+	public void PlayWindUpEndSounds()
+	{
+		EmitSoundToAll(g_WindUpEndSounds[GetRandomInt(0, sizeof(g_WindUpEndSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
+	}
 	
 	public OshimunoFarmer(float vecPos[3], float vecAng[3], int ally, const char[] data)
 	{
@@ -160,6 +179,8 @@ methodmap OshimunoFarmer < CClotBody
 		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
 		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
 
+		EmitSoundToAll("npc/zombie_poison/pz_alert1.wav", _, _, _, _, 1.0);		
+		EmitSoundToAll("npc/zombie_poison/pz_alert1.wav", _, _, _, _, 1.0);
 		RaidModeTime = gameTime + 180.0;
 		RaidBossActive = EntIndexToEntRef(npc.index);
 		RaidAllowsBuildings = false;
@@ -326,6 +347,7 @@ static void ClotThink(int iNPC)
 		else
 		{
 			OshimunoFarmerLineAoeDetonate(npc);
+			npc.PlayWindUpEndSounds();
 			npc.m_flLineAoeDetonate = 0.0;
 			npc.m_flLineAoeFade = gameTime + FARMER_LINE_FADE_TIME;
 			npc.m_flLineAoeFadeDraw = gameTime + FARMER_LINE_FADE_STEP;
@@ -376,15 +398,15 @@ static void ClotThink(int iNPC)
 		int treehealth = ReturnEntityMaxHealth(npc.index) / 10;
 		float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 		float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-		int entity = NPC_CreateByName("npc_oshimuno_tree", -1, pos, ang, GetTeam(npc.index));
-		if(entity > MaxClients)
+		int tree = NPC_CreateByName("npc_oshimuno_tree", -1, pos, ang, GetTeam(npc.index));
+		if(tree > MaxClients)
 		{
-			/*ConnectWithBeam(npc.index, entity, 245, 180, 255, 1.0, 1.0, 0.0, LASERBEAM);*/
-			view_as<CClotBody>(entity).m_iWearable9=ConnectWithBeam(npc.index, entity, 245, 180, 255, 1.0, 1.0, 0.0, LASERBEAM);
+			/*ConnectWithBeam(npc.index, tree, 245, 180, 255, 1.0, 1.0, 0.0, LASERBEAM);*/
+			view_as<CClotBody>(tree).m_iWearable9=ConnectWithBeam(npc.index, tree, 245, 180, 255, 1.0, 1.0, 0.0, LASERBEAM);
 			if(GetTeam(npc.index) != TFTeam_Red)
-				NpcAddedToZombiesLeftCurrently(entity, true);
-			SetEntProp(entity, Prop_Data, "m_iHealth", treehealth);
-			SetEntProp(entity, Prop_Data, "m_iMaxHealth", treehealth);
+				NpcAddedToZombiesLeftCurrently(tree, true);
+			SetEntProp(tree, Prop_Data, "m_iHealth", treehealth);
+			SetEntProp(tree, Prop_Data, "m_iMaxHealth", treehealth);
 		}
 		npc.m_flTreeCooldown = gameTime + TREE_SPAWN_COOLDOWN;
 	}
@@ -497,6 +519,7 @@ void OshimunoFarmerSelfDefense(OshimunoFarmer npc, float distance, float vecTarg
 			{
 				npc.m_flMeleeSwingCount = 0.0;
 				OshimunoFarmerLineAoeStart(npc, gameTime);
+				npc.PlayWindUpSounds();
 			}
 		}
 	}
@@ -727,37 +750,28 @@ bool OshimunoFarmerTransform(OshimunoFarmer npc)
 		b_CannotBeHeadshot[npc.index] = false;
 		b_CannotBeBackstabbed[npc.index] = false;
 		b_NpcIsInvulnerable[npc.index] = false; //Special huds for invul targets
+		RaidModeScaling *= 1.05;
 		npc.m_bisWalking = true;
 		npc.StartPathing();
 		npc.SetActivity("ACT_MP_RUN_MELEE");
 		npc.m_flTransformIn = 0.0;
-		return false;
-	}
-	if(npc.m_flTransformIn < GetGameTime() + 0.5)
-	{
-		if(npc.m_iChanged_WalkCycle != 10)
+		for(int i=0 ; i < 6 ; i++) //summon 6 trees
 		{
-			RaidModeScaling *= 1.05;
-			/*fl_Extra_Speed[npc.index] *= 1.05;*/
-			for(int i=0 ; i < 6 ; i++) //summon 6 trees
-			{
-				int treehealth = ReturnEntityMaxHealth(npc.index) / 10;
-				float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-				float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-				int entity = NPC_CreateByName("npc_oshimuno_tree", -1, pos, ang, GetTeam(npc.index));
+			int treehealth = ReturnEntityMaxHealth(npc.index) / 10;
+			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+			float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+			int tree = NPC_CreateByName("npc_oshimuno_tree", -1, pos, ang, GetTeam(npc.index));
 
-				if(entity > MaxClients)
-				{
-					ConnectWithBeam(npc.index, entity, 245, 180, 255, 1.0, 1.0, 0.0, LASERBEAM);
-					if(GetTeam(npc.index) != TFTeam_Red)
-						NpcAddedToZombiesLeftCurrently(entity, true);
-					SetEntProp(entity, Prop_Data, "m_iHealth", treehealth);
-					SetEntProp(entity, Prop_Data, "m_iMaxHealth", treehealth);
-				}
+			if(tree > MaxClients)
+			{
+				ConnectWithBeam(npc.index, tree, 245, 180, 255, 1.0, 1.0, 0.0, LASERBEAM);
+				if(GetTeam(npc.index) != TFTeam_Red)
+					NpcAddedToZombiesLeftCurrently(tree, true);
+				SetEntProp(tree, Prop_Data, "m_iHealth", treehealth);
+				SetEntProp(tree, Prop_Data, "m_iMaxHealth", treehealth);
 			}
-			npc.m_iChanged_WalkCycle = 10;
 		}
-		return true;
+		return false;
 	}
 	if(npc.m_iChanged_WalkCycle != 9)
 	{
@@ -771,7 +785,7 @@ bool OshimunoFarmerTransform(OshimunoFarmer npc)
 		ApplyStatusEffect(npc.index, npc.index, "Solid Stance", 3.0);	
 		ApplyStatusEffect(npc.index, npc.index, "Fluid Movement", 3.0);	
 		npc.AddActivityViaSequence("taunt_unleashed_rage_engineer");
-		npc.SetPlaybackRate(1.2);
+		npc.SetPlaybackRate(1.1);
 		npc.SetCycle(0.1);
 		npc.m_flAttackHappens = 0.0;
 	}	
@@ -801,4 +815,21 @@ static void ClotDeath(int entity)
 		
 	if(IsValidEntity(npc.m_iWearable6))
 		RemoveEntity(npc.m_iWearable6);
+
+	OshimunoFarmer_RemoveBeam(npc.index); 
+}
+
+void OshimunoFarmer_RemoveBeam(int entity) //TODO: fix this code to actually delete the beams on death
+{
+	int a, entity1;
+	// remove beams
+	while((entity1 = FindEntityByNPC(a)) != -1)
+	{
+		if(IsValidEntity(entity1) && i_NpcInternalId[entity1] == OshimunoTree_ID() && GetTeam(entity) == GetTeam(entity1))
+		{
+			OshimunoTree npcOther = view_as<OshimunoTree>(entity1);
+			if(IsValidEntity(npcOther.m_iWearable9))
+				RemoveEntity(npcOther.m_iWearable9);
+		}
+	}
 }

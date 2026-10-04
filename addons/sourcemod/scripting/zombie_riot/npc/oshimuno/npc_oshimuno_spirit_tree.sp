@@ -8,8 +8,31 @@ static const char g_DeathSounds[][] =
 	"vo/heavy_paincrticialdeath03.mp3"
 };
 
+static int NPCID;
 static char gExplosive1;
 static char gLaser1;
+
+static int TCONE_COLOR[3] = { 245, 180, 255 };
+static bool g_TreeConeFillOk = false;
+static int g_TreeConeLaser = -1;
+
+#define TCONE_FILL_MAT "laststand/fill_cone45_v2.vmt"
+#define TCONE_RADIUS 160.0
+#define TCONE_MELEE_ARC 90.0			// punch hit radius
+#define TCONE_HALFANGLE 60.0	    	// angle based on relative north, 22.5 = a 45 degree cone
+#define TCONE_LIFESPAN 0.75	    	// how long the cone lasts before disappearing
+#define TCONE_OUTLINE_ALPHA 200
+#define TCONE_FILL_ALPHA 90			// 0 disables the pie sheet entirely
+#define TCONE_FILL_FWD 0.7071
+#define TCONE_FILL_LEFT 0.0
+#define TCONE_INTERVAL 2.5
+#define TCONE_MELEE_DAMAGE 100.0
+#define TCONE_DAMAGE 100.0
+#define TCONE_LOG_MODEL "models/props_forest/tree_pine_singlelog.mdl"
+#define TCONE_LOG_RISE 200.0
+#define TCONE_LOG_TIME 0.75
+#define TCONE_LOG_SINK 110.0
+#define TCONE_LOG_ALPHA 128
 
 #define INITIAL_ORB_SPAWN_COOLDOWN 10.0
 #define ORB_SPAWN_COOLDOWN 20.0
@@ -19,6 +42,18 @@ void OshimunoSpiritTreeOnMapStart()
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheModel("models/props_japan/sakura_tree01.mdl");
 	gLaser1 = PrecacheModel("materials/sprites/laser.vmt");
+	g_TreeConeLaser = PrecacheModel("sprites/laserbeam.vmt");
+	PrecacheModel(TCONE_LOG_MODEL);
+	char path[PLATFORM_MAX_PATH];
+	FormatEx(path, sizeof(path), "materials/%s", TCONE_FILL_MAT);
+	g_TreeConeFillOk = FileExists(path, true);
+	if(g_TreeConeFillOk)
+	{
+		AddFileToDownloadsTable(path);
+		ReplaceString(path, sizeof(path), ".vmt", ".vtf");
+		AddFileToDownloadsTable(path);
+		PrecacheModel(TCONE_FILL_MAT);
+	}
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Spirit Cherry Blossom");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spirit_tree");
@@ -27,12 +62,17 @@ void OshimunoSpiritTreeOnMapStart()
 	data.Flags = 0;
 	data.Category = Type_Oshimuno;
 	data.Func = ClotSummon;
-	NPC_Add(data);
+	NPCID = NPC_Add(data);
 }
 
-static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
+int OshimunoSpiritTree_ID()
 {
-	return OshimunoSpiritTree(vecPos, vecAng, team);
+	return NPCID;
+}
+
+static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team, const char[] data)
+{
+	return OshimunoSpiritTree(vecPos, vecAng, team, data);
 }
 
 methodmap OshimunoSpiritTree < CClotBody
@@ -42,12 +82,23 @@ methodmap OshimunoSpiritTree < CClotBody
 		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
-	property float m_flOrbCooldown
+	property float m_flEnrageDelay
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
+	}
+	property float m_flNextConeAttack
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][2]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][2] = TempValueForProperty; }
 	}
-	public OshimunoSpiritTree(float vecPos[3], float vecAng[3], int ally)
+	property float m_flOrbCooldown
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][3]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][3] = TempValueForProperty; }
+	}
+
+	public OshimunoSpiritTree(float vecPos[3], float vecAng[3], int ally, const char[] data)
 	{
 		OshimunoSpiritTree npc = view_as<OshimunoSpiritTree>(CClotBody(vecPos, vecAng, "models/props_japan/sakura_tree01.mdl", "1.5", "1000", ally));
 		SetEntityRenderColor(npc.index, 0, 255, 255);
@@ -57,6 +108,8 @@ methodmap OshimunoSpiritTree < CClotBody
 		Is_a_Medic[npc.index] = true; 
 		b_thisNpcIsABoss[npc.index] = true; // no instakills
 		i_NpcIsABuilding[npc.index] = true;
+		b_NoHealthbar[npc.index] = 1;
+		b_thisNpcHasAnOutline[npc.index] = true;
 		KillFeed_SetKillIcon(npc.index, "megaton");
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
@@ -68,27 +121,29 @@ methodmap OshimunoSpiritTree < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 100.0;
+		npc.m_flSpeed = 350.0;
 		npc.m_flMeleeArmor = 1.35;
-		npc.m_flOrbCooldown = gameTime + INITIAL_ORB_SPAWN_COOLDOWN;
 		npc.m_bDissapearOnDeath = true;
+		npc.m_flNextConeAttack = 0.0;
+		npc.m_flEnrageDelay = 0.0;
+		npc.m_flOrbCooldown = gameTime + INITIAL_ORB_SPAWN_COOLDOWN;
 
-		int Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 1000.0, .NeedLOSPlayer = true);
+		int Decision = TeleportDiversioToRandLocation(npc.index, true, 2000.0, 1000.0, .NeedLOSPlayer = true);
 		switch(Decision)
 		{
 			case 2:
 			{
-				Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 500.0, .NeedLOSPlayer = true);
+				Decision = TeleportDiversioToRandLocation(npc.index, true, 2000.0, 500.0, .NeedLOSPlayer = true);
 				if(Decision == 2)
 				{
-					Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 250.0, .NeedLOSPlayer = true);
+					Decision = TeleportDiversioToRandLocation(npc.index, true, 2000.0, 250.0, .NeedLOSPlayer = true);
 					if(Decision == 2)
 					{
-						Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 0.0, .NeedLOSPlayer = true);
+						Decision = TeleportDiversioToRandLocation(npc.index, true, 2000.0, 0.0, .NeedLOSPlayer = true);
 						if(Decision == 2)
 						{
 							//damn, cant find any.... guess we'll just not care about LOS.
-							Decision = TeleportDiversioToRandLocation(npc.index, true, 1500.0, 0.0);
+							Decision = TeleportDiversioToRandLocation(npc.index, true, 2000.0, 0.0);
 						}
 					}
 				}
@@ -96,6 +151,26 @@ methodmap OshimunoSpiritTree < CClotBody
 			case 3:
 			{
 				//todo code on what to do if random teleport is disabled
+			}
+		}
+		if(StrContains(data, "spawn_notif") != -1)
+		{
+			if(ally != TFTeam_Red)
+			{
+				if(LastSpawnDiversio < GetGameTime())
+				{
+					EmitSoundToAll("weapons/sniper_railgun_world_reload.wav", _, _, _, _, 1.0);	
+					EmitSoundToAll("weapons/sniper_railgun_world_reload.wav", _, _, _, _, 1.0);	
+					for(int client_check=1; client_check<=MaxClients; client_check++)
+					{
+						if(IsClientInGame(client_check) && !IsFakeClient(client_check))
+						{
+							SetGlobalTransTarget(client_check);
+							ShowGameText(client_check, "voice_player", 1, "%t", "The trees surround you");
+						}
+					}
+				}
+				LastSpawnDiversio = GetGameTime() + 10.0;
 			}
 		}
 		return npc;
@@ -128,8 +203,8 @@ static void ClotThink(int iNPC)
 		npc.m_iTarget = target;
 		npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
 	}
-	if(!npc.Anger) //if trees are the last thing alive get enraged and start chasing
-	{	
+	if(!npc.Anger) //if trees are the last thing alive get enraged and start chasing after a delay
+	{
 		if(npc.m_flOrbCooldown < gameTime)// spawn orbs every 20s while not enraged
 		{
 			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
@@ -147,9 +222,18 @@ static void ClotThink(int iNPC)
 			}
 			npc.m_flOrbCooldown = gameTime + ORB_SPAWN_COOLDOWN;
 		}
-		if(npc.m_flRecheckIfAlliesDead < GetGameTime())
+
+		if(npc.m_flRecheckIfAlliesDead < gameTime &&! npc.m_flEnrageDelay)
 		{
 			if(!IsValidAlly(npc.index, GetClosestAlly(npc.index)))
+			{
+				npc.m_flEnrageDelay = gameTime + 3.0;
+				fl_TotalArmor[npc.index] = 0.66;
+			}
+		}
+		if(npc.m_flEnrageDelay)
+		{
+			if(npc.m_flEnrageDelay < gameTime)
 			{
 				npc.Anger = true;
 				SetEntityRenderColor(npc.index, 255, 0, 0); // red because they're PISSED
@@ -203,6 +287,7 @@ static void ClotThink(int iNPC)
 			{
 				npc.SetGoalEntity(target);
 			}
+			OshimunoSpiritTreeConeAttack(npc, distance, gameTime);
 		}
 	}
 }
@@ -210,9 +295,9 @@ static void ClotThink(int iNPC)
 	
 static void OshimunoSpiritTreeEffect(int entity = -1, float VecPos_target[3] = {0.0,0.0,0.0})
 {	
-	int r = 235; //orange
-	int g = 125;
-	int b = 0;
+	int r = 245; //light pink
+	int g = 180;
+	int b = 255;
 	int laser;
 
 	laser = ConnectWithBeam(entity, -1, r, g, b, 3.0, 3.0, 2.35, LASERBEAM, _, VecPos_target);
@@ -225,21 +310,21 @@ public void OshimunoSpiritTreeAttackInvoke(int ref, int enemy)
 	int entity = EntRefToEntIndex(ref);
 	if(IsValidEntity(entity))
 	{
-		float Time=1.75;
-		float Range=150.0;
+		float Time=2.0;
+		float Range=200.0;
 		if(LastMann)
-			Range = 75.0;
+			Range = 100.0;
 
-		float Dmg=500.0;
+		float Dmg=250.0;
 		float vecTarget[3];
 		WorldSpaceCenter(enemy, vecTarget );
 		vecTarget[2] += 1.0;
 		
 		
 		int color[4];
-		color[0] = 235;
-		color[1] = 125;
-		color[2] = 0;
+		color[0] = 245;
+		color[1] = 180;
+		color[2] = 255;
 		color[3] = 255;
 		float UserLoc[3];
 		GetAbsOrigin(entity, UserLoc);
@@ -262,7 +347,7 @@ public void OshimunoSpiritTreeAttackInvoke(int ref, int enemy)
 		WritePackFloat(data, Dmg); // Damge
 		WritePackCell(data, ref);
 		
-		spawnRing_Vectors(vecTarget, Range * 2.0, 0.0, 0.0, 0.0, "materials/sprites/laserbeam.vmt", 235, 125, 0, 200, 1, Time, 6.0, 0.1, 1, 1.0);
+		spawnRing_Vectors(vecTarget, Range * 2.0, 0.0, 0.0, 0.0, "materials/sprites/laserbeam.vmt", 245, 180, 255, 200, 1, Time, 6.0, 0.1, 1, 1.0);
 	}
 }
 
@@ -307,6 +392,250 @@ public Action Smite_Timer_Spirit_Tree(Handle Smite_Logic, DataPack data)
 	return Plugin_Continue;
 }
 
+void OshimunoSpiritTreeConeAttack(OshimunoSpiritTree npc, float distance, float gameTime)
+{
+	if(distance > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 1.5 || npc.m_flNextConeAttack > gameTime)
+		return;
+
+	int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
+	if(!IsValidEnemy(npc.index, target, false, true))
+		return;
+
+	npc.m_iTarget = target;
+	npc.m_flNextConeAttack = gameTime + TCONE_INTERVAL;
+
+	float bossPos[3];
+	GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", bossPos);
+
+	float yawDeg;
+	{
+		float at[3];
+		WorldSpaceCenter(target, at);
+		float dx = at[0] - bossPos[0];
+		float dy = at[1] - bossPos[1];
+		if((dx * dx) + (dy * dy) >= 1.0)
+		{
+			yawDeg = ArcTangent2(dy, dx) * 180.0 / FLOAT_PI;
+		}
+		else
+		{
+			float ang[3];
+			GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+			yawDeg = ang[1];
+		}
+	}
+	float yawRad = yawDeg * FLOAT_PI / 180.0;
+	float arcRad = TCONE_MELEE_ARC * FLOAT_PI / 180.0;
+	bool hit[MAXPLAYERS + 1];
+	for(int client = 1; client <= MaxClients; client++)
+	{
+		if(!IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) != TFTeam_Red)
+			continue;
+
+		float pos[3];
+		GetClientAbsOrigin(client, pos);
+		float dx = pos[0] - bossPos[0];
+		float dy = pos[1] - bossPos[1];
+		float dz = pos[2] - bossPos[2];
+		if(((dx * dx) + (dy * dy)) > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) || dz > 120.0 || dz < -120.0)
+			continue;
+
+		if(TCONE_MELEE_ARC < 180.0)
+		{
+			float diff = ArcTangent2(dy, dx) - yawRad;
+			while(diff > FLOAT_PI) diff -= FLOAT_PI * 2.0;
+			while(diff < -FLOAT_PI) diff += FLOAT_PI * 2.0;
+			if(FloatAbs(diff) > arcRad)
+				continue;
+		}
+		hit[client] = true;
+		float at[3];
+		WorldSpaceCenter(client, at);
+		SDKHooks_TakeDamage(client, npc.index, npc.index, TCONE_MELEE_DAMAGE, DMG_CLUB, -1, _, at);
+		OshimunoSpiritTreeSpawnLog(pos);
+	}
+	OshimunoSpiritTreeResolveCone(npc, bossPos, yawDeg, hit);
+	OshimunoSpiritTreeDrawCone(bossPos, yawDeg);
+}
+
+static void OshimunoSpiritTreeResolveCone(OshimunoSpiritTree npc, const float apex[3], float yawDeg, const bool exclude[MAXPLAYERS + 1])
+{
+	float yawRad = yawDeg * FLOAT_PI / 180.0;
+	float halfAngle = (TCONE_HALFANGLE + 6.0) * FLOAT_PI / 180.0;
+	float radiusPad = TCONE_RADIUS + 24.0;
+
+	for(int client = 1; client <= MaxClients; client++)
+	{
+		if(exclude[client] || !IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) != TFTeam_Red)
+			continue;
+
+		float pos[3];
+		GetClientAbsOrigin(client, pos);
+		float dx = pos[0] - apex[0];
+		float dy = pos[1] - apex[1];
+		float dz = pos[2] - apex[2];
+		if(((dx * dx) + (dy * dy)) > (radiusPad * radiusPad) || dz > 120.0 || dz < -120.0)
+			continue;
+
+		float diff = ArcTangent2(dy, dx) - yawRad;
+		while(diff > FLOAT_PI) diff -= FLOAT_PI * 2.0;
+		while(diff < -FLOAT_PI) diff += FLOAT_PI * 2.0;
+		if(FloatAbs(diff) > halfAngle)
+			continue;
+
+		float at[3];
+		WorldSpaceCenter(client, at);
+		SDKHooks_TakeDamage(client, npc.index, npc.index, TCONE_DAMAGE, DMG_CLUB, -1, _, at);
+		OshimunoSpiritTreeSpawnLog(pos);
+	}
+}
+
+static void OshimunoSpiritTreeDrawCone(const float apex[3], float yawDeg)
+{
+	int color[4];
+	color[0] = TCONE_COLOR[0];
+	color[1] = TCONE_COLOR[1];
+	color[2] = TCONE_COLOR[2];
+	color[3] = TCONE_OUTLINE_ALPHA;
+
+	float from[3];
+	from = apex;
+	from[2] += 5.0;
+
+	float halfAngle = TCONE_HALFANGLE * FLOAT_PI / 180.0;
+	float yawRad = yawDeg * FLOAT_PI / 180.0;
+	float prev[3];
+	for(int step; step <= 6; step++)
+	{
+		float ang = yawRad - halfAngle + ((halfAngle * 2.0) * (float(step) / 6.0));
+		float at[3];
+		at[0] = from[0] + (Cosine(ang) * TCONE_RADIUS);
+		at[1] = from[1] + (Sine(ang) * TCONE_RADIUS);
+		at[2] = from[2];
+
+		if(step == 0 || step == 6)
+		{
+			TE_SetupBeamPoints(from, at, g_TreeConeLaser, -1, 0, 0, TCONE_LIFESPAN, 4.0, 4.0, 0, 0.0, color, 0);
+			TE_SendToAll();
+		}
+		if(step)
+		{
+			TE_SetupBeamPoints(prev, at, g_TreeConeLaser, -1, 0, 0, TCONE_LIFESPAN, 4.0, 4.0, 0, 0.0, color, 0);
+			TE_SendToAll();
+		}
+		prev = at;
+	}
+	if(TCONE_FILL_ALPHA <= 0 || !g_TreeConeFillOk)
+		return;
+
+	int spr = CreateEntityByName("env_sprite_oriented");
+	if(spr <= MaxClients || !IsValidEntity(spr))
+		return;
+
+	char buffer[48];
+	DispatchKeyValue(spr, "model", TCONE_FILL_MAT);
+	FormatEx(buffer, sizeof(buffer), "%.3f", (TCONE_RADIUS * 0.5) / 32.0);
+	DispatchKeyValue(spr, "scale", buffer);
+	DispatchKeyValue(spr, "rendermode", "1");	
+	FormatEx(buffer, sizeof(buffer), "%d %d %d", TCONE_COLOR[0], TCONE_COLOR[1], TCONE_COLOR[2]);
+	DispatchKeyValue(spr, "rendercolor", buffer);
+	IntToString(TCONE_FILL_ALPHA, buffer, sizeof(buffer));
+	DispatchKeyValue(spr, "renderamt", buffer);
+	DispatchKeyValue(spr, "spawnflags", "1");	
+	float ang[3];
+	ang[0] = 90.0;
+	ang[1] = yawDeg + 45.0;
+	FormatEx(buffer, sizeof(buffer), "%.0f %.0f 0", ang[0], ang[1]);
+	DispatchKeyValue(spr, "angles", buffer);
+	DispatchSpawn(spr);
+	float fwdRad = yawDeg * FLOAT_PI / 180.0;
+	float leftRad = (yawDeg + 90.0) * FLOAT_PI / 180.0;
+	float at[3];
+	at[0] = apex[0] + (Cosine(fwdRad) * TCONE_RADIUS * TCONE_FILL_FWD)
+		+ (Cosine(leftRad) * TCONE_RADIUS * TCONE_FILL_LEFT);
+	at[1] = apex[1] + (Sine(fwdRad) * TCONE_RADIUS * TCONE_FILL_FWD)
+		+ (Sine(leftRad) * TCONE_RADIUS * TCONE_FILL_LEFT);
+	at[2] = apex[2] + 4.0;
+	TeleportEntity(spr, at, ang, NULL_VECTOR);
+	SetEdictFlags(spr, (GetEdictFlags(spr) & ~(FL_EDICT_DONTSEND | FL_EDICT_PVSCHECK)) | FL_EDICT_ALWAYS);
+
+	CreateTimer(TCONE_LIFESPAN, Timer_RemoveEntity, EntIndexToEntRef(spr), TIMER_FLAG_NO_MAPCHANGE);
+}
+
+static void OshimunoSpiritTreeSpawnLog(const float playerPos[3])
+{
+	float ground[3];
+	ground = playerPos;
+
+	float start[3], end[3];
+	start = playerPos;
+	start[2] += 55.0;
+	end = playerPos;
+	end[2] -= 800.0;
+
+	Handle tr = TR_TraceRayEx(start, end, MASK_PLAYERSOLID_BRUSHONLY, RayType_EndPoint);
+	if(TR_DidHit(tr))
+		TR_GetEndPosition(ground, tr);
+	delete tr;
+
+	int prop = CreateEntityByName("prop_physics_multiplayer");
+	if(prop <= MaxClients || !IsValidEntity(prop))
+		return;
+
+	float at[3];
+	at = ground;
+	at[2] -= TCONE_LOG_SINK;
+
+	float ang[3];
+	ang[1] = GetRandomFloat(-180.0, 180.0);
+
+	DispatchKeyValue(prop, "model", TCONE_LOG_MODEL);
+	DispatchKeyValue(prop, "physicsmode", "2");
+	DispatchKeyValue(prop, "solid", "0");
+	DispatchKeyValue(prop, "massScale", "1.0");
+	DispatchKeyValue(prop, "spawnflags", "6");
+	DispatchKeyValueVector(prop, "origin", at);
+	DispatchKeyValueVector(prop, "angles", ang);
+	DispatchSpawn(prop);
+
+	float mins[3], maxs[3];
+	GetEntPropVector(prop, Prop_Send, "m_vecMins", mins);
+	GetEntPropVector(prop, Prop_Send, "m_vecMaxs", maxs);
+
+	float up = maxs[2];
+	if((maxs[0] - mins[0]) >= (maxs[1] - mins[1]) && (maxs[0] - mins[0]) > (maxs[2] - mins[2]))
+	{
+		ang[0] = -90.0;
+		up = (maxs[0] > -mins[0]) ? maxs[0] : -mins[0];
+	}
+	else if((maxs[1] - mins[1]) > (maxs[2] - mins[2]))
+	{
+		ang[2] = 90.0;
+		up = (maxs[1] > -mins[1]) ? maxs[1] : -mins[1];
+	}
+	else if(-mins[2] > up)
+	{
+		up = -mins[2];
+	}
+
+	if(up > 1.0)
+		at[2] = ground[2] - up - 4.0;
+
+	float vel[3];
+	vel[2] = (TCONE_LOG_RISE / TCONE_LOG_TIME) + (0.5 * 800.0 * TCONE_LOG_TIME);
+	TeleportEntity(prop, at, ang, vel);
+
+	SetEntityRenderMode(prop, RENDER_TRANSCOLOR);
+	SetEntityRenderColor(prop, 255, 255, 255, TCONE_LOG_ALPHA);
+
+	SetEntityCollisionGroup(prop, 1);
+	SetEntProp(prop, Prop_Send, "m_usSolidFlags", 12);
+	SetEntProp(prop, Prop_Data, "m_nSolidType", 6);
+	SetEdictFlags(prop, (GetEdictFlags(prop) & ~(FL_EDICT_DONTSEND | FL_EDICT_PVSCHECK)) | FL_EDICT_ALWAYS);
+
+	CreateTimer(TCONE_LOG_TIME, Timer_RemoveEntity, EntIndexToEntRef(prop), TIMER_FLAG_NO_MAPCHANGE);
+}
+
 static void ClotDeath(int entity)
 {
 	OshimunoSpiritTree npc = view_as<OshimunoSpiritTree>(entity);
@@ -333,6 +662,6 @@ static void ClotDeath(int entity)
 	if(IsValidEntity(npc.m_iWearable4))
 		RemoveEntity(npc.m_iWearable4);
 	
-	if(IsValidEntity(npc.m_iWearable5))
-		RemoveEntity(npc.m_iWearable5);
+	if(IsValidEntity(npc.m_iWearable9))
+		RemoveEntity(npc.m_iWearable9);
 }

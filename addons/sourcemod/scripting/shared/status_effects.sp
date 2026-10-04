@@ -245,6 +245,7 @@ void InitStatusEffects()
 	StatusEffects_Aperture();
 	StatusEffects_SmokeScreen();
 	StatusEffects_Adoration();
+	StatusEffects_Extreme_Adoration();
 	StatusEffects_SpiritFire(); //combine all new effects into one like aperture and put them here
 	StatusEffects_Ruiania();
 	StatusEffects_BrickWeapon();
@@ -12426,7 +12427,24 @@ void StatusEffects_Adoration()
 	data.MovementspeedModif			=  1.2;
 	data.Positive 					= true;
 	data.ShouldScaleWithPlayerCount = false;
-	data.Slot						= 0; //0 means ignored
-	data.SlotPriority				= 0; //if its higher, then the lower version is entirely ignored.
+	data.Slot						= 21; //0 means ignored
+	data.SlotPriority				= 1; //if its higher, then the lower version is entirely ignored.
+	StatusEffect_AddGlobal(data);
+}
+void StatusEffects_Extreme_Adoration()
+{
+	StatusEffect data;
+
+	strcopy(data.BuffName, sizeof(data.BuffName), "Extreme Adoration");
+	strcopy(data.HudDisplay, sizeof(data.HudDisplay), "!⍝!");
+	strcopy(data.AboveEnemyDisplay, sizeof(data.AboveEnemyDisplay), ""); //dont display above head, so empty
+	//-1.0 means unused
+	data.DamageTakenMulti 			=  0.8;
+	data.DamageDealMulti			=  0.35;
+	data.MovementspeedModif			=  1.2;
+	data.Positive 					= true;
+	data.ShouldScaleWithPlayerCount = false;
+	data.Slot						= 21; //0 means ignored
+	data.SlotPriority				= 2; //if its higher, then the lower version is entirely ignored.
 	StatusEffect_AddGlobal(data);
 }

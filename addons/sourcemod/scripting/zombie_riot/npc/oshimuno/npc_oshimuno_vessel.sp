@@ -255,7 +255,7 @@ static Action OshimunoVesselOnTakeDamage(int victim, int &attacker, int &inflict
 	if(attacker <= MaxClients)
 	{
 		if(TeutonType[attacker] != TEUTON_NONE)
-		return Plugin_Continue;
+			return Plugin_Continue;
 	}
 	if((i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED)) // reset from any non-debuff or teuton damage
 		return Plugin_Continue;

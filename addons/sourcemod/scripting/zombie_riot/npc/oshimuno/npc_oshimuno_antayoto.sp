@@ -4,46 +4,44 @@
 
 static const char g_DeathSounds[][] =
 {
-	"vo/engineer_paincrticialdeath01.mp3",
-	"vo/engineer_paincrticialdeath02.mp3",
-	"vo/engineer_paincrticialdeath03.mp3",
+	"vo/spy_paincrticialdeath01.mp3",
+	"vo/spy_paincrticialdeath02.mp3",
+	"vo/spy_paincrticialdeath03.mp3",
 };
 
 static const char g_HurtSounds[][] =
 {
-	"vo/engineer_painsharp01.mp3",
-	"vo/engineer_painsharp02.mp3",
-	"vo/engineer_painsharp03.mp3",
-	"vo/engineer_painsharp04.mp3",
-	"vo/engineer_painsharp05.mp3",
-	"vo/engineer_painsharp06.mp3",
-	"vo/engineer_painsharp07.mp3",
-	"vo/engineer_painsharp08.mp3",
+	"vo/spy_painsharp01.mp3",
+	"vo/spy_painsharp02.mp3",
+	"vo/spy_painsharp03.mp3",
+	"vo/spy_painsharp04.mp3",
 };
 
 static const char g_IdleAlertedSounds[][] =
 {
-	"vo/engineer_meleedare01.mp3",
-	"vo/engineer_meleedare02.mp3",
-	"vo/engineer_meleedare03.mp3",
-};
-
-static const char g_MeleeHitSounds[][] =
-{
-	"weapons/cbar_hit1.wav",
-	"weapons/cbar_hit2.wav"
+	"vo/spy_battlecry01.mp3",
+	"vo/spy_battlecry02.mp3",
+	"vo/spy_battlecry03.mp3",
+	"vo/spy_battlecry04.mp3",
 };
 
 static const char g_MeleeAttackSounds[][] =
 {
-	"weapons/machete_swing.wav",
+	"weapons/knife_swing.wav",
+};
+
+static const char g_MeleeHitSounds[][] =
+{
+	"weapons/blade_hit1.wav",
+	"weapons/blade_hit2.wav",
+	"weapons/blade_hit3.wav",
+	"weapons/blade_hit4.wav",
 };
 
 static const char g_RangedAttackSounds[][] =
 {
 	"weapons/cleaver_throw.wav",
 };
-
 
 int OshimunoAntayotoId;
 int OshimunoAntayotoIDReturn()
@@ -284,6 +282,12 @@ methodmap OshimunoAntayoto < CClotBody
 		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 1);
 		npc.m_iWearable6 = npc.EquipItem("head", "models/workshop/player/items/spy/dec25_aristocravat/dec25_aristocravat.mdl");
 		SetEntProp(npc.m_iWearable6, Prop_Send, "m_nSkin", 1);
+		npc.m_iWearable7 = Trail_Attach(npc.index, ARROW_TRAIL, 80, 1.5, 40.0, 8.0, 1);
+		/*
+		float flPos[3], flAng[3];
+		npc.GetAttachment("eyes", flPos, flAng);
+		npc.m_iWearable8 = ParticleEffectAt_Parent(flPos, "unusual_psychic_eye_white_glow", npc.index, "eyes", {0.0,0.0,-15.0});
+		*/
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(2);
@@ -294,12 +298,14 @@ methodmap OshimunoAntayoto < CClotBody
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
 		npc.m_iStepNoiseType = STEPSOUND_GIANT;	
 		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
-		npc.m_flMeleeArmor = 1.25;	
+		npc.m_flMeleeArmor = 1.25;
+		npc.m_iHealthBar = 2;
 		
 		func_NPCDeath[npc.index] = OshimunoAntayoto_Death;
 		func_NPCOnTakeDamage[npc.index] = OshimunoAntayoto_OnTakeDamage;
 		func_NPCThink[npc.index] = OshimunoAntayoto_Think;
 		func_NPCFuncWin[npc.index] = OshimunoAntayoto_Win;
+		func_NPCLostHealthBar[npc.index] = view_as<Function>(OshimunoAntayoto_LifeLost);
 
 		RaidModeTime = gameTime + 200.0;
 		RaidBossActive = EntIndexToEntRef(npc.index);
@@ -544,8 +550,24 @@ public void OshimunoAntayoto_Win(int entity)
 	NPCTalkMessage(entity, "get owned.");
 }
 
-static void OshimunoAntayoto_Death(int entity)
+static bool OshimunoAntayoto_LifeLost(int entity, int LifeAfter)
 {
+	OshimunoAntayoto npc = view_as<OshimunoAntayoto>(entity);
+	if(npc.m_iHealthBar == 2)
+	{
+		g_AntayotoHealthPhase = 1;
+		g_AntayotoSmokePending = true;
+	}
+	else if(npc.m_iHealthBar == 1)
+	{
+		g_AntayotoHealthPhase = 2;
+		g_AntayotoSmokePending = true;
+	}
+	return true;
+}
+static void OshimunoAntayoto_Death(int entity)
+{	
+	OshimunoAntayoto npc = view_as<OshimunoAntayoto>(entity);
 	RaidBossActive = INVALID_ENT_REFERENCE;
 	OshimunoAntayotoBombsReset();
 	g_AntayotoSmokeImmuneUntil = 0.0;
@@ -559,6 +581,30 @@ static void OshimunoAntayoto_Death(int entity)
 
 	NPCTalkMessage(entity, "Nvm fuck you i made it all up.");
 	NPCTalkMessage(entity, "*dies of death*");
+
+	if(IsValidEntity(npc.m_iWearable1))
+		RemoveEntity(npc.m_iWearable1);
+	
+	if(IsValidEntity(npc.m_iWearable2))
+		RemoveEntity(npc.m_iWearable2);
+	
+	if(IsValidEntity(npc.m_iWearable3))
+		RemoveEntity(npc.m_iWearable3);
+	
+	if(IsValidEntity(npc.m_iWearable4))
+		RemoveEntity(npc.m_iWearable4);
+	
+	if(IsValidEntity(npc.m_iWearable5))
+		RemoveEntity(npc.m_iWearable5);
+		
+	if(IsValidEntity(npc.m_iWearable6))
+		RemoveEntity(npc.m_iWearable6);
+	
+	if(IsValidEntity(npc.m_iWearable7))
+		RemoveEntity(npc.m_iWearable7);
+		
+	if(IsValidEntity(npc.m_iWearable8))
+		RemoveEntity(npc.m_iWearable8);
 }
 
 void OshimunoAntayotoAnimationChange(OshimunoAntayoto npc)
@@ -727,13 +773,13 @@ int OshimunoAntayoto_SelfDefense(OshimunoAntayoto npc, float gameTime, int targe
 #define ANTAYOTO_LINE_SMOKE_PERIOD 0.75
 #define ANTAYOTO_LINE_SMOKE_LIFE 0.75
 #define ANTAYOTO_LINE_SMOKE_WINDDOWN 3
-#define ANTAYOTO_BOMB_COUNT 4
-#define ANTAYOTO_BOMB_DISTANCE 300.0
+#define ANTAYOTO_BOMB_COUNT 8
+#define ANTAYOTO_BOMB_DISTANCE 500.0
 #define ANTAYOTO_BOMB_SPEED 800.0
-#define ANTAYOTO_BOMB_FUSE 3.0
-#define ANTAYOTO_BOMB_RADIUS 200.0
+#define ANTAYOTO_BOMB_FUSE 2.5
+#define ANTAYOTO_BOMB_RADIUS 250.0
 #define ANTAYOTO_BOMB_DAMAGE 100.0
-#define ANTAYOTO_BOMB_SCALE 3.0
+#define ANTAYOTO_BOMB_SCALE 1.0
 #define ANTAYOTO_SMOKE_HIDE_TIME 4.0
 #define ANTAYOTO_SMOKE_CLEAR_LEAD 3.0
 
@@ -744,18 +790,6 @@ static float g_AntayotoBombTime[ANTAYOTO_BOMB_COUNT];
 static float g_AntayotoBombDraw[ANTAYOTO_BOMB_COUNT];
 static bool OshimunoAntayoto_Rotation(OshimunoAntayoto npc, float gameTime)
 {
-	int health = GetEntProp(npc.index, Prop_Data, "m_iHealth");
-	int maxHealth = GetEntProp(npc.index, Prop_Data, "m_iMaxHealth");
-	if(g_AntayotoHealthPhase == 0 && float(health) <= (float(maxHealth) * 0.66))
-	{
-		g_AntayotoHealthPhase = 1;
-		g_AntayotoSmokePending = true;
-	}
-	else if(g_AntayotoHealthPhase == 1 && float(health) <= (float(maxHealth) * 0.33))
-	{
-		g_AntayotoHealthPhase = 2;
-		g_AntayotoSmokePending = true;
-	}
 	switch(npc.m_iWhatAbilityDo)
 	{
 		case 3:
@@ -837,7 +871,7 @@ static bool OshimunoAntayoto_Rotation(OshimunoAntayoto npc, float gameTime)
 			if(elapsed >= (ANTAYOTO_ROTATION_STEP * 6.0))
 			{
 				g_AntayotoRotationStage = 6;
-				OshimunoAntayoto_LinePhaseStart(npc, gameTime);
+				OshimunoAntayoto_LinePhaseStart(npc);
 				return true;
 			}
 		}
@@ -948,7 +982,8 @@ static void OshimunoAntayoto_ConeNukeStart(OshimunoAntayoto npc, float gameTime)
 	npc.m_iChanged_WalkCycle = 500;
 	npc.m_bisWalking = false;
 	npc.StopPathing();
-	OshimunoAntayotoSetKunaiVisible(npc, false);
+	if(IsValidEntity(npc.m_iWearable1))
+		RemoveEntity(npc.m_iWearable1);
 	strcopy(g_AntayotoConeSwingAnim, sizeof(g_AntayotoConeSwingAnim), "layer_secondrate_sorcery_spy");
 	npc.AddActivityViaSequence(g_AntayotoConeSwingAnim);
 	npc.SetPlaybackRate(ANTAYOTO_CONE_ANIM_RATE);
@@ -1165,7 +1200,8 @@ static void OshimunoAntayotoConeFaceYaw(OshimunoAntayoto npc, float yawDeg)
 
 static void OshimunoAntayotoConeFinish(OshimunoAntayoto npc)
 {
-	OshimunoAntayotoSetKunaiVisible(npc, true);
+	if(!IsValidEntity(npc.m_iWearable1))
+		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl");
 	npc.SetPlaybackRate(1.0);
 	npc.m_iChanged_WalkCycle = 0;
 	npc.m_iWhatAbilityDo = 0;
@@ -1246,7 +1282,7 @@ static void OshimunoAntayotoConeFadeFrame(any ref)
 	RequestFrame(OshimunoAntayotoConeFadeFrame, ref);
 }
 
-static void OshimunoAntayoto_LinePhaseStart(OshimunoAntayoto npc, float gameTime)
+static void OshimunoAntayoto_LinePhaseStart(OshimunoAntayoto npc)
 {
 	npc.m_iWhatAbilityDo = 5;
 	npc.m_iChanged_WalkCycle = 700;
@@ -1596,16 +1632,6 @@ static void OshimunoAntayotoSetInvisible(OshimunoAntayoto npc, bool invisible)
 	}
 }
 
-static void OshimunoAntayotoSetKunaiVisible(OshimunoAntayoto npc, bool visible)
-{
-	if(!IsValidEntity(npc.m_iWearable1))
-		return;
-	int alpha = visible ? 255 : 0;
-	RenderMode mode = visible ? RENDER_NORMAL : RENDER_TRANSCOLOR;
-	SetEntityRenderMode(npc.m_iWearable1, mode);
-	SetEntityRenderColor(npc.m_iWearable1, 255, 255, 255, alpha);
-}
-
 static void OshimunoAntayoto_SmokeEscape(OshimunoAntayoto npc, float gameTime)
 {
 	g_AntayotoSmokePending = false;
@@ -1828,154 +1854,3 @@ static void OshimunoAntayotoBombsReset()
 		g_AntayotoBombProp[bomb] = -1;
 	}
 }
-/*
-//Wwalk Cycle offset is 300
-bool OshimunoAntayoto_CongaVeryFastDo(OshimunoAntayoto npc, float gameTime)
-{
-	if(npc.m_iWhatAbilityDo != 2 && npc.m_iWhatAbilityDo != 0)
-		return false;
-	if(npc.m_flDoingAnimation < gameTime)
-	{
-		if(npc.m_flCongaFastDo < gameTime)
-		{
-			if(!IsValidEnemy(npc.index, npc.m_iTarget))
-				return false;
-			if(!Can_I_See_Enemy_Only(npc.index, npc.m_iTarget))
-				return false;
-
-			npc.m_flSpeed = 720.0;
-			npc.m_flCongaFastDo = gameTime + 35.0;
-			npc.m_flDoingAnimation = gameTime + 0.25;
-			npc.m_bisWalking = false;
-			npc.StartPathing();
-			npc.m_iChanged_WalkCycle = 300;
-			npc.AddActivityViaSequence("taunt_conga");
-			npc.SetPlaybackRate(2.5);
-			npc.SetCycle(0.05);
-			npc.m_iWhatAbilityDo = 2;
-			f_NpcAdjustFriction[npc.index] = 0.2;
-			ApplyStatusEffect(npc.index, npc.index, "Intangible", 999999.0);
-			f_CheckIfStuckPlayerDelay[npc.index] = FAR_FUTURE; //She CANT stuck you, so dont make players not unstuck in cant bve stuck ? what ?
-			b_ThisEntityIgnoredBeingCarried[npc.index] = true; //cant be targeted AND wont do npc collsiions
-		}
-	}
-	if(npc.m_iWhatAbilityDo != 2)
-		return false;
-		
-	int CurrentShotAt = npc.m_iChanged_WalkCycle - 300;
-	if(CurrentShotAt > 20)
-	{
-		f_NpcAdjustFriction[npc.index] = 1.0;
-		RemoveSpecificBuff(npc.index, "Intangible");
-		f_CheckIfStuckPlayerDelay[npc.index] = 1.0; //She CANT stuck you, so dont make players not unstuck in cant bve stuck ? what ?
-		b_ThisEntityIgnoredBeingCarried[npc.index] = false; //cant be targeted AND wont do npc collsiions
-		npc.m_iWhatAbilityDo = 0;
-		npc.m_flDoingAnimation = 0.0;
-		return false;
-	}
-	if(npc.m_flDoingAnimation < gameTime)
-	{		
-		npc.m_iChanged_WalkCycle++;
-		i_ExplosiveProjectileHexArray[npc.index] |= EP_DEALS_CLUB_DAMAGE;
-		float radius = 160.0, damage = 20.0 * RaidModeScaling;
-		float Loc[3];
-		GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", Loc);
-		Explode_Logic_Custom(damage, npc.index, npc.index, -1, _, radius, _, _, true);
-		spawnRing_Vectors(Loc, 0.1, 0.0, 0.0, 1.0, "materials/sprites/laserbeam.vmt", 255, 200, 200, 255, 1, 0.2, 8.0, 1.5, 1, radius*2.0);
-		spawnRing_Vectors(Loc, 0.1, 0.0, 0.0, 25.0, "materials/sprites/laserbeam.vmt", 255, 200, 200, 255, 1, 0.2, 8.0, 1.5, 1, radius*2.0);
-		spawnRing_Vectors(Loc, 0.1, 0.0, 0.0, 45.0, "materials/sprites/laserbeam.vmt", 255, 200, 200, 255, 1, 0.2, 8.0, 1.5, 1, radius*2.0);
-		spawnRing_Vectors(Loc, 0.1, 0.0, 0.0, 65.0, "materials/sprites/laserbeam.vmt", 255, 200, 200, 255, 1, 0.2, 8.0, 1.5, 1, radius*2.0);
-
-		npc.m_flDoingAnimation = gameTime + 0.25;
-	}
-	return false;
-}
-
-
-//Wwalk Cycle offset is 400
-bool OshimunoAntayoto_JumpOfDeath(OshimunoAntayoto npc, float gameTime)
-{
-	if(npc.m_iWhatAbilityDo != 3 && npc.m_iWhatAbilityDo != 0)
-		return false;
-	if(npc.m_flDoingAnimation < gameTime)
-	{
-		if(npc.m_flJumpAtEnemy < gameTime)
-		{
-			if(!IsValidEnemy(npc.index, npc.m_iTarget))
-				return false;
-			if(!Can_I_See_Enemy_Only(npc.index, npc.m_iTarget))
-				return false;
-
-			npc.m_flJumpAtEnemy = gameTime + 35.0;
-			npc.m_flDoingAnimation = gameTime + 1.0;
-			npc.m_bisWalking = false;
-			npc.StopPathing();
-			npc.AddActivityViaSequence("taunt_table_flip_outro");
-			npc.SetPlaybackRate(0.65);
-			npc.SetCycle(0.01);
-			npc.m_iChanged_WalkCycle = 400;
-			npc.m_iWhatAbilityDo = 3;
-			EmitSoundToAll("mvm/mvm_cpoint_klaxon.wav", npc.index, SNDCHAN_STATIC, 120, _, 1.0);
-			EmitSoundToAll("mvm/mvm_cpoint_klaxon.wav", npc.index, SNDCHAN_STATIC, 120, _, 1.0);
-		}
-	}
-	if(npc.m_iWhatAbilityDo != 3)
-		return false;
-		
-	if(npc.m_iChanged_WalkCycle == 400)
-	{
-		if(!IsValidEnemy(npc.index, npc.m_iTarget))
-			return true;
-		float vecTarget[3]; WorldSpaceCenter(npc.m_iTarget, vecTarget );
-		npc.FaceTowards(vecTarget, 15000.0);
-		if(npc.m_flDoingAnimation < gameTime)
-		{
-			npc.SetPlaybackRate(0.0);
-			npc.m_iChanged_WalkCycle = 401;
-			npc.m_flDoingAnimation = gameTime + 4.0;
-			npc.m_flGravityMulti = 0.65;
-			PluginBot_Jump(npc.index, vecTarget, 4000.0, .timemodify = 4.0);
-			npc.PlaySuperJumpSound();
-			float flPos[3];
-			float flAng[3];
-			npc.GetAttachment("effect_hand_R", flPos, flAng);
-			npc.m_iWearable5 = ParticleEffectAt_Parent(flPos, "raygun_projectile_red_crit", npc.index, "effect_hand_R", {0.0,0.0,0.0});
-			
-
-			npc.GetAttachment("effect_hand_L", flPos, flAng);
-			npc.m_iWearable4 = ParticleEffectAt_Parent(flPos, "raygun_projectile_red_crit", npc.index, "effect_hand_L", {0.0,0.0,0.0});
-
-		}
-		return true;
-	}
-	
-	if ((npc.IsOnGround() || npc.m_flDoingAnimation < gameTime) && (npc.m_iChanged_WalkCycle == 401))
-	{
-		float damageDealt = 600.0 * RaidModeScaling;
-
-		npc.AddActivityViaSequence("taunt_yeti_layer");
-		npc.SetPlaybackRate(1.0);
-		npc.SetCycle(0.75);
-		npc.m_iChanged_WalkCycle = 402;
-		npc.m_flDoingAnimation = gameTime + 1.5;
-		static float flMyPos[3];
-		GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", flMyPos);
-		flMyPos[2] += 15.0;
-		Explode_Logic_Custom(damageDealt, npc.index, npc.index, -1, flMyPos,300.0, 1.0, _, true, 20);
-		TE_Particle("asplode_hoodoo", flMyPos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
-		EmitSoundToAll(SOUND_WAND_LIGHTNING_ABILITY_PAP_SMITE, 0, SNDCHAN_AUTO, 100, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, flMyPos);
-		EmitSoundToAll(SOUND_WAND_LIGHTNING_ABILITY_PAP_SMITE, 0, SNDCHAN_AUTO, 100, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, flMyPos);
-		npc.m_flGravityMulti = 1.0;
-		if(IsValidEntity(npc.m_iWearable5))
-			RemoveEntity(npc.m_iWearable5);
-		if(IsValidEntity(npc.m_iWearable4))
-			RemoveEntity(npc.m_iWearable4);
-	}
-	if (npc.m_iChanged_WalkCycle == 402 && npc.m_flDoingAnimation < gameTime)
-	{
-		npc.m_iChanged_WalkCycle = 0;
-		npc.m_iWhatAbilityDo = 0;
-	}
-	return true;
-}
-*/

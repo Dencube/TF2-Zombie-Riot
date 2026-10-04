@@ -1,6 +1,8 @@
 #pragma semicolon 1
 #pragma newdecls required
 
+static int NPCID;
+
 static const char g_DeathSounds[][] =
 {
 	"vo/medic_paincrticialdeath01.mp3",
@@ -52,12 +54,17 @@ void OshimunoPopstarOnMapStart()
 	data.Flags = 0;
 	data.Category = Type_Dancer;
 	data.Func = ClotSummon;
-	NPC_Add(data);
+	NPCID = NPC_Add(data);
 }
 
-static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
+int OshimunoPopstar_ID()
 {
-	return OshimunoPopstar(vecPos, vecAng, team);
+	return NPCID;
+}
+
+static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team, const char[] data)
+{
+	return OshimunoPopstar(vecPos, vecAng, team, data);
 }
 
 methodmap OshimunoPopstar < CClotBody
@@ -96,7 +103,7 @@ methodmap OshimunoPopstar < CClotBody
 		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
 	}
-	public OshimunoPopstar(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoPopstar(float vecPos[3], float vecAng[3], int ally, const char[] data)
 	{
 		OshimunoPopstar npc = view_as<OshimunoPopstar>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.0", "5000", ally));
 
@@ -117,7 +124,7 @@ methodmap OshimunoPopstar < CClotBody
 		npc.m_flSpeed = 300.0;
 		npc.m_iState = 0;
 		npc.m_flTauntLoop = 0.0;
-		NPCTalkMessage(npc.index, "Looks like we got a a brand new set of fans. Boys, give em one hell of a dance battle!");
+		NPCTalkMessage(npc.index, "Looks like we got a brand new set of fans. Boys, give em one hell of a dance battle!");
 		npc.m_flInvulDuration = gameTime + 10.0; // 0 is for standing still and dancing while invincible
 		
 		npc.m_iWearable1 = npc.EquipItem("head", "models/weapons/c_models/c_saxxy/c_saxxy.mdl");
@@ -216,6 +223,7 @@ static void ClotThink(int iNPC)
 			NPCTalkMessage(npc.index, "A star has to lookout for all of her fans!");
 			npc.StartPathing();
 		}
+		/*
 		for(int i; i < i_MaxcountNpcTotal; i++) // EVERYONE adores the popstar
 		{
 			int entity = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
@@ -236,10 +244,11 @@ static void ClotThink(int iNPC)
 				if(entity > MaxClients)
 				{
 					if(GetTeam(npc.index) != TFTeam_Red)
-					NpcAddedToZombiesLeftCurrently(entity, true);
+						NpcAddedToZombiesLeftCurrently(entity, true);
 				}
 			}
 		}
+		*/
 	}
 	
 	npc.PlayIdleSound();

@@ -21,9 +21,9 @@ void OshimunoBoomboxOnMapStart() // USE `npc_oshimuno_break_boombox` TO KILL THI
 	NPC_Add(data);
 }
 
-static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
+static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team, const char[] data)
 {
-	return OshimunoBoombox(vecPos, vecAng, team);
+	return OshimunoBoombox(vecPos, vecAng, team, data);
 }
 
 methodmap OshimunoBoombox < CClotBody
@@ -37,13 +37,10 @@ methodmap OshimunoBoombox < CClotBody
 		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
-	public OshimunoBoombox(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoBoombox(float vecPos[3], float vecAng[3], int ally, const char[] data)
 	{	
 		OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, vecAng, "models/buildables/dispenser_lvl3_light.mdl", "1.35", "1000", ally));
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
-		
-		// OshimunoBoombox npc = view_as<OshimunoBoombox>(CClotBody(vecPos, {-7.63202, 345.066, -44.5095}, "models/player/items/scout/boombox.mdl", "6.0", "15000", ally));
-		// boombox model use if the offset can be somehow fixed
 
 		float gameTime = GetGameTime(npc.index);
 		i_NpcWeight[npc.index] = 2;
@@ -130,7 +127,6 @@ static void ClotThink(int iNPC)
 	
 	float VecSelfNpcabs[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", VecSelfNpcabs);
 	spawnRing_Vectors(VecSelfNpcabs, BOOMBOX_RANGE_TRACE * 2.0, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 15, 15, 225, 200, 1, /*duration*/ 0.11, 5.0, 2.0, 1);
-
 }
 
 void OshimunoBoomboxStatusEffectApply(int entity, int victim)
@@ -169,7 +165,7 @@ static Action BoomboxOnTakeDamage(int victim, int &attacker, int &inflictor, flo
 			npc.m_flKnockbackCooldown = gameTime + KNOCKBACK_COOLDOWN;
 		}
 	}
-	damage = 0.0; // THIS MAKES IT SO THE BOOMBOX CANNOT DIE BY NORMAL MEANS || USE `npc_oshimuno_break_boombox` TO KILL THIS NPC AT THE VERY END OF A WAVE
+	damage = 0.0; // THIS MAKES IT SO THE BOOMBOX CANNOT DIE BY NORMAL MEANS || USE `npc_oshimuno_break_boombox` TO KILL THIS NPC
 	return Plugin_Changed;
 }
 

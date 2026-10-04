@@ -151,11 +151,11 @@ void OshimunoSpiritOrbSelfDefense(OshimunoSpiritOrb npc, float distance, float v
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 45.0;
+					float damage = 55.0;
 				
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
-					StatusEffects_SpiritFireAddStuff(target, 3, 2.0);
+					StatusEffects_SpiritFireAddStuff(target, 2, 2.0);
 				}
 			}
 			delete swingTrace;

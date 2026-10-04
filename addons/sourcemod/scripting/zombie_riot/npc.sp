@@ -1287,6 +1287,7 @@ void NPC_ConfigSetup()
 	OshimunoArsonistOnMapStart();
 	OshimunoDrunkardOnMapStart();
 	OshimunoChefOnMapStart();
+	OshimunoChefEliteOnMapStart();
 	OshimunoSpiritualistOnMapStart();
 	OshimunoGruntOnMapStart();
 	OshimunoGruntEliteOnMapStart();
@@ -1314,6 +1315,7 @@ void NPC_ConfigSetup()
 	OshimunoEssenceHarvesterOnMapStart();
 	OshimunoVesselOnMapStart();
 	OshimunoRicochetOnMapStart();
+	OshimunoRockMasterOnMapStart();
 	
 }
 
@@ -2853,14 +2855,13 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_forerunner.sp"
 #include "npc/oshimuno/npc_oshimuno_forerunner_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_chef.sp"
+#include "npc/oshimuno/npc_oshimuno_chef_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_drunkard.sp"
 #include "npc/oshimuno/npc_oshimuno_spiritualist.sp"
 #include "npc/oshimuno/npc_oshimuno_grunt.sp"
 #include "npc/oshimuno/npc_oshimuno_grunt_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_avenger.sp"
 #include "npc/oshimuno/npc_oshimuno_avenger_elite.sp"
-#include "npc/oshimuno/npc_oshimuno_executor.sp"
-#include "npc/oshimuno/npc_oshimuno_executor_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_mobster.sp"
 #include "npc/oshimuno/npc_oshimuno_mobster_elite.sp"
 #include "npc/oshimuno/npc_oshimuno_agent.sp"
@@ -2879,7 +2880,12 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_wrestler.sp"
 #include "npc/oshimuno/npc_oshimuno_popstar.sp"
 #include "npc/oshimuno/npc_oshimuno_backup_dancer.sp"
-#include "npc/oshimuno/npc_oshimuno_flogger.sp"
 #include "npc/oshimuno/npc_oshimuno_essence_harvester.sp"
 #include "npc/oshimuno/npc_oshimuno_vessel.sp"
+#include "npc/oshimuno/npc_oshimuno_rockmaster.sp"
+
+//unused for now
+#include "npc/oshimuno/npc_oshimuno_flogger.sp"
 #include "npc/oshimuno/npc_oshimuno_ricochet.sp"
+#include "npc/oshimuno/npc_oshimuno_executor.sp"
+#include "npc/oshimuno/npc_oshimuno_executor_elite.sp"

@@ -97,7 +97,7 @@ methodmap OshimunoOccultist < CClotBody
 	}
 	public OshimunoOccultist(float vecPos[3], float vecAng[3], int ally)
 	{
-		OshimunoOccultist npc = view_as<OshimunoOccultist>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.0", "1000", ally));
+		OshimunoOccultist npc = view_as<OshimunoOccultist>(CClotBody(vecPos, vecAng, "models/player/medic.mdl", "1.35", "5000", ally));
 		float gameTime = GetGameTime(npc.index);
 		
 		i_NpcWeight[npc.index] = 1;
@@ -113,7 +113,7 @@ methodmap OshimunoOccultist < CClotBody
 		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
 		func_NPCThink[npc.index] = ClotThink;
 		
-		npc.m_flSpeed = 200.0;
+		npc.m_flSpeed = 240.0;
 		npc.m_flSpiritCalling = gameTime + INITIAL_DELAY; // timer for when we switch states
 		npc.m_iState = 0;	//0 is normal behavior  || 1 is for hunting spirit orbs to respawn as enemies
 
@@ -197,14 +197,15 @@ static void ClotThink(int iNPC)
 
 			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 			float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-			float healing = float(ReturnEntityMaxHealth(npc.index) / 4);
+			float healing = float(ReturnEntityMaxHealth(npc.index) / 5);
 			int health = ReturnEntityMaxHealth(npc.index) / 2;
-			if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED))
+			if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 2.0)
 			{
 				//touched the spirit orb we now spawn a random npc
 				npc.m_iState = 0;
 				HealEntityGlobal(npc.index, npc.index, healing, 1.5, 0.0, HEAL_SELFHEAL);
 				npc.m_flSpiritCalling = gameTime + CALLING_DELAY;
+				ParticleEffectAt(vecTarget, "bl_killtaunt_lightning02", 2.0);
 
 				SmiteNpcToDeath(npc.m_iTargetAlly);
 				b_DoGibThisNpc[npc.m_iTargetAlly] = false;
@@ -266,7 +267,7 @@ static void ClotThink(int iNPC)
 	}
 	if(npc.m_iState == 0)
 	{	
-		npc.m_flSpeed = 300.0;
+		npc.m_flSpeed = 240.0;
 		int target = npc.m_iTarget;
 		if(i_Target[npc.index] != -1 && !IsValidEnemy(npc.index, target))
 			i_Target[npc.index] = -1;
@@ -314,8 +315,8 @@ void OshimunoOccultistSelfDefense(OshimunoOccultist npc, float distance, float v
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 40.0;
-					
+					float damage = 100.0;
+					StatusEffects_SpiritFireAddStuff(target, 1, 5.0);
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 				}

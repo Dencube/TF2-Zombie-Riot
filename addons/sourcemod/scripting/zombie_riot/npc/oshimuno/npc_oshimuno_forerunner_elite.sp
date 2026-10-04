@@ -143,7 +143,7 @@ methodmap OshimunoForerunnerElite < CClotBody
 		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/demo/dec24_commanding_style1/dec24_commanding_style1.mdl");
 		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 
-		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2024_spider_sights/hwn2024_spider_sights_demoman.mdl");
+		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/all_class/hwn2024_spider_sights/hwn2024_spider_sights_demo.mdl");
 		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 		
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
