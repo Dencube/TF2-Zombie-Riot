@@ -1773,6 +1773,14 @@
 		"it"		"Tiratore accurato"
 		"ko"		"정확한 명사수"
 	}
+	"Skull Piercing Rounds"
+	{
+		"en"		"Skull Piercing Rounds"
+	}
+	"Skull Piercing Rounds Desc"
+	{
+		"en"		"-Headshots deal 25％ more damage\n-Snipers no longer flinch when scoping"
+	}
 	"Ammo Coat"
 	{
 		"en"		"Ammo Coat"
@@ -2417,10 +2425,6 @@
 		"en"		"Living Armor"
 		"ru"		"Живая броня"
 		"ko"		"생체 장갑"
-	}
-	"Living Armor Desc"
-	{
-		"en"		"-Armor now regens 3 seconds after being hurt\n-Armor icon changes\n-Max Armor is 25％ less\n-Armor protects only 50％ instead of 75％\n-Cant get armor from buildings"
 	}
 	"Living Armor Chat"
 	{

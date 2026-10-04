@@ -1390,6 +1390,8 @@ stock int HealEntityGlobal(int healer,
 	  int MaxHealPermitted = 99999999,
 	  float &HealPenalty = 1.0)
 {
+	if(receiver <= 0)
+		return 0;
 	/*
 		MaxHealPermitted is used for HealEntityViaFloat
 		Good for ammo based healing.
@@ -3000,17 +3002,12 @@ stock int Target_Hit_Wand_Detection(int owner_projectile, int other_entity)
 		return -1;
 	}
 #if defined ZR
-	else if(!Arena_Mode() && GetTeam(other_entity) == TFTeam_Red)
+	else if(GetTeam(other_entity) == GetTeam(owner_projectile))
 	{
 		if(b_NpcIsTeamkiller[owner_projectile])
 			return other_entity;
 		else
 			return -1;
-	}
-	else if(Arena_Mode())
-	{
-		if(b_NpcIsTeamkiller[owner_projectile])
-			return other_entity;
 	}
 #endif
 	if(other_entity <= MaxClients)
@@ -3040,6 +3037,8 @@ stock int Target_Hit_Wand_Detection(int owner_projectile, int other_entity)
 		else
 			return -1;
 	}
+	if(IsValidEnemy(owner_projectile, other_entity, true, true))
+		return other_entity;
 	return 0;
 }
 

@@ -3970,7 +3970,7 @@ static void MenuPage(int client, int section)
 				continue;
 			}
 
-			if(NPCOnly[client] != 1 && item.GregOnlySell)
+			if(NPCOnly[client] != 1 && item.GregOnlySell && !item.Owned[client])
 			{
 				// Block showing items if only sell
 				continue;
@@ -5135,6 +5135,9 @@ int Store_TryToBuyItem(int client, int index, bool autoLoadout)
 	
 	if (item.Owned[client])
 		return BUY_RESULT_ALREADY_HAS_ITEM;
+
+	if(item.GregOnlySell && !item.NPCSeller) //cannot autobuy hidden items.
+		return BUY_RESULT_FAILURE;
 	
 	int cash = Store_GetPlayerCash(client, false);
 	
@@ -5653,6 +5656,7 @@ void Store_ApplyAttribs(int client)
 	map.SetValue("526", 1.0);//
 	map.SetValue("527", 1.0);// no tf2 afterburn
 	map.SetValue("4049", 1.0);// Elemental Res
+	map.SetValue("68", ClassForStats == TFClass_Scout ? -1.0 : 0.0);
 	
 	if(PapModeDo == PAP_MODE_BUILDING_ONLY)
 	{
@@ -5662,6 +5666,10 @@ void Store_ApplyAttribs(int client)
 
 	map.SetValue("442", 1.0);	// Move Speed
 	map.SetValue("49", 1);	// no doublejumps
+	if(i_CurrentEquippedPerk[client] & PERK_SYMBIOSOS_SHOT) //living armor
+	{
+		map.SetValue("4058", 1.0);	// regen armor
+	}
 
 	if(b_IsAloneOnServer)
 		map.SetValue("412", 0.75);	//if alone, gain 25% resistance
@@ -6720,7 +6728,7 @@ int Store_GiveItem(int client, int index, bool &use=false, bool &found=false, bo
 		{	
 			//dont give it if it doesnt have it.
 			if(Attributes_Has(entity, 103))
-				Attributes_SetMulti(entity, 103, 1.2);
+				Attributes_SetMulti(entity, 103, 1.4);
 				
 			if(Attributes_Has(entity, 106))
 				Attributes_SetMulti(entity, 106, 0.8);
@@ -7506,8 +7514,9 @@ void Clip_GiveWeaponClipBack(int client, int weapon)
 	if(item.GetItemInfo(item.Owned[client]-1, info))
 	{
 		float PrimaryAttack = GetEntPropFloat(weapon, Prop_Send, "m_flNextPrimaryAttack");
-		if(PrimaryAttack < item.m_flNextPrimaryAttack[client])
+		if(PrimaryAttack < item.m_flNextPrimaryAttack[client] && item.m_flNextPrimaryAttack[client] < FAR_FUTURE)
 		{
+			//prevent no attack fix
 			SetEntPropFloat(weapon, Prop_Send, "m_flNextPrimaryAttack", item.m_flNextPrimaryAttack[client]);
 		}
 		if(info.HasNoClip)

@@ -1,7 +1,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-static const float MaxMulti = 3.0;	// Max health multi after cap (3.0 is x3 of HealthCap)
+static const float MaxMulti = 1.75;	// Max health multi after cap (3.0 is x3 of HealthCap)
 static const float SlowStack = 0.1;	// Decrease speed by this much every max health over cap (0.25 gives -25% speed at x2 HP)
 static const float PropDamage = 3.0;	// Prop damage (Metal Cost * Building Damage * PropDamage)
 
@@ -79,6 +79,7 @@ static int DrugNerf[MAXPLAYERS];
 //static Function OgEntityFuncAttack[MAXENTITIES][2];
 static Handle WeaponTimer[MAXPLAYERS];
 //static bool RecentlySwapped[MAXPLAYERS];
+static int MarkedSwapRef[MAXPLAYERS] = {INVALID_ENT_REFERENCE, ...};
 static bool DoneLastmanSecret;
 
 static bool Precached = false;
@@ -551,31 +552,32 @@ bool Gunsaw_LastmanSecret()
 	return true;
 }
 
-public void Gunsaw_NPCDeath(int entity)
+int Gunsaw_MarkedVictim(int client)
 {
-	/*
+	return MarkedSwapRef[client];
+}
+
+void Gunsaw_NPCDeath(int entity)
+{
 	for(int client = 1; client <= MaxClients; client++)
 	{
-		if(WeaponTimer[client] && dieingstate[client])
+		if(WeaponTimer[client] && TeutonType[client] == TEUTON_NONE && MarkedSwapRef[client] != -1 && MarkedSwapRef[client] == EntIndexToEntRef(entity))
 		{
-			float pos1[3], pos2[3];
-			GetEntPropVector(entity, Prop_Data, "m_vecOrigin", pos1);
-			GetEntPropVector(client, Prop_Data, "m_vecOrigin", pos2);
-			if(GetVectorDistance(pos1, pos2, true) > 100000.0)
-				continue;
-			
-			if(!ValidSwapTarget(entity, true))
+			MarkedSwapRef[client] = -1;
+
+			if(dieingstate[client])
 			{
 				if(GetClientHealth(client) < 200)
-				{
 					SetEntityHealth(client, 200);
-					return;
-				}
-
-				break;
 			}
 
-			CNavArea endArea = TheNavMesh.GetNavArea(pos1);
+			if(!ValidSwapTarget(entity, true))
+				break;
+
+			float pos[3];
+			GetEntPropVector(entity, Prop_Data, "m_vecOrigin", pos);
+
+			CNavArea endArea = TheNavMesh.GetNavArea(pos);
 			if(endArea == NULL_AREA)
 				return;
 			
@@ -583,14 +585,16 @@ public void Gunsaw_NPCDeath(int entity)
 			if(startArea == NULL_AREA)
 				continue;
 			
-			if(TheNavMesh.BuildPath(startArea, endArea, pos1, .teamID = 2))
+			if(TheNavMesh.BuildPath(startArea, endArea, pos, .teamID = 2))
 			{
+				if(!dieingstate[client])
+					i_AmountDowned[client]++;
+
 				StealBodyForm(client, entity);
 				return;
 			}
 		}
 	}
-	*/
 }
 
 void Gunsaw_NPCTakeDamage(int victim, int client)
@@ -605,41 +609,16 @@ void Gunsaw_NPCTakeDamage(int victim, int client)
 			return;
 		}
 
-		int health = victim <= MaxClients ? GetClientHealth(victim) : GetEntProp(victim, Prop_Data, "m_iHealth");
-		int maxhealth = ReturnEntityMaxHealth(victim);
-		bool injured = health < (maxhealth / 10);
-
-		if(!ValidSwapTarget(victim, injured))
+		if(!ValidSwapTarget(victim, true))
 		{
-			if(dieingstate[client])
-			{
-				if(GetClientHealth(client) < 200)
-					SetEntityHealth(client, 200);
-			}
-
 			ClientCommand(client, "playgamesound items/medshotno1.wav");
 			SetDefaultHudPosition(client);
-			ShowSyncHudText(client, SyncHud_Notifaction, injured ? "Can not steal this body!" : "Target too healthy!");
+			ShowSyncHudText(client, SyncHud_Notifaction, "Can not steal this body!");
 			return;
 		}
 
-		i_AmountDowned[client]++;
-		StealBodyForm(client, victim);
-
-		if(victim <= MaxClients)
-		{
-			ForcePlayerSuicide(victim);
-		}
-		else
-		{
-			view_as<CClotBody>(victim).m_iHealthBar = 0;
-			SetEntityHealth(victim, 1);
-			b_DissapearOnDeath[victim] = true;
-			RemoveSpecificBuff(victim, "Infinite Will");
-			SDKHooks_TakeDamage(victim, client, client, GetRandomFloat(99999.0,9999999.0), DMG_BLAST, -1, {0.1,0.1,0.1}, _, _, ZR_SLAY_DAMAGE);
-		}
-
-		f_InBattleHudDisableDelay[client] = GetGameTime() + 1.0;
+		MarkedSwapRef[client] = EntIndexToEntRef(victim);
+		ApplyStatusEffect(client, victim, "Desired Host", 999.0);
 	}
 }
 
@@ -1143,10 +1122,10 @@ static Action GunsawHudTimer(Handle timer, DataPack pack)
 				
 				PrintHintText(client, " \n \n \n \n \n \n \n \n \n \n \n \n%.1f\n \n \n \n \n \n \n \n \n \n \n \n ", mood);
 			}
-			else if(b_HoldingInspectWeapon[client])
+			/*else if(b_HoldingInspectWeapon[client])
 			{
 				PrintHintText(client, "%.1f", fClamp(MonologueMood(client), -100.0, 100.0));
-			}
+			}*/
 			else if(dieingstate[client])
 			{
 				PrintHintText(client, "Melee hit a nearby enemy to self-revive");
@@ -1167,7 +1146,7 @@ static Action GunsawHudTimer(Handle timer, DataPack pack)
 				
 				if(!ModelNPCName[client])
 				{
-					PrintHintText(client, "%s\n \nCrouched melee hit to steal an enemy body", name);
+					PrintHintText(client, "%s\n \nCrouched melee hit to mark a body to host", name);
 				}
 				else
 				//int active = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
@@ -1266,7 +1245,7 @@ static Action GunsawHudTimer(Handle timer, DataPack pack)
 					
 					SetEntityHealth(client, health);
 				}
-				else if(GameRules_GetRoundState() != RoundState_ZombieRiot)
+				else if(GameRules_GetRoundState() == RoundState_BetweenRounds)
 				{
 					DrugNerf[client] -= 20;
 					if(DrugNerf[client] < 0)
@@ -1452,6 +1431,8 @@ public void Weapon_GunsawShotgun_M1(int client, int weapon, bool crit, int slot)
 		if(Arena_Mode()) //nerf for it
 			BulletsMax = 3;
 		float ratio = BoomstickAdjustDamageAndAmmoCount(weapon, BulletsMax);
+		Attributes_SetMulti(weapon, 1, 0.75);
+
 		Ability_Apply_Cooldown(client, 2, 2.0 * ratio);
 		
 		float vec[3], vel[3];
@@ -1540,8 +1521,8 @@ public void Weapon_GunsawPistol_M2(int client, int weapon, bool crit, int slot)
 	}
 
 	int health = ReturnEntityMaxHealth(client);
-	HealEntityGlobal(client, client, float(health), 5.0, 1.5, HEAL_SELFHEAL);
-	DrugNerf[client] += 200;
+	HealEntityGlobal(client, client, float(health), 5.0, 2.5, HEAL_SELFHEAL);
+	DrugNerf[client] += 250;
 	Monologue_Drug(client);
 }
 
@@ -1769,6 +1750,7 @@ static void GunsawPropDamagePost(int prop, int victim, float damage, int weapon)
 	{
 		// Victim died, lose prop health
 		int prophp = GetEntProp(prop, Prop_Data, "m_iHealth");
+		int prophp_before = prophp;
 		float propmax = float(ReturnEntityMaxHealth(prop));
 		float totalDamage = MetalSpendOnBuilding[prop] * PropDamage;
 
@@ -1776,11 +1758,16 @@ static void GunsawPropDamagePost(int prop, int victim, float damage, int weapon)
 		
 		// Example: Decrease health by 20% damage dealt
 		prophp -= RoundFloat(propmax * dealt / totalDamage);
+		if(prophp > prophp_before)
+		{
+			prophp = prophp_before;
+		}
 		if(prophp < 1)
 		{
 			ZRRamMulti = -1.0;
 			prophp = 0;
 		}
+		
 		
 		SetEntProp(prop, Prop_Data, "m_iHealth", prophp);
 	}
