@@ -568,8 +568,19 @@ public void OnPostThink(int client)
 			//standing ontop of raids now entirely debuffs you.
 			TF2_AddCondition(client, TFCond_LostFooting, 1.0);
 			TF2_AddCondition(client, TFCond_AirCurrent, 1.0);
-			float damageStand = 5.0;
-			NpcStuckZoneWarning(client, damageStand);
+			float damageTrigger = 5.0;
+			NpcStuckZoneWarning(client, damageTrigger, 0);	
+			if(damageTrigger > 1.0)
+			{
+				if(damageTrigger < 1000.0 && (i_CurrentEquippedPerk[client] & PERK_LOVER))
+				{
+					TeleportBackToLastSavePosition(client);
+				}
+				else
+				{
+					SDKHooks_TakeDamage(client, 0, 0, damageTrigger, DMG_OUTOFBOUNDS, -1,_,_,_,ZR_STAIR_ANTI_ABUSE_DAMAGE);
+				}
+			}
 		}
 	}
 #if defined ZR
@@ -705,8 +716,19 @@ public void OnPostThink(int client)
 			//standing ontop of raids now entirely debuffs you.
 			TF2_AddCondition(client, TFCond_LostFooting, 1.0);
 			TF2_AddCondition(client, TFCond_AirCurrent, 1.0);
-			float damageStand = 5.0;
-			NpcStuckZoneWarning(client, damageStand);
+			float damageTrigger = 5.0;
+			NpcStuckZoneWarning(client, damageTrigger, 0);	
+			if(damageTrigger > 1.0)
+			{
+				if(damageTrigger < 1000.0 && (i_CurrentEquippedPerk[client] & PERK_LOVER))
+				{
+					TeleportBackToLastSavePosition(client);
+				}
+				else
+				{
+					SDKHooks_TakeDamage(client, 0, 0, damageTrigger, DMG_OUTOFBOUNDS, -1,_,_,_,ZR_STAIR_ANTI_ABUSE_DAMAGE);
+				}
+			}
 		}
 		//re using NPC value.
 		StatusEffect_TimerCallDo(client);
@@ -734,12 +756,11 @@ public void OnPostThink(int client)
 			//regen armor if out of battle
 			if((f_TimeUntillNormalHeal[client] - 1.0) < GetGameTime() && dieingstate[client] == 0)
 			{
-			//	if(Armor_Charge[client] >= 0)
-			//	{
-					float DefaultRegenArmor = 0.06666;
-					DefaultRegenArmor *= 1.5;
-					GiveArmorViaPercentage(client, DefaultRegenArmor, 1.0);
-			//	}
+				float DefaultRegenArmor = 0.06666;
+				DefaultRegenArmor *= 1.5;
+				if(Armor_Charge[client] < 0)
+					DefaultRegenArmor *= 0.5;
+				GiveArmorViaPercentage(client, DefaultRegenArmor, 1.0);
 			}
 		}
 
@@ -2387,7 +2408,7 @@ public Action Player_OnTakeDamageAlive_DeathCheck(int victim, int &attacker, int
 			//this updates it .
 			//PrintToConsole(victim, "[ZR] THIS IS DEBUG! IGNORE! Player_OnTakeDamageAlive_DeathCheck 11");
 			
-			Rogue_PlayerDowned(victim);	
+			Rogue_PlayerDowned(victim);
 			
 			//there are players still left, down them.
 			int DownsLeft = TotalDowns();

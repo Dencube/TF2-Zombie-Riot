@@ -3252,6 +3252,7 @@ public void OnEntityDestroyed(int entity)
 	{
 		EntityKilled_HitDetectionCooldown(entity);
 		WeaponWeaponAdditionOnRemoved(entity);
+		func_WandOnTouch[entity] = INVALID_FUNCTION;
 		CurrentEntities--;
 
 		if(entity > MaxClients)
@@ -4000,7 +4001,7 @@ int TotalDowns()
 	if(ZR_Get_Modifier() == PREFIX_ONESTAND)
 		downsleft++;
 	
-	if(ZR_Get_Modifier() == OLD_TIMES || ZR_Get_Modifier() == NOSTALGICA)
+	if(ZR_Get_Modifier() == OLD_TIMES || ZR_Get_Modifier() == NOSTALGICA || NTReduceDowns())
 		downsleft--;
 	
 	downsleft += Dungeon_DownedBonus();

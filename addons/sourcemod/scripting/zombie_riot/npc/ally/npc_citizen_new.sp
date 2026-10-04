@@ -2055,6 +2055,9 @@ static void CitizenMenu(int client, int page = 0)
 					FormatEx(buffer, sizeof(buffer), "%t", "Set My Basepoint");
 					menu.AddItem("26", buffer, ITEMDRAW_DEFAULT);
 
+					FormatEx(buffer, sizeof(buffer), "%t", "Remove My Basepoint");
+					menu.AddItem("27", buffer, ITEMDRAW_DEFAULT);
+
 					FormatEx(buffer, sizeof(buffer), "%t (%i/%i)", "Build Barricade At Me",BuildingsSee, MaxBuildingsSee);
 					menu.AddItem("15", buffer, DontAllowBuilding ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
 
@@ -2199,6 +2202,13 @@ static int CitizenMenuH(Menu menu, MenuAction action, int client, int choice)
 				{
 					GetAbsOrigin(client, f3_NpcSavePos[npc.index]);
 					CPrintToChat(client, "%t","Saved Pos for Base");
+				}
+				case 27:
+				{
+					f3_NpcSavePos[npc.index][0] = 0.0;
+					f3_NpcSavePos[npc.index][1] = 0.0;
+					f3_NpcSavePos[npc.index][2] = 0.0;
+					CPrintToChat(client, "%t","Removed Basepoint");
 				}
 			}
 
@@ -4704,16 +4714,18 @@ public void Citizen_ClotThink(int iNPC)
 		{
 			npc.m_flidle_talk = 0.0;
 			npc.m_bAllowBackWalking = false;
-			
-			WorldSpaceCenter(target, vecTarget);
-			if(GetVectorDistance(vecMe, vecTarget, true) > 29000.0)
+			if(IsValidEntity(target))
 			{
-				npc.SetGoalEntity(target);
-			}
-			else
-			{
-				PredictSubjectPosition(npc, target, _, _, vecTarget);
-				npc.SetGoalVector(vecTarget);
+				WorldSpaceCenter(target, vecTarget);
+				if(GetVectorDistance(vecMe, vecTarget, true) > 29000.0)
+				{
+					npc.SetGoalEntity(target);
+				}
+				else
+				{
+					PredictSubjectPosition(npc, target, _, _, vecTarget);
+					npc.SetGoalVector(vecTarget);
+				}
 			}
 			
 			npc.StartPathing();

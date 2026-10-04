@@ -964,6 +964,19 @@ public bool PassfilterGlobal(int ent1, int ent2, bool result)
 			}
 			return false;
 		}
+		//force collision with buildings
+		else if(i_IsABuilding[entity1] && entity2 <= MaxClients)
+		{
+			Function func = func_WandOnTouch[entity1];
+			if(func && func != INVALID_FUNCTION)
+			{
+				Call_StartFunction(null, func);
+				Call_PushCell(entity1);
+				Call_PushCell(entity2);
+				Call_Finish();
+				//todo: convert all on death and on take damage to this.
+			}
+		}
 #endif
 		if(Arena_Mode())
 		{
@@ -1515,10 +1528,10 @@ public MRESReturn DHook_ForceRespawn(int client)
 	}
 #if defined ZR
 
-	if(!IsRespawning && Arena_Mode() && !Waves_InSetup())
+	if(Arena_Mode() && !IsRespawning && !Arena_CanRespawn(client))
 		return MRES_Supercede;
 	
-	if(!IsRespawning && Dungeon_InRespawnTimer(client))
+	if(Dungeon_Mode() && !IsRespawning && Dungeon_InRespawnTimer(client))
 		return MRES_Supercede;
 
 	DoTutorialStep(client, false);
@@ -1570,7 +1583,7 @@ public MRESReturn DHook_ForceRespawn(int client)
 		RequestFrame(SetHealthAfterRevive, EntIndexToEntRef(client));
 	}
 	
-	if(Dungeon_Mode())
+	if(Dungeon_Mode() || Arena_Mode())
 		i_AmountDowned[client] = 0;
 	f_TimeAfterSpawn[client] = GetGameTime() + 1.0;
 
@@ -1581,7 +1594,7 @@ public MRESReturn DHook_ForceRespawn(int client)
 		return MRES_Ignored;
 	}
 	
-	if(Construction_Mode() || BetWar_Mode() || Dungeon_Mode())
+	if(Construction_Mode() || BetWar_Mode() || Dungeon_Mode() || Arena_Mode())
 		return MRES_Ignored;
 #endif
 	
