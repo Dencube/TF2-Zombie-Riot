@@ -12416,16 +12416,29 @@ static void SpiritFireEnd(int entity, StatusEffect Apply_MasterStatusEffect, E_S
 	{
 		if(!IsEntityAlive(entity))
 		{
-			for(int i=0 ; i < 3 ; i++) //summon 3 orbs
+			float pos[3]; GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", pos);
+			float ang[3]; GetEntPropVector(entity, Prop_Data, "m_angRotation", ang);
+			int TeamValue;
+			switch(GetTeam(entity)) // invert the team value of whatever dies
 			{
-				float pos[3]; GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", pos);
-				float ang[3]; GetEntPropVector(entity, Prop_Data, "m_angRotation", ang);
-				int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", entity, pos, ang, TFTeam_Blue); //TODO: make the orbs spawn on the opposite team of the victim
-				if(orb > MaxClients)
+				case TFTeam_Red:
 				{
-					if(GetTeam(orb) != TFTeam_Red)
-						NpcAddedToZombiesLeftCurrently(orb, true);
+					TeamValue = TFTeam_Blue;
 				}
+				case TFTeam_Blue:
+				{
+					TeamValue = TFTeam_Red;
+				}
+				default:
+				{
+					TeamValue = TFTeam_Blue;
+				}
+			}
+			int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", entity, pos, ang, TeamValue, "globalscale_player");
+			if(orb > MaxClients)
+			{
+				if(GetTeam(orb) != TFTeam_Red)
+					NpcAddedToZombiesLeftCurrently(orb, true);
 			}
 		}
 		return;
@@ -12436,7 +12449,23 @@ static void SpiritFireEnd(int entity, StatusEffect Apply_MasterStatusEffect, E_S
 		{	
 			float pos[3]; GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", pos);
 			float ang[3]; GetEntPropVector(entity, Prop_Data, "m_angRotation", ang);
-			int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", entity, pos, ang, TFTeam_Blue); //TODO: make the orbs spawn on the opposite team of the victim
+			int TeamValue;
+			switch(GetTeam(entity)) // invert the team value of whatever dies
+			{
+				case TFTeam_Red:
+				{
+					TeamValue = TFTeam_Blue;
+				}
+				case TFTeam_Blue:
+				{
+					TeamValue = TFTeam_Red;
+				}
+				default:
+				{
+					TeamValue = TFTeam_Blue;
+				}
+			}
+			int orb = NPC_CreateByName("npc_oshimuno_spirit_orb", entity, pos, ang, TeamValue, "globalscale_npc");
 			if(orb > MaxClients)
 			{
 				if(GetTeam(orb) != TFTeam_Red)

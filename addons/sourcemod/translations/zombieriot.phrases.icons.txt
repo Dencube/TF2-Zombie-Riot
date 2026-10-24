@@ -773,4 +773,8 @@
 	{
 		"en" 		 "Antayoto arrives"
 	}
+	"Taishimo has arrived"
+	{
+		"en" 		"Taishimo has arrived"
+	}
 }

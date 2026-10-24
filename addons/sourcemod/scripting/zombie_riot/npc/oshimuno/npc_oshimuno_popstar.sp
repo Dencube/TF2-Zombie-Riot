@@ -38,7 +38,11 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/boxing_gloves_swing2.wav",
 	"weapons/boxing_gloves_swing4.wav"
 };
-
+static const char g_TeleportSound[][] = 
+{
+	"weapons/rescue_ranger_teleport_receive_01.wav",
+	"weapons/rescue_ranger_teleport_receive_02.wav",
+};
 void OshimunoPopstarOnMapStart()
 {
 	PrecacheSoundArray(g_DeathSounds);
@@ -46,6 +50,7 @@ void OshimunoPopstarOnMapStart()
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
+	PrecacheSoundArray(g_TeleportSound);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Popstar");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_popstar");
@@ -93,6 +98,10 @@ methodmap OshimunoPopstar < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
+	public void PlayTeleportSound() 
+	{
+		EmitSoundToAll(g_TeleportSound[GetRandomInt(0, sizeof(g_TeleportSound) - 1)], this.index, SNDCHAN_STATIC, RAIDBOSS_ZOMBIE_SOUNDLEVEL, _, BOSS_ZOMBIE_VOLUME);
+	}
 	property float m_flTauntLoop
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
@@ -124,6 +133,7 @@ methodmap OshimunoPopstar < CClotBody
 		npc.m_flSpeed = 300.0;
 		npc.m_iState = 0;
 		npc.m_flTauntLoop = 0.0;
+		npc.g_TimesSummoned = 0;
 		NPCTalkMessage(npc.index, "Looks like we got a brand new set of fans. Boys, give em one hell of a dance battle!");
 		npc.m_flInvulDuration = gameTime + 10.0; // 0 is for standing still and dancing while invincible
 		
@@ -199,8 +209,13 @@ static void ClotThink(int iNPC)
 		}
 		OshimunoPopstarSelfDefense(npc, distance, vecTarget, gameTime); 
 	}
-	if(npc.m_iState == 0)
+	if(npc.m_flInvulDuration)
 	{
+		if(!npc.Anger)
+		{
+			npc.Anger = true;
+			fl_TotalArmor[npc.index] = 0.1;
+		}
 		/*
 		if(npc.m_flTauntLoop < gameTime) // loops the taunt if dancing
 		{
@@ -213,42 +228,57 @@ static void ClotThink(int iNPC)
 		*/
 		if(npc.m_flInvulDuration > gameTime)
 		{
-			b_NpcIsInvulnerable[npc.index] = true;
+			NPCTalkMessage(npc.index, "Boys! Assist me!");
+			npc.m_bisWalking = false;
+			npc.AddActivityViaSequence("taunt_surgeons_squeezebox");
+			npc.SetPlaybackRate(0.7);
+			npc.SetCycle(0.01);
 			npc.StopPathing();
 		}
-		else
+		if(npc.m_flInvulDuration > gameTime + 0.5)
 		{
-			b_NpcIsInvulnerable[npc.index] = false;
-			npc.m_iState = 1;
-			NPCTalkMessage(npc.index, "A star has to lookout for all of her fans!");
+			for(int i; i < i_MaxcountNpcTotal; i++)
+			{
+				int backupdancer = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
+				if(IsValidEntity(backupdancer))
+				{
+					char npc_classname[60];
+					NPC_GetPluginById(i_NpcInternalId[backupdancer], npc_classname, sizeof(npc_classname));
+
+					if(backupdancer != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_backup_dancer") && IsEntityAlive(backupdancer))) // look for an unclaimed boombox alive then grab it
+					{
+						static float hullcheckmins[3];
+						static float hullcheckmaxs[3];
+						hullcheckmins = view_as<float>( { -30.0, -30.0, 0.0 } );
+						hullcheckmaxs = view_as<float>( { 30.0, 30.0, 120.0 } );
+						float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
+						float PosRand[3]; PosRand = VecSelfNpc;
+						PosRand[0] += GetRandomFloat(-50.0, 50.0);
+						PosRand[1] -= GetRandomFloat(-50.0, 50.0);
+						Npc_Teleport_Safe(backupdancer, PosRand, hullcheckmins, hullcheckmaxs, true);
+						ApplyStatusEffect(npc.index, backupdancer, "Extreme Adoration", 7.5);
+					}
+				}
+			}
+			npc.PlayTeleportSound();
+		}
+		if(npc.m_flInvulDuration < gameTime)
+		{
+			npc.Anger = false;
+			fl_TotalArmor[npc.index] = 1.0;
+			npc.m_flInvulDuration = 0.0;
+			// NPCTalkMessage(npc.index, "A star has to lookout for all of her fans!");
+			npc.m_bisWalking = true;
 			npc.StartPathing();
 		}
-		/*
 		for(int i; i < i_MaxcountNpcTotal; i++) // EVERYONE adores the popstar
 		{
 			int entity = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
 			if(IsValidEntity(entity))
 			{
-				ApplyStatusEffect(npc.index, entity, "Adoration", 30.0);
+				ApplyStatusEffect(npc.index, entity, "Adoration", 7.5);
 			}
 		}
-		if(!npc.Anger)
-		{
-			npc.Anger = true;
-			for(int i=0 ; i < 4 ; i++) //summons 4 dancers
-			{
-				float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-				float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-				int entity = NPC_CreateByName("npc_oshimuno_bouncer", -1, pos, ang, GetTeam(npc.index));
-
-				if(entity > MaxClients)
-				{
-					if(GetTeam(npc.index) != TFTeam_Red)
-						NpcAddedToZombiesLeftCurrently(entity, true);
-				}
-			}
-		}
-		*/
 	}
 	
 	npc.PlayIdleSound();
@@ -296,6 +326,8 @@ void OshimunoPopstarSelfDefense(OshimunoPopstar npc, float distance, float vecTa
 
 static Action PopstarOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
+	OshimunoPopstar npc = view_as<OshimunoPopstar>(victim);
+	float gameTime = GetGameTime(npc.index);
 	if(attacker <= 0)
 		return Plugin_Continue;
 
@@ -303,6 +335,15 @@ static Action PopstarOnTakeDamage(int victim, int &attacker, int &inflictor, flo
 	{
 		damage *= 0.33;
 		return Plugin_Changed;
+	}
+	if(npc.g_TimesSummoned < 60)
+	{
+		int nextLoss = ReturnEntityMaxHealth(npc.index) * (70 - npc.g_TimesSummoned) / 100;
+		if(GetEntProp(npc.index, Prop_Data, "m_iHealth") < nextLoss)
+		{
+			npc.g_TimesSummoned = npc.g_TimesSummoned + 30;
+			npc.m_flInvulDuration = gameTime + 5.0;
+		}
 	}
 	return Plugin_Changed;
 }

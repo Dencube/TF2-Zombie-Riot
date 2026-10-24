@@ -2186,7 +2186,7 @@ bool NemalSwordSlicer(Nemal npc)
 					float DamageCalc = 50.0 * RaidModeScaling;
 					float VecEnemy[3]; WorldSpaceCenter(TargetEnemy, VecEnemy);
 					npc.FaceTowards(VecEnemy, 15000.0);
-					NemalAirSlice(npc.index,TargetEnemy, DamageCalc, 125, 125, 255, 250.0, 6, 1000.0, "flaregun_trail_blue");
+					NemalAirSlice(npc.index,TargetEnemy, DamageCalc, NULL_VECTOR, 125, 125, 255, 250.0, 6, 1000.0, "flaregun_trail_blue");
 					npc.PlayRangedSound();
 				}
 			}
@@ -2456,7 +2456,7 @@ bool CurrentSliceIndexAviable[MAX_SLICES_ALLOWED];
 bool TargetsHitNemal[MAX_SLICES_ALLOWED][MAXENTITIES];
 int EntityBelongsToMasterIndex[MAXENTITIES];
 
-void NemalAirSlice(int iNpc, int target, float damage,int red, int green, int blue, float fatness, int MaxJoints, float speed, char[] Particle, bool GiveDebuff = true,
+void NemalAirSlice(int iNpc, int target, float damage, float customAng[3], int red, int green, int blue, float fatness, int MaxJoints, float speed, char[] Particle, bool GiveDebuff = true,
 bool Vertical = false, bool ForcePredict = false)
 {
 	//This determines on what was hit beforehand, we cant have duplicates!
@@ -2501,9 +2501,12 @@ bool Vertical = false, bool ForcePredict = false)
 	}
 	float TempAng[3];
 	float AngleFromSelf[3];
-
 	MakeVectorFromPoints(vecSelf, VecTarget, TempAng);
 	GetVectorAngles(TempAng, AngleFromSelf);
+	//Override firing angles with custom ones if applicable
+	AngleFromSelf[0] += customAng[0];
+	AngleFromSelf[1] += customAng[1];
+	AngleFromSelf[2] += customAng[2];
 	//It should delete itself if the middle part touches a wall.
 	int MasterEntityIndex = Wand_Projectile_Spawn(iNpc, speed, 0.0, 0.0, -1, -1, "", AngleFromSelf,_,vecSelf);
 	SetEntProp(MasterEntityIndex, Prop_Send, "m_usSolidFlags", 12); 

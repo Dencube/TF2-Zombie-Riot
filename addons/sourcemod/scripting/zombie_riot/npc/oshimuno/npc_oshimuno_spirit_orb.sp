@@ -30,9 +30,9 @@ void OshimunoSpiritOrbOnMapStart()
 	NPC_Add(data);
 }
 
-static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
+static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team, const char[] data)
 {
-	return OshimunoSpiritOrb(vecPos, vecAng, team);
+	return OshimunoSpiritOrb(vecPos, vecAng, team, data);
 }
 
 methodmap OshimunoSpiritOrb < CClotBody
@@ -46,9 +46,9 @@ methodmap OshimunoSpiritOrb < CClotBody
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
 	
-	public OshimunoSpiritOrb(float vecPos[3], float vecAng[3], int ally)
+	public OshimunoSpiritOrb(float vecPos[3], float vecAng[3], int ally, const char[] data)
 	{
-		OshimunoSpiritOrb npc = view_as<OshimunoSpiritOrb>(CClotBody(vecPos, vecAng, "models/bots/demo/bot_sentry_buster.mdl", "0.6", "1000", ally));
+		OshimunoSpiritOrb npc = view_as<OshimunoSpiritOrb>(CClotBody(vecPos, vecAng, "models/bots/demo/bot_sentry_buster.mdl", "0.4", "1000", ally));
 		SetEntityRenderMode(npc.index, RENDER_NONE); //make buster model invisible
 		i_NpcWeight[npc.index] = 1;
 		npc.SetActivity("ACT_MP_RUN_MELEE");
@@ -65,18 +65,52 @@ methodmap OshimunoSpiritOrb < CClotBody
 		
 		npc.m_flSpeed = 200.0;
 		npc.m_bDissapearOnDeath = true;
+		npc.m_flWaveScale = 1.0;
+		npc.m_iOverlordComboAttack = 0;
 
 		float flPos[3], flAng[3];
 		npc.GetAttachment("head", flPos, flAng);
 
-		npc.m_iWearable1 = ParticleEffectAt_Parent(flPos, "flaregun_energyfield_blue", npc.index, "head", {0.0,0.0,30.0});
+		npc.m_iWearable1 = ParticleEffectAt_Parent(flPos, "flaregun_energyfield_blue", npc.index, "head", {0.0,0.0,20.0});
 		/*npc.m_iWearable1 = npc.EquipItemSeperate("models/weapons/w_models/w_baseball.mdl" ,_,_, 1.75, 30.0, false);
 		SetEntityRenderColor(npc.m_iWearable1, 0, 255, 255, 100); */ // cyan 
 		
-		npc.m_iWearable8 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_parent", npc.index, "head", {0.0,0.0,35.0});
+		npc.m_iWearable8 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_parent", npc.index, "head", {0.0,0.0,22.0});
 
-		npc.m_iWearable9 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_sparkles", npc.index, "head", {0.0,0.0,35.0});
+		npc.m_iWearable9 = ParticleEffectAt_Parent(flPos, "unusual_spectral_fire_sparkles", npc.index, "head", {0.0,0.0,22.0});
 
+		if(StrContains(data, "globalscale_npc") != -1)
+		{
+			npc.m_iOverlordComboAttack++;
+			int health = StringToInt(MinibossHealthScaling(100.0, true));
+			SetEntProp(npc.index, Prop_Data, "m_iMaxHealth", health);
+			SetEntProp(npc.index, Prop_Data, "m_iHealth", health);
+			float wave = float(Waves_GetRoundScale()+1);
+			wave *= 0.133333;
+			npc.m_flWaveScale = wave;
+			npc.m_flWaveScale *= MinibossScalingReturn();
+			b_thisNpcIsAMiniboss[npc.index] = true;
+		}
+		if(StrContains(data, "globalscale_player") != -1)
+		{
+			npc.m_iOverlordComboAttack++;
+			int health = StringToInt(MinibossHealthScaling(225.0, true));
+			SetEntProp(npc.index, Prop_Data, "m_iMaxHealth", health);
+			SetEntProp(npc.index, Prop_Data, "m_iHealth", health);
+			float wave = float(Waves_GetRoundScale()+1);
+			wave *= 0.133333;
+			npc.m_flWaveScale = wave;
+			npc.m_flWaveScale *= MinibossScalingReturn();
+			b_thisNpcIsAMiniboss[npc.index] = true;
+		}
+		if(StrContains(data, "teleport_in_orb") != -1)
+		{
+			TeleportDiversioToRandLocation(npc.index,_,900.0, 500.0);
+			float pos[3];
+			GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+			ParticleEffectAt(pos, "teleported_blue", 0.5);
+			FreezeNpcInTime(npc.index, 0.5);
+		}
 		npc.StartPathing();
 		return npc;
 	}
@@ -151,11 +185,13 @@ void OshimunoSpiritOrbSelfDefense(OshimunoSpiritOrb npc, float distance, float v
 				int target = TR_GetEntityIndex(swingTrace);
 				if(target > 0)
 				{
-					float damage = 55.0;
+					float damage = 55.0 * npc.m_flWaveScale;
 				
 					npc.PlayMeleeHitSound();
 					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
 					StatusEffects_SpiritFireAddStuff(target, 2, 2.0);
+					if(npc.m_iOverlordComboAttack)
+						StatusEffects_SpiritFireAddStuff(target, 3, 1.0);
 				}
 			}
 			delete swingTrace;

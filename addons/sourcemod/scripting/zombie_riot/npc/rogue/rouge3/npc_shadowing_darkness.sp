@@ -1410,8 +1410,8 @@ bool Shadowing_Darkness_UpperDash(Shadowing_Darkness_Boss npc, float gameTime, f
 					float DamageCalc = 50.0;
 					DamageCalc *= RaidModeScaling;
 					//basically oneshots
-					NemalAirSlice(npc.index,npc.m_iTargetWalkTo, DamageCalc, 255, 125, 125, 300.0, 8, 1200.0, "raygun_projectile_red", false, true, true);
-					NemalAirSlice(npc.index,npc.m_iTargetWalkTo, DamageCalc, 255, 125, 125, 300.0, 8, 1200.0, "raygun_projectile_red", false, true, false);
+					NemalAirSlice(npc.index,npc.m_iTargetWalkTo, DamageCalc, NULL_VECTOR, 255, 125, 125, 300.0, 8, 1200.0, "raygun_projectile_red", false, true, true);
+					NemalAirSlice(npc.index,npc.m_iTargetWalkTo, DamageCalc, NULL_VECTOR, 255, 125, 125, 300.0, 8, 1200.0, "raygun_projectile_red", false, true, false);
 				}
 				npc.m_bisWalking = false;
 				npc.m_iChanged_WalkCycle = 6;

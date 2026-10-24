@@ -1449,7 +1449,7 @@ int SilvesterSelfDefense(Silvester npc, float gameTime, int target, float distan
 					npc.FaceTowards(VecEnemy, 15000.0);
 					float DamageCalc = 35.0 * RaidModeScaling;
 					npc.PlayRangedSound();
-					NemalAirSlice(npc.index, target, DamageCalc, 215, 150, 0, 200.0, 6, 1000.0, "rockettrail_fire", false);
+					NemalAirSlice(npc.index, target, DamageCalc, NULL_VECTOR, 215, 150, 0, 200.0, 6, 1000.0, "rockettrail_fire", false);
 				}
 			}
 		}
@@ -1840,7 +1840,7 @@ bool SilvesterSwordSlicer(Silvester npc, bool NemalAssistance)
 					float DamageCalc = 50.0 * RaidModeScaling;
 					float VecEnemy[3]; WorldSpaceCenter(TargetEnemy, VecEnemy);
 					npc.FaceTowards(VecEnemy, 15000.0);
-					NemalAirSlice(npc.index, TargetEnemy, DamageCalc, 215, 150, 0, 200.0, 6, 1750.0, "rockettrail_fire", false);
+					NemalAirSlice(npc.index, TargetEnemy, DamageCalc, NULL_VECTOR, 215, 150, 0, 200.0, 6, 1750.0, "rockettrail_fire", false);
 					npc.PlayRangedSound();
 				}
 			}

@@ -121,6 +121,7 @@ methodmap OshimunoBackupDancer < CClotBody
 		npc.m_iOverlordComboAttack = 0;
 		npc.m_flInvulDuration = 0.0;
 		npc.m_flTauntLoop = 0.0;
+		b_NpcUnableToDie[npc.index] = true;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/player/items/soldier/short2014_soldier_fedhair/short2014_soldier_fedhair.mdl");
 
@@ -142,7 +143,7 @@ static int GetPopstarAlive(int entity)
 {
 	int PopstarAlive;
 	int a, entity1;
-	// Count trees
+
 	while((entity1 = FindEntityByNPC(a)) != -1)
 	{
 		if(IsValidEntity(entity1) && i_NpcInternalId[entity1] == OshimunoPopstar_ID() && GetTeam(entity) == GetTeam(entity1))
@@ -211,12 +212,14 @@ static void ClotThink(int iNPC)
 			b_NpcIsInvulnerable[npc.index] = false;
 			npc.m_flInvulDuration = 0.0;
 			npc.StartPathing();
+			npc.m_bisWalking = true;
+			npc.SetActivity("ACT_MP_RUN_MELEE");
 		}
 		else
 		{
 			if(npc.m_flTauntLoop < gameTime) // loops the taunt
 			{
-				npc.AddActivityViaSequence("taunt_manrobic");
+				npc.AddActivityViaSequence("taunt_conga");
 				npc.SetPlaybackRate(1.2);
 				npc.SetCycle(0.0);
 				npc.m_flTauntLoop = gameTime + 3.0;
@@ -291,15 +294,23 @@ static Action OshimunoBackupDancerOnTakeDamage(int victim, int &attacker, int &i
 {	
 	OshimunoBackupDancer npc = view_as<OshimunoBackupDancer>(victim);
 	float gameTime = GetGameTime(npc.index);
-	if(GetPopstarAlive(npc.index) > 0  && GetEntProp(npc.index, Prop_Data, "m_iHealth") <= 1) //enrage below 50% hp
+	if(GetEntProp(npc.index, Prop_Data, "m_iHealth") <= 1) //enrage below 50% hp
 	{
-		b_NpcIsInvulnerable[npc.index] = true;
-		npc.StopPathing();
-		npc.m_iState = 1;
-		float healing = float(ReturnEntityMaxHealth(npc.index)); // heal to max hp over 12s
-		HealEntityGlobal(npc.index, npc.index, healing, 1.0, REVIVE_DURATION, HEAL_ABSOLUTE);
-		NPCStats_RemoveAllDebuffs(npc.index, 1.0);
-		npc.m_flInvulDuration = gameTime + REVIVE_DURATION;
+		if(GetPopstarAlive(npc.index) > 0) // start reviving if popstar is alive
+		{
+			b_NpcIsInvulnerable[npc.index] = true;
+			npc.StopPathing();
+			npc.m_bisWalking = false;
+			float healing = float(ReturnEntityMaxHealth(npc.index)); // heal to max hp over 12s
+			HealEntityGlobal(npc.index, npc.index, healing, 1.0, REVIVE_DURATION, HEAL_ABSOLUTE);
+			NPCStats_RemoveAllDebuffs(npc.index, 1.0);
+			npc.m_flInvulDuration = gameTime + REVIVE_DURATION;
+			npc.m_flNextMeleeAttack = gameTime + REVIVE_DURATION;
+		}
+		else if(GetPopstarAlive(npc.index) <= 0)
+		{
+			b_NpcUnableToDie[npc.index] = false;
+		}
 	}
 	return Plugin_Changed;
 }

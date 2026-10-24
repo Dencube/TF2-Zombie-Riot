@@ -80,6 +80,63 @@ static float g_AntayotoLineSlotYaw[ANTAYOTO_LINE_SLOTS];
 static float g_AntayotoLineSlotLen[ANTAYOTO_LINE_SLOTS];
 static int g_AntayotoLineSlotCount;
 
+#define ANTAYOTO_SLASH_WIDTH 100.0
+#define ANTAYOTO_SLASH_LENGTH 800.0
+#define ANTAYOTO_SLASH_GAP 100.0
+#define ANTAYOTO_SLASH_START 50.0
+#define ANTAYOTO_SLASH_TIME 1.5
+#define ANTAYOTO_SLASH_SWING_LEAD 0.75
+#define ANTAYOTO_SLASH_SWING_DELAY 0.1953
+#define ANTAYOTO_SLASH_IMPACT_DELAY (-0.04)
+#define ANTAYOTO_SLASH_FADE_TIME 0.15
+#define ANTAYOTO_SLASH_SPREAD 75.0
+#define ANTAYOTO_SLASH_FADE_STEP 0.045
+#define ANTAYOTO_SLASH_DAMAGE 100.0
+
+#define ANTAYOTO_ROTATION_STEP 10.0
+#define ANTAYOTO_KUNAI_STATE_DURATION 5.0
+#define ANTAYOTO_KUNAI_THROW_COOLDOWN 0.7
+#define ANTAYOTO_KUNAI_DAMAGE 35.0
+#define ANTAYOTO_KUNAI_SPEED_MIN 1400.0
+#define ANTAYOTO_KUNAI_SPEED_MAX 1700.0
+#define ANTAYOTO_KUNAI_LEAD 150.0
+
+#define ANTAYOTO_CONE_ANIM_TIME 0.5
+#define ANTAYOTO_CONE_HOLD_TIME 1.5
+#define ANTAYOTO_CONE_LENGTH 600.0
+#define ANTAYOTO_CONE_HALF_ANGLE 65.0
+#define ANTAYOTO_CONE_DAMAGE 200.0
+#define ANTAYOTO_CONE_FADE_TIME 0.15
+#define ANTAYOTO_CONE_SPREAD 95.0
+#define ANTAYOTO_CONE_TELEGRAPH_ALPHA 255
+#define ANTAYOTO_CONE_STAGGER 1.5
+#define ANTAYOTO_CONE_ANIM_RATE 1.0
+#define ANTAYOTO_CONE_ANIM_RATE2 1.2
+
+#define ANTAYOTO_LINE_DETONATE_TIME 1.0
+#define ANTAYOTO_LINE_MIN_LENGTH 800.0
+#define ANTAYOTO_LINE_PADDING 300.0
+#define ANTAYOTO_LINE_SMOKE_PERIOD 0.75
+#define ANTAYOTO_LINE_SMOKE_LIFE 0.75
+#define ANTAYOTO_LINE_SMOKE_WINDOW 3
+#define ANTAYOTO_LINE_PHASE_DURATION 5.0
+
+#define ANTAYOTO_BOMB_COUNT 8
+#define ANTAYOTO_BOMB_DISTANCE 500.0
+#define ANTAYOTO_BOMB_SPEED 800.0
+#define ANTAYOTO_BOMB_FUSE 2.5
+#define ANTAYOTO_BOMB_RADIUS 250.0
+#define ANTAYOTO_BOMB_DAMAGE 100.0
+#define ANTAYOTO_BOMB_SCALE 1.0
+#define ANTAYOTO_SMOKE_HIDE_TIME 4.0
+#define ANTAYOTO_SMOKE_CLEAR_LEAD 3.0
+
+static int g_AntayotoBombState[ANTAYOTO_BOMB_COUNT];
+static int g_AntayotoBombProp[ANTAYOTO_BOMB_COUNT] = { -1, ... };
+static float g_AntayotoBombPos[ANTAYOTO_BOMB_COUNT][3];
+static float g_AntayotoBombTime[ANTAYOTO_BOMB_COUNT];
+static float g_AntayotoBombDraw[ANTAYOTO_BOMB_COUNT];
+
 static float OshimunoAntayotoWavDuration(const char[] soundPath)
 {
 	char fullPath[PLATFORM_MAX_PATH];
@@ -191,15 +248,25 @@ methodmap OshimunoAntayoto < CClotBody
 		public get()							{ return fl_AbilityOrAttack[this.index][4]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][4] = TempValueForProperty; }
 	}
-	property float m_flBombThrowCD
+	property float m_flKunaiThrowCD
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][5]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][5] = TempValueForProperty; }
 	}
-	property float m_flTeleportAwayCD
+	property int m_iKunaiThrowAmount
+	{
+		public get()							{ return i_AmountProjectiles[this.index]; }
+		public set(int TempValueForProperty) 	{ i_AmountProjectiles[this.index] = TempValueForProperty; }
+	}
+	property float m_flKunaiStateDuration
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][6]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][6] = TempValueForProperty; }
+	}
+	property float m_flLineStateDuration
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][7]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][7] = TempValueForProperty; }
 	}
 	property int m_iWhatAbilityDo
 	{
@@ -230,7 +297,6 @@ methodmap OshimunoAntayoto < CClotBody
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	
 	public void PlayRangedSound()
 	{
 		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
@@ -300,6 +366,7 @@ methodmap OshimunoAntayoto < CClotBody
 		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
 		npc.m_flMeleeArmor = 1.25;
 		npc.m_iHealthBar = 2;
+		npc.m_iKunaiThrowAmount = 10;
 		
 		func_NPCDeath[npc.index] = OshimunoAntayoto_Death;
 		func_NPCOnTakeDamage[npc.index] = OshimunoAntayoto_OnTakeDamage;
@@ -425,7 +492,7 @@ static void OshimunoAntayoto_Think(int iNPC)
 	{
 		return;
 	}
-	npc.m_flNextDelayTime =gameTime + DEFAULT_UPDATE_DELAY_FLOAT;
+	npc.m_flNextDelayTime = gameTime + DEFAULT_UPDATE_DELAY_FLOAT;
 	npc.Update();
 
 	OshimunoAntayoto_BombsThink(npc, gameTime);
@@ -720,7 +787,7 @@ int OshimunoAntayoto_SelfDefense(OshimunoAntayoto npc, float gameTime, int targe
 					npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_,3.0);
 							
 					npc.m_flAttackHappens = gameTime + 0.1;
-					npc.m_flNextMeleeAttack = gameTime + 0.15;
+					npc.m_flNextMeleeAttack = gameTime + 0.6;
 					npc.m_flDoingAnimation = gameTime + 0.1;
 				}
 			}
@@ -734,60 +801,6 @@ int OshimunoAntayoto_SelfDefense(OshimunoAntayoto npc, float gameTime, int targe
 	return 0;
 }
 
-//cone stuff
-
-#define ANTAYOTO_SLASH_WIDTH 100.0
-#define ANTAYOTO_SLASH_LENGTH 800.0
-#define ANTAYOTO_SLASH_GAP 100.0
-#define ANTAYOTO_SLASH_START 50.0
-#define ANTAYOTO_SLASH_TIME 1.5
-#define ANTAYOTO_SLASH_SWING_LEAD 0.75
-#define ANTAYOTO_SLASH_SWING_DELAY 0.1953
-#define ANTAYOTO_SLASH_IMPACT_DELAY (-0.04)
-#define ANTAYOTO_SLASH_FADE_TIME 0.15
-#define ANTAYOTO_SLASH_SPREAD 75.0
-#define ANTAYOTO_SLASH_FADE_STEP 0.045
-#define ANTAYOTO_SLASH_DAMAGE 100.0
-
-#define ANTAYOTO_ROTATION_STEP 10.0
-#define ANTAYOTO_THROW_STATE_DURATION 2.0
-#define ANTAYOTO_INITIAL_THROW 0.5
-#define ANTAYOTO_KUNAI_THROW_COOLDOWN 0.3
-#define ANTAYOTO_KUNAI_DAMAGE 35.0
-#define ANTAYOTO_KUNAI_SPEED 1000.0
-#define ANTAYOTO_KUNAI_LEAD 150.0
-#define ANTAYOTO_CONE_ANIM_TIME 0.5
-#define ANTAYOTO_CONE_HOLD_TIME 2.0
-#define ANTAYOTO_CONE_LENGTH 800.0
-#define ANTAYOTO_CONE_HALF_ANGLE 45.0
-#define ANTAYOTO_CONE_DAMAGE 500.0
-#define ANTAYOTO_CONE_FADE_TIME 0.15
-#define ANTAYOTO_CONE_SPREAD 75.0
-#define ANTAYOTO_CONE_TELEGRAPH_ALPHA 255
-#define ANTAYOTO_CONE_STAGGER 2.0
-#define ANTAYOTO_CONE_ANIM_RATE 1.0
-#define ANTAYOTO_CONE_ANIM_RATE2 1.2
-#define ANTAYOTO_LINE_DETONATE_TIME 1.0
-#define ANTAYOTO_LINE_MIN_LENGTH 800.0
-#define ANTAYOTO_LINE_PADDING 300.0
-#define ANTAYOTO_LINE_SMOKE_PERIOD 0.75
-#define ANTAYOTO_LINE_SMOKE_LIFE 0.75
-#define ANTAYOTO_LINE_SMOKE_WINDDOWN 3
-#define ANTAYOTO_BOMB_COUNT 8
-#define ANTAYOTO_BOMB_DISTANCE 500.0
-#define ANTAYOTO_BOMB_SPEED 800.0
-#define ANTAYOTO_BOMB_FUSE 2.5
-#define ANTAYOTO_BOMB_RADIUS 250.0
-#define ANTAYOTO_BOMB_DAMAGE 100.0
-#define ANTAYOTO_BOMB_SCALE 1.0
-#define ANTAYOTO_SMOKE_HIDE_TIME 4.0
-#define ANTAYOTO_SMOKE_CLEAR_LEAD 3.0
-
-static int g_AntayotoBombState[ANTAYOTO_BOMB_COUNT];
-static int g_AntayotoBombProp[ANTAYOTO_BOMB_COUNT] = { -1, ... };
-static float g_AntayotoBombPos[ANTAYOTO_BOMB_COUNT][3];
-static float g_AntayotoBombTime[ANTAYOTO_BOMB_COUNT];
-static float g_AntayotoBombDraw[ANTAYOTO_BOMB_COUNT];
 static bool OshimunoAntayoto_Rotation(OshimunoAntayoto npc, float gameTime)
 {
 	switch(npc.m_iWhatAbilityDo)
@@ -871,7 +884,7 @@ static bool OshimunoAntayoto_Rotation(OshimunoAntayoto npc, float gameTime)
 			if(elapsed >= (ANTAYOTO_ROTATION_STEP * 6.0))
 			{
 				g_AntayotoRotationStage = 6;
-				OshimunoAntayoto_LinePhaseStart(npc);
+				OshimunoAntayoto_LinePhaseStart(npc, gameTime);
 				return true;
 			}
 		}
@@ -893,38 +906,43 @@ static void OshimunoAntayotoKunaiAimAt(int target, float aimPos[3])
 	}
 }
 
-static void OshimunoAntayotoThrowKunai(OshimunoAntayoto npc, float aimPos[3])
+static void OshimunoAntayotoThrowKunai(OshimunoAntayoto npc, float aimPos[3], float VecSelfNpc[3])
 {
-	int projectile = npc.FireArrow(aimPos, ANTAYOTO_KUNAI_DAMAGE, ANTAYOTO_KUNAI_SPEED, "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl", 1.5);
-	int trail = Trail_Attach(projectile, ARROW_TRAIL, 80, 0.16, 15.0, 6.0, 1);
-	i_WandParticle[projectile] = EntIndexToEntRef(trail);
-	CreateTimer(6.0, Timer_RemoveEntity, EntIndexToEntRef(trail), TIMER_FLAG_NO_MAPCHANGE);
-	SetParent(projectile, trail);
+	for(int i=0 ; i < 10; i++) //throw a bundle of kunais
+	{
+		float projectileSpeed = GetRandomFloat(ANTAYOTO_KUNAI_SPEED_MIN, ANTAYOTO_KUNAI_SPEED_MAX);
+		int projectile = npc.FireArrow(aimPos, ANTAYOTO_KUNAI_DAMAGE * RaidModeScaling, projectileSpeed, "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl", 1.2);
+		int trail = Trail_Attach(projectile, ARROW_TRAIL, 80, 0.16, 15.0, 6.0, 1);
+		i_WandParticle[projectile] = EntIndexToEntRef(trail);
+		CreateTimer(5.0, Timer_RemoveEntity, EntIndexToEntRef(trail), TIMER_FLAG_NO_MAPCHANGE);
+		SetParent(projectile, trail);
+		float vec[3];
+		vec[0] += VecSelfNpc[0] + GetRandomFloat(-10.0, 10.0);
+		vec[1] += VecSelfNpc[1] + GetRandomFloat(-10.0, 10.0);
+		vec[2] += VecSelfNpc[2] + GetRandomFloat(-10.0, 10.0);
+		TeleportEntity(projectile, vec, NULL_VECTOR, NULL_VECTOR);
+	}
 }
 
 static void OshimunoAntayoto_KunaiJumpStart(OshimunoAntayoto npc, float gameTime)
 {
-	float vBackoffPos[3];
-	BackoffFromOwnPositionAndAwayFromEnemy(npc, npc.m_iTarget,_,vBackoffPos);
-	vBackoffPos[2] += 275.0;
-	PluginBot_Jump(npc.index, vBackoffPos);
 	npc.m_iWhatAbilityDo = 3;
 	npc.m_iChanged_WalkCycle = 600;
 	g_AntayotoKunaiThrowCount = 0;
-	npc.m_flTeleportAwayCD = gameTime + ANTAYOTO_THROW_STATE_DURATION;
-	npc.m_flBombThrowCD = gameTime + ANTAYOTO_INITIAL_THROW;
-	npc.m_flNextMeleeAttack = gameTime + ANTAYOTO_THROW_STATE_DURATION;
+	npc.m_flKunaiStateDuration = gameTime + ANTAYOTO_KUNAI_STATE_DURATION;
+	npc.m_flKunaiThrowCD = gameTime + ANTAYOTO_KUNAI_THROW_COOLDOWN;
+	npc.m_flNextMeleeAttack = gameTime + ANTAYOTO_KUNAI_STATE_DURATION;
 }
 
 static bool OshimunoAntayoto_KunaiJump(OshimunoAntayoto npc, float gameTime)
 {
-	if(npc.m_flTeleportAwayCD < gameTime)
+	if(npc.m_flKunaiStateDuration < gameTime)
 	{
 		npc.m_iWhatAbilityDo = 0;
 		npc.m_iChanged_WalkCycle = 0;
 		return false;
 	}
-	if(npc.m_flBombThrowCD < gameTime && IsValidEnemy(npc.index, npc.m_iTarget))
+	if(npc.m_flKunaiThrowCD < gameTime && IsValidEnemy(npc.index, npc.m_iTarget))
 	{
 		float EnemyPos[3];
 		OshimunoAntayotoKunaiAimAt(npc.m_iTarget, EnemyPos);
@@ -939,7 +957,7 @@ static bool OshimunoAntayoto_KunaiJump(OshimunoAntayoto npc, float gameTime)
 		GetEntPropVector(npc.index, Prop_Data, "m_angRotation", vecSetAng);
 		vecSetAng[1] = vecThrowAng[1];
 		TeleportEntity(npc.index, NULL_VECTOR, vecSetAng, NULL_VECTOR);
-		OshimunoAntayotoThrowKunai(npc, EnemyPos);
+		OshimunoAntayotoThrowKunai(npc, EnemyPos, VecSelfNpc);
 		g_AntayotoKunaiThrowCount++;
 		bool sideVolley = false;
 		if(g_AntayotoHealthPhase >= 2)
@@ -960,11 +978,12 @@ static bool OshimunoAntayoto_KunaiJump(OshimunoAntayoto npc, float gameTime)
 					continue;
 				float sidePos[3];
 				OshimunoAntayotoKunaiAimAt(client, sidePos);
-				OshimunoAntayotoThrowKunai(npc, sidePos);
+				OshimunoAntayotoThrowKunai(npc, sidePos, VecSelfNpc);
 			}
 		}
-		npc.m_flBombThrowCD = gameTime + ANTAYOTO_KUNAI_THROW_COOLDOWN;
+		npc.m_flKunaiThrowCD = gameTime + ANTAYOTO_KUNAI_THROW_COOLDOWN;
 		npc.PlayRangedSound();
+		npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_,3.0);
 	}
 	if(npc.m_flDoingAnimation < gameTime)
 	{
@@ -1138,7 +1157,7 @@ static void OshimunoAntayotoConeDetonate(OshimunoAntayoto npc, float yawDeg)
 		if(missing < 0.0)
 			missing = 0.0;
 
-		float damage = ANTAYOTO_CONE_DAMAGE * (1.0 + missing);
+		float damage = ANTAYOTO_CONE_DAMAGE * RaidModeScaling * (1.0 + missing);
 		float at[3];
 		WorldSpaceCenter(client, at);
 		PlaySound = true;
@@ -1282,7 +1301,7 @@ static void OshimunoAntayotoConeFadeFrame(any ref)
 	RequestFrame(OshimunoAntayotoConeFadeFrame, ref);
 }
 
-static void OshimunoAntayoto_LinePhaseStart(OshimunoAntayoto npc)
+static void OshimunoAntayoto_LinePhaseStart(OshimunoAntayoto npc, float gameTime)
 {
 	npc.m_iWhatAbilityDo = 5;
 	npc.m_iChanged_WalkCycle = 700;
@@ -1290,6 +1309,7 @@ static void OshimunoAntayoto_LinePhaseStart(OshimunoAntayoto npc)
 	npc.StopPathing();
 	npc.m_flSlashAoeDetonate = 0.0;
 	npc.m_flDoingAnimation = 0.0;
+	npc.m_flLineStateDuration = gameTime + ANTAYOTO_LINE_PHASE_DURATION;
 	g_AntayotoLineSmokeTime = 0.0;
 	g_AntayotoLineSlotCount = 1;
 	if(g_AntayotoHealthPhase >= 2)
@@ -1367,7 +1387,6 @@ static bool OshimunoAntayoto_LinePhase(OshimunoAntayoto npc, float gameTime)
 	GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 	f3_NpcSavePos[npc.index] = pos;
 
-	bool anyPicked = false;
 	int maxCount = 0;
 	for(int slot = 0; slot < g_AntayotoLineSlotCount; slot++)
 	{
@@ -1386,7 +1405,7 @@ static bool OshimunoAntayoto_LinePhase(OshimunoAntayoto npc, float gameTime)
 		}
 		if(count <= 0)
 			continue;
-
+		
 		if(count > maxCount)
 			maxCount = count;
 
@@ -1417,15 +1436,14 @@ static bool OshimunoAntayoto_LinePhase(OshimunoAntayoto npc, float gameTime)
 		}
 		g_AntayotoLineSlotYaw[slot] = yawDeg;
 		g_AntayotoLineSlotActive[slot] = true;
-		anyPicked = true;
 	}
-	if(!anyPicked)
+	if(npc.m_flLineStateDuration < gameTime)
 	{
 		OshimunoAntayoto_LinePhaseEnd(npc, gameTime);
 		return false;
 	}
 
-	if(maxCount <= ANTAYOTO_LINE_SMOKE_WINDDOWN)
+	if(maxCount <= ANTAYOTO_LINE_SMOKE_WINDOW)
 	{
 		g_AntayotoLineSmokeTime = FAR_FUTURE;
 	}
@@ -1538,7 +1556,7 @@ static void OshimunoAntayotoLineDetonate(OshimunoAntayoto npc, int slot)
 			continue;
 
 		float fwdDist = (dx * fwdX) + (dy * fwdY);
-		if(fwdDist < -24.0 || fwdDist > (g_AntayotoLineSlotLen[slot] + 24.0))
+		if(fwdDist < -24.0 || fwdDist > (TAISHIMO_LINE_LENGTH + 24.0))
 			continue;
 
 		float leftDist = (dx * leftX) + (dy * leftY);
@@ -1548,7 +1566,7 @@ static void OshimunoAntayotoLineDetonate(OshimunoAntayoto npc, int slot)
 		float at[3];
 		WorldSpaceCenter(client, at);
 		npc.PlayMeleeHitSound();
-		SDKHooks_TakeDamage(client, npc.index, npc.index, ANTAYOTO_SLASH_DAMAGE, DMG_CLUB, -1, _, at);
+		SDKHooks_TakeDamage(client, npc.index, npc.index, ANTAYOTO_SLASH_DAMAGE * RaidModeScaling, DMG_CLUB, -1, _, at);
 	}
 }
 
@@ -1639,26 +1657,7 @@ static void OshimunoAntayoto_SmokeEscape(OshimunoAntayoto npc, float gameTime)
 	float flPosSmoke[3];
 	WorldSpaceCenter(npc.index, flPosSmoke);
 	ParticleEffectAt(flPosSmoke, "grenade_smoke", 2.0);
-
-	for(int entitycount; entitycount<MAXENTITIES; entitycount++)
-	{
-		if(IsValidEntity(entitycount) && entitycount != npc.index && (!b_NpcHasDied[entitycount]))
-		{
-			if(GetTeam(entitycount) == GetTeam(npc.index) && IsEntityAlive(entitycount))
-			{
-				float pos1[3];
-				GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos1);
-				static float pos2[3];
-				GetEntPropVector(entitycount, Prop_Data, "m_vecAbsOrigin", pos2);
-				if(GetVectorDistance(pos1, pos2, true) < (500 * 500))
-				{
-					if(!Can_I_See_Ally(npc.index, entitycount))
-						continue;
-					ApplyStatusEffect(npc.index, entitycount, "Smoke Screen", 10.0);
-				}
-			}
-		}
-	}
+	ApplyStatusEffect(npc.index, npc.index, "Smoke Screen", 10.0);
 
 	float vecLaunchPos[3];
 	GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", vecLaunchPos);

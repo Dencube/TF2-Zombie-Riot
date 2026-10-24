@@ -8306,7 +8306,15 @@
 	}
 	"Street Chef Desc"
 	{
-		"en" 	"Serves the best seafood dishes.\n-Deals extra damage to targets based on their missing health"
+		"en" 	"Serves the best seafood dishes.\n-Deals extra damage to targets based on their missing health."
+	}
+	"Michelin Chef"
+	{
+		"en" 	"Michelin Chef"
+	}
+	"Michelin Chef Desc"
+	{
+		"en" 	"Only caters to the tastes of the elite.\n-Deals extra damage to targets based on their missing health.\n-Heals nearby enemies with every hit."
 	}
 	"Crippling Gambler"
 	{
@@ -8314,7 +8322,7 @@
 	}
 	"Crippling Gambler Desc"
 	{
-		"en" 	"Just needs one more win to finally stop for good.\n-Switches between 6 revolvers with different effects."
+		"en" 	"Just needs one more win to finally stop for good.\n-Switches between 6 revolvers, each one with different effects."
 	}
 	"Cherry Blossom"
 	{
@@ -8322,7 +8330,7 @@
 	}
 	"Cherry Blossom Desc"
 	{
-		"en" 	"A ''peaceful'' tree.\n-Creates a healing aura to allies when killed.\n-Enrages if left alive for last."
+		"en" 	"A ''peaceful'' tree.\n-Creates a healing aura for players when killed.\n-Enrages if left alive for last."
 	}
 	"Spirit Cherry Blossom"
 	{
@@ -8330,7 +8338,7 @@
 	}
 	"Spirit Cherry Blossom Desc"
 	{
-		"en" 	"A less ''peaceful'' tree.\n-Creates a healing aura to allies when killed.\n-Occasionally summmons new Spirit Orbs.\n-Enrages if left alive for last."
+		"en" 	"A less ''peaceful'' tree.\n-Creates a healing aura for players when killed.\n-Occasionally summmons new Spirit Orbs.\n-Enrages if left alive for last."
 	}
 	"Shibuya Dancer"
 	{
@@ -8495,5 +8503,29 @@
 	"Essence Harvester Desc"
 	{
 		"en" 	"Stores Spirits for future endeavors.\n-Stores the Spirit Essence of nearby dead allies.\n-Inflicts Spirie Fire on hit and on death spawns up to 5 Spirit Orbs based on how much Spirit Essence was stored."
+	}
+	"Rock Master"
+	{
+		"en" 	"Rock Master"
+	}
+	"Rock Master Desc"
+	{
+		"en" 	"Mastered the art of throwing stones with deadly precision.\n-Throws rocks at targets that ragdoll and knockback on hit."
+	}
+	"Shibuya Backup Dancer"
+	{
+		"en" 	"Shibuya Backup Dancer"
+	}
+	"Shibuya Backup Dancer Desc"
+	{
+		"en" 	"One of the Popstar's handpicked devotees.\n-Slowly heals back to full hp when taking fatal damage as long as the Popstar is alive."
+	}
+	"Trash Man"
+	{
+		"en" 	"Trash Man"
+	}
+	"Trash Man Desc"
+	{
+		"en" 	"Transforms trash into deadly weaponry.\n-Shoots rockets at enemies.\n-After losing enough hp, starts rapidly loading rockets and unleashes them after enough time.\n-Fires his stored rockets early when taking fatal damage."
 	}
 }

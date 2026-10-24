@@ -79,7 +79,7 @@ static void ClotThink(int iNPC)
 		if(IsValidEntity(boombox))
 		{
 			char npc_classname[60];
-			NPC_GetPluginById(i_NpcInternalId[boombox ], npc_classname, sizeof(npc_classname));
+			NPC_GetPluginById(i_NpcInternalId[boombox], npc_classname, sizeof(npc_classname));
 
 			if(boombox != INVALID_ENT_REFERENCE && (StrEqual(npc_classname, "npc_oshimuno_boombox") && IsEntityAlive(boombox))) // look for all boomboxes
 			{

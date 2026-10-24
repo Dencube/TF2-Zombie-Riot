@@ -1,6 +1,20 @@
 #pragma semicolon 1
 #pragma newdecls required
 
+#define TAISHIMO_LINE_WIDTH 180.0
+#define TAISHIMO_LINE_LENGTH 900.0
+#define TAISHIMO_LINE_PADDING 350.0
+#define TAISHIMO_LINE_START 30.0
+#define TAISHIMO_LINE_TIME 1.2
+#define TAISHIMO_LINE_SWING_LEAD 0.75
+#define TAISHIMO_LINE_SWING_DELAY 0.1953
+#define TAISHIMO_LINE_IMPACT_DELAY (-0.04)
+#define TAISHIMO_LINE_SPREAD 75.0
+#define TAISHIMO_LINE_DAMAGE 30.0
+#define TAISHIMO_LINE_FADE_TIME 0.15
+#define TAISHIMO_LINE_FADE_STEP 0.045
+#define TAISHIMO_LINE_DETONATE_TIME 1.0
+
 static const char g_DeathSounds[][] =
 {
 	"vo/soldier_paincrticialdeath01.mp3",
@@ -44,42 +58,110 @@ static const char g_MeleeAttackSounds[][] =
 	"weapons/samurai/tf_katana_05.wav",
 	"weapons/samurai/tf_katana_06.wav",
 };
-static const char g_MeleeBroke[][] =
+
+static const char g_RangedAttackSounds[][] =
 {
-	"player/taunt_sorcery_staff_break.wav",
+	"weapons/cleaver_throw.wav",
+};
+static const char g_WindUpSounds[][] =
+{
+	"vo/taunts/engineer_taunts08.mp3",
+	"vo/taunts/engineer_taunts10.mp3"
+};
+static const char g_WindUpEndSounds[][] =
+{
+	"vo/engineer_wranglekills04.mp3"
 };
 
+static int g_TaishimoLineLaser = -1;
+static const char g_TaishimoLineWindUpSound[] = "misc/halloween/strongman_fast_swing_01.wav";
+static const char g_TaishimoLineImpactSound[] = "misc/halloween/strongman_fast_impact_01.wav";
+int OshimunoTaishimoId;
+int OshimunoTaishimoIDReturn()
+{
+	return OshimunoTaishimoId;
+}
 
 void OshimunoTaishimoOnMapStart()
 {
+	NPCData data;
 	PrecacheSoundArray(g_DeathSounds);
 	PrecacheSoundArray(g_HurtSounds);
 	PrecacheSoundArray(g_IdleAlertedSounds);
 	PrecacheSoundArray(g_MeleeHitSounds);
 	PrecacheSoundArray(g_MeleeAttackSounds);
-	PrecacheSoundArray(g_MeleeBroke);
-	NPCData data;
+	PrecacheSoundArray(g_RangedAttackSounds);
+	PrecacheSoundArray(g_WindUpSounds);
+	PrecacheSoundArray(g_WindUpEndSounds);
+	PrecacheSound(g_TaishimoLineWindUpSound);
+	PrecacheSound(g_TaishimoLineImpactSound);
+	g_TaishimoLineLaser = PrecacheModel("sprites/laserbeam.vmt");
 	strcopy(data.Name, sizeof(data.Name), "Taishimo");
-	strcopy(data.Plugin, sizeof(data.Plugin), "npc_taishimo");
-	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_taishimo");
+	strcopy(data.Icon, sizeof(data.Icon), "blackheavysoul");
 	data.IconCustom = true;
-	data.Flags = 0;
-	data.Category = Type_Outlaws;
+	data.Flags = MVM_CLASS_FLAG_MINIBOSS|MVM_CLASS_FLAG_ALWAYSCRIT;
+	data.Category = Type_Raid;
 	data.Func = ClotSummon;
-	NPC_Add(data);
+	OshimunoTaishimoId = NPC_Add(data);
 }
 
-static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team)
+static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team, const char[] data)
 {
-	return Taishimo(vecPos, vecAng, team);
+	return OshimunoTaishimo(vecPos, vecAng, team, data);
 }
 
-methodmap Taishimo < CClotBody
+methodmap OshimunoTaishimo < CClotBody
 {
-	property int m_iAttacksLeft
+	property float m_flTransformIn
 	{
-		public get()		{	return this.m_iOverlordComboAttack;	}
-		public set(int value) 	{	this.m_iOverlordComboAttack = value;	}
+		public get()							{ return fl_NextChargeSpecialAttack[this.index]; }
+		public set(float TempValueForProperty) 	{ fl_NextChargeSpecialAttack[this.index] = TempValueForProperty; }
+	}
+	property int m_iSaiyanState
+	{
+		public get()							{ return i_State[this.index]; }
+		public set(int TempValueForProperty) 	{ i_State[this.index] = TempValueForProperty; }
+	}
+	property float m_flSlashFlurry
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
+	}
+	property float m_flCongaFastDo
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
+	}
+	property float m_flJumpAtEnemy
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][2]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][2] = TempValueForProperty; }
+	}
+	property int m_iWhatAbilityDo
+	{
+		public get()							{ return i_MedkitAnnoyance[this.index]; }
+		public set(int TempValueForProperty) 	{ i_MedkitAnnoyance[this.index] = TempValueForProperty; }
+	}
+	property float m_flLineAoeDetonate
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][3]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][3] = TempValueForProperty; }
+	}
+	property float m_flLineAoeYaw
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][4]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][4] = TempValueForProperty; }
+	}
+	property float m_flLineAoeFade
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][5]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][5] = TempValueForProperty; }
+	}
+	property float m_flLineAoeFadeDraw
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][6]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][6] = TempValueForProperty; }
 	}
 	public void PlayIdleSound()
 	{
@@ -101,80 +183,216 @@ methodmap Taishimo < CClotBody
  	{
 		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
 	}
-	public void PlayMeleeBroke()
- 	{
-		EmitSoundToAll(g_MeleeBroke[GetRandomInt(0, sizeof(g_MeleeBroke) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);
-	}
-
 	public void PlayMeleeHitSound()
 	{
 		EmitSoundToAll(g_MeleeHitSounds[GetRandomInt(0, sizeof(g_MeleeHitSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
 	}
-	
-	public Taishimo(float vecPos[3], float vecAng[3], int ally)
+	public void PlayRangedSound()
 	{
-		Taishimo npc = view_as<Taishimo>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.0", "999999", ally));
-		
-		i_NpcWeight[npc.index] = 5;
-		npc.SetActivity("ACT_MP_RUN_MELEE");
+		EmitSoundToAll(g_RangedAttackSounds[GetRandomInt(0, sizeof(g_RangedAttackSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
+	}
+	public void PlayWindUpSounds()
+	{
+		EmitSoundToAll(g_WindUpSounds[GetRandomInt(0, sizeof(g_WindUpSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
+	}
+	public void PlayWindUpEndSounds()
+	{
+		EmitSoundToAll(g_WindUpEndSounds[GetRandomInt(0, sizeof(g_WindUpEndSounds) - 1)], this.index, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, _);	
+	}
+	
+	public OshimunoTaishimo(float vecPos[3], float vecAng[3], int ally, const char[] data)
+	{
+		OshimunoTaishimo npc = view_as<OshimunoTaishimo>(CClotBody(vecPos, vecAng, "models/player/soldier.mdl", "1.35", "40000", ally, false, true, true,true)); //giant!
+		float gameTime = GetGameTime(npc.index);
+
 		KillFeed_SetKillIcon(npc.index, "demokatana");
+		int iActivity = npc.LookupActivity("ACT_MP_RUN_MELEE");
+		if(iActivity > 0) npc.StartActivity(iActivity);
+
+		MusicEnum music;
+		strcopy(music.Path, sizeof(music.Path), "#zombiesurvival/aprilfools/reteptheme_1.mp3");
+		music.Time = 110;
+		music.Volume = 2.0;
+		music.Custom = true;
+		strcopy(music.Name, sizeof(music.Name), "Retep theme");
+		strcopy(music.Artist, sizeof(music.Artist), "terraria peter griffin mod");
+		Music_SetRaidMusic(music);
+
+		func_NPCDeath[npc.index] = OshimunoTaishimo_Death;
+		func_NPCOnTakeDamage[npc.index] = OshimunoTaishimo_OnTakeDamage;
+		func_NPCThink[npc.index] = OshimunoTaishimo_Think;
+		func_NPCFuncWin[npc.index] = OshimunoTaishimo_Win;
 		
 		npc.m_iBleedType = BLEEDTYPE_NORMAL;
-		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
+		npc.m_iStepNoiseType = STEPSOUND_GIANT;	
 		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
-		
 
-		func_NPCDeath[npc.index] = ClotDeath;
-		func_NPCOnTakeDamage[npc.index] = Generic_OnTakeDamage;
-		func_NPCThink[npc.index] = ClotThink;
-		
-		npc.m_flSpeed = 290.0;
+		npc.m_flSpeed = 320.0;
+		npc.m_flMeleeArmor = 1.25;
+		npc.m_iOverlordComboAttack = 0;
+		npc.m_flSlashFlurry = gameTime + 5.0;
+		/*
+		npc.m_flCongaFastDo = gameTime + 20.0;
+		npc.m_flJumpAtEnemy = gameTime + 10.0;
+		*/
+		npc.m_flNextMeleeAttack = 0.0;
 
-		npc.m_iAttacksLeft = 3;
+		RaidModeTime = gameTime + 200.0;
+		RaidBossActive = EntIndexToEntRef(npc.index);
+		RaidAllowsBuildings = false;
+		RaidAllowLastman = true;
+		WaveStart_SubWaveStart(gameTime + 500.0);
+		GiveOneRevive();
+
+		i_NpcWeight[npc.index] = 5;
+		b_thisNpcIsARaid[npc.index] = true;
+		b_angered_twice[npc.index] = false;
+
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_katana/c_shogun_katana_soldier.mdl");
-
 		npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/soldier/dec15_diplomat/dec15_diplomat.mdl");
-
+		SetEntProp(npc.m_iWearable2, Prop_Send, "m_nSkin", 1);
 		npc.m_iWearable3 = npc.EquipItem("head", "models/workshop/player/items/soldier/jul13_gangplank_garment/jul13_gangplank_garment.mdl");
-
+		SetEntProp(npc.m_iWearable3, Prop_Send, "m_nSkin", 1);
 		npc.m_iWearable4 = npc.EquipItem("head", "models/workshop/player/items/soldier/hw2013_shaolin_sash/hw2013_shaolin_sash.mdl");
-
+		SetEntProp(npc.m_iWearable4, Prop_Send, "m_nSkin", 1);
 		npc.m_iWearable5 = npc.EquipItem("head", "models/workshop/player/items/soldier/hw2013_faux_manchu/hw2013_faux_manchu.mdl");
-
+		SetEntProp(npc.m_iWearable5, Prop_Send, "m_nSkin", 1);
 		npc.m_iWearable6 = npc.EquipItem("head", "models/workshop/player/items/all_class/fall2013_hong_kong_cone/fall2013_hong_kong_cone_soldier.mdl");
+		SetEntProp(npc.m_iWearable6, Prop_Send, "m_nSkin", 1);
 
 		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
 		SetVariantInt(2);
 		AcceptEntityInput(npc.index, "SetBodyGroup");
+
+		EmitSoundToAll("npc/zombie_poison/pz_alert1.wav", _, _, _, _, 1.0);	
+		EmitSoundToAll("npc/zombie_poison/pz_alert1.wav", _, _, _, _, 1.0);	
+
+		for(int client_clear=1; client_clear<=MaxClients; client_clear++)
+		{
+			fl_AlreadyStrippedMusic[client_clear] = 0.0; //reset to 0
+		}
+		
+		BlockLoseSay = false;
+
+		bool final = StrContains(data, "final_item") != -1;
+		
+		if(final)
+		{
+			i_RaidGrantExtra[npc.index] = 6;
+		}
+		for(int client_check=1; client_check<=MaxClients; client_check++)
+		{
+			if(IsClientInGame(client_check) && !IsFakeClient(client_check))
+			{
+				LookAtTarget(client_check, npc.index);
+				SetGlobalTransTarget(client_check);
+				ShowGameText(client_check, "item_armor", 1, "%t", "Taishimo has arrived");
+			}
+		}
+
+		char buffers[3][64];
+		ExplodeString(data, ";", buffers, sizeof(buffers), sizeof(buffers[]));
+		//the very first and 2nd char are SC for scaling
+		if(buffers[0][0] == 's' && buffers[0][1] == 'c')
+		{
+			//remove SC
+			ReplaceString(buffers[0], 64, "sc", "");
+			float value = StringToFloat(buffers[0]);
+			RaidModeScaling = value;
+
+			if(RaidModeScaling < 35)
+			{
+				RaidModeScaling *= 0.25; //abit low, inreacing
+			}
+			else
+			{
+				RaidModeScaling *= 0.5;
+			}
+
+			if(value > 40.0)
+			{
+				RaidModeScaling *= 0.85;
+			}
+			
+		}
+		else
+		{	
+			RaidModeScaling = float(Waves_GetRoundScale()+1);
+			if(RaidModeScaling < 35)
+			{
+				RaidModeScaling *= 0.25; //abit low, inreacing
+			}
+			else
+			{
+				RaidModeScaling *= 0.5;
+			}
+				
+			if(Waves_GetRoundScale()+1 > 25)
+			{
+				RaidModeScaling *= 0.85;
+			}
+		}
+		float amount_of_people = ZRStocks_PlayerScalingDynamic();
+		if(amount_of_people > 12.0)
+		{
+			amount_of_people = 12.0;
+		}
+		amount_of_people *= 0.12;
+		
+		if(amount_of_people < 1.0)
+			amount_of_people = 1.0;
+
+		RaidModeScaling *= amount_of_people; //More then 9 and he raidboss gets some troubles, bufffffffff
+
+		RemoveAllDamageAddition();
+
+		if(StrContains(data, "timeout") != -1)
+		{
+			RaidModeTime = gameTime + 10.0;
+		}
 
 		npc.StartPathing();
 		return npc;
 	}
 }
 
-static void ClotThink(int iNPC)
+static void NPCTalkMessage(int entity, const char[] message)
 {
-	Taishimo npc = view_as<Taishimo>(iNPC);
+	PrintNPCMessageWithPrefixes(entity, "black", message);
+}
 
+
+
+static void OshimunoTaishimo_Think(int iNPC)
+{
+	OshimunoTaishimo npc = view_as<OshimunoTaishimo>(iNPC);
 	float gameTime = GetGameTime(npc.index);
 	if(npc.m_flNextDelayTime > gameTime)
+	{
 		return;
-	
+	}
 	npc.m_flNextDelayTime = gameTime + DEFAULT_UPDATE_DELAY_FLOAT;
 	npc.Update();
 
-	if(npc.m_blPlayHurtAnimation)
+	if(LastMann)
 	{
-		npc.AddGesture("ACT_MP_GESTURE_FLINCH_CHEST", false);
-		npc.PlayHurtSound();
-		npc.m_blPlayHurtAnimation = false;
+		if(!npc.m_fbGunout)
+		{
+			npc.m_fbGunout = true;
+			NPCTalkMessage(npc.index, "Last Noob Left.");
+		}
 	}
-	
-	if(npc.m_flNextThinkTime > gameTime)
+	if(i_RaidGrantExtra[npc.index] == RAIDITEM_INDEX_WIN_COND)
+	{
+		npc.m_bisWalking = false;
+		npc.AddActivityViaSequence("selectionMenu_Idle");
+		npc.SetCycle(0.01);
+		func_NPCThink[npc.index] = INVALID_FUNCTION;
+		
+		NPCTalkMessage(npc.index, "GG EZs.");
 		return;
-	
-	npc.m_flNextThinkTime = gameTime + 0.1;
 
+	}	
 	int target = npc.m_iTarget;
 	if(i_Target[npc.index] != -1 && !IsValidEnemy(npc.index, target))
 		i_Target[npc.index] = -1;
@@ -185,118 +403,529 @@ static void ClotThink(int iNPC)
 		npc.m_iTarget = target;
 		npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
 	}
-	
-	if(target > 0)
+
+	if(OshimunoTaishimoSlash_Do(npc, gameTime))
 	{
-		float vecTarget[3]; WorldSpaceCenter(target, vecTarget);
-		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
-		float distance = GetVectorDistance(vecTarget, VecSelfNpc, true);	
-		
-		if(distance < npc.GetLeadRadius())
+		return;
+	}
+	
+	if(!BlockLoseSay && RaidModeTime < gameTime)
+	{
+		ApplyStatusEffect(npc.index, npc.index, "Perfected Instinct", 999999.9);
+		fl_Extra_Speed[npc.index] 	*= 1.25;
+		if(!npc.Anger)
 		{
-			float vPredictedPos[3]; PredictSubjectPosition(npc, target,_,_, vPredictedPos);
-			npc.SetGoalVector(vPredictedPos);
+			fl_TotalArmor[npc.index] *= 0.5;
+			f_AttackSpeedNpcIncrease[npc.index] *= 0.65;
 		}
-		else 
-		{
-			npc.SetGoalEntity(target);
-		}
-		TaishimoSelfDefense(npc, distance, vecTarget, gameTime); 
+		npc.Anger = true;
+		npc.m_iSaiyanState = 999;
+		RaidModeTime = FAR_FUTURE;
+		f_AttackSpeedNpcIncrease[npc.index] *= 0.85;
+		RaidModeScaling *= 1.5;
 	}
 
-	npc.PlayIdleSound();
+	
+	if(npc.m_blPlayHurtAnimation)
+	{
+		npc.AddGesture("ACT_MP_GESTURE_FLINCH_CHEST", false);
+		npc.m_blPlayHurtAnimation = false;
+		npc.PlayHurtSound();
+	}
+
+	if(!IsValidEntity(RaidBossActive))
+	{
+		RaidBossActive = EntIndexToEntRef(npc.index);
+	}
+
+	if(npc.m_flGetClosestTargetTime < gameTime)
+	{
+		npc.m_iTarget = GetClosestTarget(npc.index);
+		npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
+	}
+	
+	if(IsValidEnemy(npc.index, npc.m_iTarget))
+	{
+		float vecTarget[3]; WorldSpaceCenter(npc.m_iTarget, vecTarget );
+		float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
+		float flDistanceToTarget = GetVectorDistance(vecTarget, VecSelfNpc, true);
+		int SetGoalVectorIndex = 0;
+		SetGoalVectorIndex = OshimunoTaishimo_SelfDefense(npc, gameTime, npc.m_iTarget, flDistanceToTarget); 
+
+		switch(SetGoalVectorIndex)
+		{
+			case 0:
+			{
+				npc.m_bAllowBackWalking = false;
+				//Get the normal prediction code.
+				if(flDistanceToTarget < npc.GetLeadRadius()) 
+				{
+					float vPredictedPos[3];
+					PredictSubjectPosition(npc, npc.m_iTarget,_,_, vPredictedPos);
+					npc.SetGoalVector(vPredictedPos);
+				}
+				else 
+				{
+					npc.SetGoalEntity(npc.m_iTarget);
+				}
+			}
+			case 1:
+			{
+				npc.m_bAllowBackWalking = true;
+				float vBackoffPos[3];
+				BackoffFromOwnPositionAndAwayFromEnemy(npc, npc.m_iTarget,_,vBackoffPos);
+				npc.SetGoalVector(vBackoffPos, true); //update more often, we need it
+			}
+		}
+	}
+
+	if(npc.m_flDoingAnimation < gameTime)
+	{
+		OshimunoTaishimoAnimationChange(npc);
+	}
 }
 
-void TaishimoSelfDefense(Taishimo npc, float distance, float vecTarget[3], float gameTime)
+static Action OshimunoTaishimo_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
+	OshimunoTaishimo npc = view_as<OshimunoTaishimo>(victim);
+	float gameTime = GetGameTime(npc.index);
+		
+	if(attacker <= 0)
+		return Plugin_Continue;
+
+	if (npc.m_flHeadshotCooldown < gameTime)
+	{
+		npc.m_flHeadshotCooldown = gameTime + DEFAULT_HURTDELAY;
+		npc.m_blPlayHurtAnimation = true;
+	}
+	return Plugin_Changed;
+}
+public void OshimunoTaishimo_Win(int entity)
+{
+	i_RaidGrantExtra[entity] = RAIDITEM_INDEX_WIN_COND;
+	BlockLoseSay = true;
+	NPCTalkMessage(entity, "get owned.");
+}
+
+static void OshimunoTaishimo_Death(int entity)
+{
+	RaidBossActive = INVALID_ENT_REFERENCE;
+	if(BlockLoseSay)
+		return;
+
+	NPCTalkMessage(entity, "Nvm fuck you i made it all up.");
+	NPCTalkMessage(entity, "*dies of death*");
+}
+
+void OshimunoTaishimoAnimationChange(OshimunoTaishimo npc)
+{
+	
+	if(npc.m_iChanged_WalkCycle == 0)
+	{
+		npc.m_iChanged_WalkCycle = -1;
+	}
+
+	if (npc.IsOnGround())
+	{
+		if(npc.m_iChanged_WalkCycle != 3)
+		{
+		//	ResetOshimunoTaishimoWeapon(npc, 0);
+			npc.m_flSpeed = 320.0;
+			npc.m_bisWalking = true;
+			npc.m_iChanged_WalkCycle = 3;
+			npc.SetActivity("ACT_MP_RUN_MELEE");
+			npc.StartPathing();
+		}	
+	}
+	else
+	{
+		if(npc.m_iChanged_WalkCycle != 4)
+		{
+		//	ResetOshimunoTaishimoWeapon(npc, 0);
+			npc.m_flSpeed = 320.0;
+			npc.m_bisWalking = false;
+			npc.m_iChanged_WalkCycle = 4;
+			npc.SetActivity("ACT_MP_JUMP_FLOAT_MELEE");
+			npc.StartPathing();
+		}	
+	}
+
+}
+
+int OshimunoTaishimo_SelfDefense(OshimunoTaishimo npc, float gameTime, int target, float distance)
+{
+	if(npc.m_iWhatAbilityDo == 2)
+	{	
+		return 0;
+	}
 	if(npc.m_flAttackHappens)
 	{
-		if(npc.m_flAttackHappens < gameTime)
+		if(npc.m_flAttackHappens < GetGameTime(npc.index))
 		{
 			npc.m_flAttackHappens = 0.0;
 			
-			Handle swingTrace;
-			npc.FaceTowards(vecTarget, 15000.0);
-			if(npc.DoSwingTrace(swingTrace, npc.m_iTarget, _, _, _, _))
+			if(IsValidEnemy(npc.index, target))
 			{
-				int target = TR_GetEntityIndex(swingTrace);
-				if(target > 0)
+				int HowManyEnemeisAoeMelee = 64;
+				Handle swingTrace;
+				float VecEnemy[3]; WorldSpaceCenter(npc.m_iTarget, VecEnemy);
+				npc.FaceTowards(VecEnemy, 15000.0);
+				npc.DoSwingTrace(swingTrace, npc.m_iTarget,_,_,_,1,_,HowManyEnemeisAoeMelee);
+				delete swingTrace;
+				bool PlaySound = false;
+				for(int counter = 1; counter <= HowManyEnemeisAoeMelee; counter++)
 				{
-					float damage = 60.0;
-					if(ShouldNpcDealBonusDamage(target))
+					if(i_EntitiesHitAoeSwing_NpcSwing[counter] > 0)
 					{
-						damage *= 3.0;
-						if(npc.m_iAttacksLeft > 0)
+						if(IsValidEntity(i_EntitiesHitAoeSwing_NpcSwing[counter]))
 						{
-							damage *= 6.0;
+							PlaySound = true;
+							int targetTrace = i_EntitiesHitAoeSwing_NpcSwing[counter];
+							float vecHit[3];
+							
+							WorldSpaceCenter(targetTrace, vecHit);
+							float damage = 15.0;
+							SDKHooks_TakeDamage(targetTrace, npc.index, npc.index, damage * RaidModeScaling, DMG_CLUB, -1, _, vecHit);								
+							bool Knocked = false;
+										
+							if(IsValidClient(targetTrace))
+							{
+								if(IsInvuln(targetTrace))
+								{
+									Knocked = true;
+									Custom_Knockback(npc.index, targetTrace, 900.0, true);
+									if(!NpcStats_IsEnemySilenced(npc.index))
+									{
+										TF2_AddCondition(targetTrace, TFCond_LostFooting, 0.5);
+										TF2_AddCondition(targetTrace, TFCond_AirCurrent, 0.5);
+									}
+								}
+							}
+							if(!Knocked)
+								Custom_Knockback(npc.index, targetTrace, 250.0, true); 
 						}
-					}
-					else
-					{
-						if(npc.m_iAttacksLeft > 0)
-						{
-							damage *= 1.15;
-						}
-					}
-
-					npc.PlayMeleeHitSound();
-					SDKHooks_TakeDamage(target, npc.index, npc.index, damage, DMG_CLUB);
-					
-					npc.m_iAttacksLeft--;
-					if(npc.m_iAttacksLeft == 0)
-					{
-						if(IsValidEntity(npc.m_iWearable1))
-							RemoveEntity(npc.m_iWearable1);
-
-						npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_paintrain/c_paintrain.mdl");
-						npc.DispatchParticleEffect(npc.index, "mvm_pow_gold_seq_wood2", NULL_VECTOR, NULL_VECTOR, NULL_VECTOR, npc.FindAttachment("effect_hand_R"), PATTACH_ABSORIGIN, true);
-						npc.PlayMeleeBroke();
-						//break melee
 					}
 				}
+				if(PlaySound)
+				{
+					npc.PlayMeleeHitSound();
+				}
 			}
-
-			delete swingTrace;
 		}
 	}
-
-	if(distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) && npc.m_flNextMeleeAttack < gameTime)
+	//Melee attack, last prio
+	else if(GetGameTime(npc.index) > npc.m_flNextMeleeAttack)
 	{
-		int target = Can_I_See_Enemy(npc.index, npc.m_iTarget);
-		if(IsValidEnemy(npc.index, target, false, true))
+		if(IsValidEnemy(npc.index, target)) 
 		{
-			npc.m_iTarget = target;
+			if(distance < (GIANT_ENEMY_MELEE_RANGE_FLOAT_SQUARED))
+			{
+				int Enemy_I_See;
+									
+				Enemy_I_See = Can_I_See_Enemy(npc.index, target);
+						
+				if(IsValidEntity(Enemy_I_See) && IsValidEnemy(npc.index, Enemy_I_See))
+				{
+					target = Enemy_I_See;
 
-			npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
-			npc.PlayMeleeSound();
-			
-			npc.m_flAttackHappens = gameTime + 0.25;
-			npc.m_flNextMeleeAttack = gameTime + 0.75;
+					npc.PlayMeleeSound();
+					npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 2.0);
+							
+					npc.m_flAttackHappens = gameTime + 0.1;
+					npc.m_flNextMeleeAttack = gameTime + 0.5;
+					npc.m_flDoingAnimation = gameTime + 0.6;
+				}
+			}
 		}
+		else
+		{
+			npc.m_flGetClosestTargetTime = 0.0;
+			npc.m_iTarget = GetClosestTarget(npc.index);
+		}	
+	}
+	return 0;
+}
+
+//200 offset
+bool OshimunoTaishimoSlash_Do(OshimunoTaishimo npc, float gameTime)
+{
+	if(npc.m_iWhatAbilityDo != 1 && npc.m_iWhatAbilityDo != 0)
+		return false;
+	if(npc.m_flDoingAnimation < gameTime)
+	{
+		if(npc.m_flSlashFlurry < gameTime)
+		{
+			if(!IsValidEnemy(npc.index, npc.m_iTarget))
+				return false;
+			if(!Can_I_See_Enemy_Only(npc.index, npc.m_iTarget))
+				return false;
+			npc.m_flSlashFlurry = gameTime + 25.0;
+			npc.m_flDoingAnimation = gameTime + 1.5;
+			npc.m_bisWalking = false;
+			npc.StopPathing();
+			npc.m_iChanged_WalkCycle = 200;
+			npc.AddActivityViaSequence("taunt03");
+			npc.SetPlaybackRate(0.65);
+			npc.SetCycle(0.05);
+			npc.m_iWhatAbilityDo = 1;
+		}
+	}
+	if(npc.m_iWhatAbilityDo != 1)
+		return false;
+		
+	int CurrentShotAt = npc.m_iChanged_WalkCycle - 200;
+	if(CurrentShotAt > 12)
+	{
+		npc.m_iWhatAbilityDo = 0;
+		npc.m_flDoingAnimation = 0.0;
+		return false;
+	}
+	if(npc.m_flDoingAnimation < gameTime)
+	{
+		npc.SetPlaybackRate(2.5);
+		npc.SetCycle(0.38);
+		npc.m_iChanged_WalkCycle++;
+		if(IsValidEnemy(npc.index, npc.m_iTarget))
+		{
+			float vecTarget[3]; WorldSpaceCenter(npc.m_iTarget, vecTarget);
+			float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
+			float ProjectileSpeed = 1200.0;
+			float SliceDamage = 50.0 * RaidModeScaling;
+			npc.FaceTowards(vecTarget, 20000.0);
+			float Min, Max;
+			int slicers;
+			switch(npc.m_iOverlordComboAttack) // switches between 3 and 4 slashes
+			{
+				case 0:
+				{
+					Min = -12.0;
+					Max = 12.0;
+					slicers = 3;
+					for(int i=0 ; i < slicers ; i++)
+					{
+						float shoot_ang[3];
+						shoot_ang[1] = Min + (Max - Min) * (float(i) / float(slicers - 1));
+
+						NemalAirSlice(npc.index, npc.m_iTarget, SliceDamage, shoot_ang, 255, 50, 50, 100.0, 8, ProjectileSpeed, "raygun_projectile_red", false, true, false);
+					}
+					npc.m_iOverlordComboAttack = 1;
+				}
+				case 1:
+				{
+					Min = -18.0;
+					Max = 18.0;
+					slicers = 4;
+					for(int i=0 ; i < slicers ; i++)
+					{
+						float shoot_ang[3];
+						shoot_ang[1] = Min + (Max - Min) * (float(i) / float(slicers - 1));
+
+						NemalAirSlice(npc.index, npc.m_iTarget, SliceDamage, shoot_ang, 255, 50, 50, 100.0, 8, ProjectileSpeed, "raygun_projectile_red", false, true, false);
+					}
+					npc.m_iOverlordComboAttack = 0;
+				}
+			}
+        }
+		npc.m_flDoingAnimation = gameTime + 0.7;
+	}
+	return true;
+}
+
+
+//300 offset
+static bool OshimunoTaishimo_LinePhase(OshimunoTaishimo npc, float gameTime)
+{
+	if(npc.m_flLineAoeDetonate)
+	{
+		if(npc.m_flLineAoeDetonate > gameTime)
+		{
+			OshimunoTaishimoLineDraw(npc, gameTime);
+		}
+		else
+		{
+			OshimunoTaishimoLineDetonate(npc);
+			EmitSoundToAll(g_TaishimoLineWindUpSound, _, _, _, _, 1.0);
+			npc.m_flLineAoeDetonate = 0.0;
+			npc.m_flLineAoeFade = gameTime + TAISHIMO_LINE_FADE_TIME;
+			npc.m_flLineAoeFadeDraw = 0.0;
+			int color[4];
+			color[0] = 255;
+			color[1] = 0;
+			color[2] = 0;
+			color[3] = 255;
+			OshimunoTaishimoLineDrawShape(npc, 0.0, color, 0.1);
+			RequestFrame(OshimunoTaishimoLineFadeFrame, EntIndexToEntRef(npc.index));
+			npc.m_flDoingAnimation = gameTime + (TAISHIMO_LINE_FADE_TIME * 2.0);
+		}
+		return true;
+	}
+	if(npc.m_flDoingAnimation > gameTime)
+		return true;
+
+	float pos[3];
+	GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+	f3_NpcSavePos[npc.index] = pos;
+
+	float at[3];
+	GetClientAbsOrigin(npc.m_iTarget, at);
+	float dx = at[0] - pos[0];
+	float dy = at[1] - pos[1];
+	float length = SquareRoot((dx * dx) + (dy * dy)) + TAISHIMO_LINE_PADDING;
+
+	float yawDeg;
+	if(((dx * dx) + (dy * dy)) >= 1.0)
+	{
+		yawDeg = ArcTangent2(dy, dx) * 180.0 / FLOAT_PI;
+	}
+	else
+	{
+		float ang[3];
+		GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+		yawDeg = ang[1];
+	}
+
+	npc.m_flLineAoeDetonate = gameTime + TAISHIMO_LINE_DETONATE_TIME;
+	OshimunoTaishimoLineDraw(npc, gameTime);
+	return true;
+}
+
+static void OshimunoTaishimo_LinePhaseEnd(OshimunoTaishimo npc, float gameTime)
+{
+	RemoveSpecificBuff(npc.index, "Intangible");
+	f_CheckIfStuckPlayerDelay[npc.index] = 1.0;
+	b_ThisEntityIgnoredBeingCarried[npc.index] = false;
+	npc.m_iWhatAbilityDo = 0;
+	npc.m_iChanged_WalkCycle = 0;
+	npc.m_flDoingAnimation = 0.0;
+	npc.StartPathing();
+	npc.m_bisWalking = true;
+}
+
+static void OshimunoTaishimoLineDraw(OshimunoTaishimo npc, float gameTime)
+{
+	float remaining = npc.m_flLineAoeDetonate - gameTime;
+	if(remaining < 0.0)
+		remaining = 0.0;
+
+	int color[4];
+	color[0] = 255;
+	color[1] = RoundToNearest(255.0 * (remaining / TAISHIMO_LINE_DETONATE_TIME));
+	color[2] = 0;
+	color[3] = 255;
+	OshimunoTaishimoLineDrawShape(npc, 0.0, color, 0.15);
+}
+
+static void OshimunoTaishimoLineDrawShape(OshimunoTaishimo npc, float expand, const int color[4], float life)
+{
+	float yawRad = npc.m_flLineAoeYaw * FLOAT_PI / 180.0;
+	float fwdX = Cosine(yawRad);
+	float fwdY = Sine(yawRad);
+	float leftX = -fwdY;
+	float leftY = fwdX;
+
+	float anchor[3];
+	anchor = f3_NpcSavePos[npc.index];
+	anchor[2] += 4.0;
+	anchor[0] -= fwdX * expand;
+	anchor[1] -= fwdY * expand;
+
+	float length = TAISHIMO_LINE_LENGTH + (expand * 2.0);
+	float halfWidth = (TAISHIMO_LINE_WIDTH * 0.5) + expand;
+	float c1[3], c2[3], c3[3], c4[3];
+	c1[0] = anchor[0] + (leftX * halfWidth);
+	c1[1] = anchor[1] + (leftY * halfWidth);
+	c1[2] = anchor[2];
+	c2[0] = anchor[0] - (leftX * halfWidth);
+	c2[1] = anchor[1] - (leftY * halfWidth);
+	c2[2] = anchor[2];
+	c3[0] = c1[0] + (fwdX * length);
+	c3[1] = c1[1] + (fwdY * length);
+	c3[2] = anchor[2];
+	c4[0] = c2[0] + (fwdX * length);
+	c4[1] = c2[1] + (fwdY * length);
+	c4[2] = anchor[2];
+
+	TE_SetupBeamPoints(c1, c2, g_TaishimoLineLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+	TE_SendToAll();
+	TE_SetupBeamPoints(c1, c3, g_TaishimoLineLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+	TE_SendToAll();
+	TE_SetupBeamPoints(c2, c4, g_TaishimoLineLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+	TE_SendToAll();
+	TE_SetupBeamPoints(c3, c4, g_TaishimoLineLaser, -1, 0, 0, life, 4.0, 4.0, 0, 0.0, color, 0);
+	TE_SendToAll();
+}
+
+static void OshimunoTaishimoLineDetonate(OshimunoTaishimo npc)
+{
+	float yawRad = npc.m_flLineAoeYaw * FLOAT_PI / 180.0;
+	float fwdX = Cosine(yawRad);
+	float fwdY = Sine(yawRad);
+	float leftX = -fwdY;
+	float leftY = fwdX;
+
+	float anchor[3];
+	anchor = f3_NpcSavePos[npc.index];
+
+	float halfWidth = (TAISHIMO_LINE_WIDTH * 0.5) + 24.0;
+	for(int client = 1; client <= MaxClients; client++)
+	{
+		if(!IsClientInGame(client) || !IsPlayerAlive(client) || GetClientTeam(client) != TFTeam_Red)
+			continue;
+
+		float pos[3];
+		GetClientAbsOrigin(client, pos);
+		float dx = pos[0] - anchor[0];
+		float dy = pos[1] - anchor[1];
+		float dz = pos[2] - anchor[2];
+		if(dz > 120.0 || dz < -120.0)
+			continue;
+
+		float fwdDist = (dx * fwdX) + (dy * fwdY);
+		if(fwdDist < -24.0 || fwdDist > (TAISHIMO_LINE_LENGTH + 24.0))
+			continue;
+
+		float leftDist = (dx * leftX) + (dy * leftY);
+		if(FloatAbs(leftDist) > halfWidth)
+			continue;
+
+		float at[3];
+		WorldSpaceCenter(client, at);
+		npc.PlayMeleeHitSound();
+		SDKHooks_TakeDamage(client, npc.index, npc.index, TAISHIMO_LINE_DAMAGE * RaidModeScaling, DMG_CLUB, -1, _, at);
 	}
 }
-static void ClotDeath(int entity)
+
+static void OshimunoTaishimoLineFadeFrame(any ref)
 {
-	Taishimo npc = view_as<Taishimo>(entity);
+	int entity = EntRefToEntIndex(ref);
+	if(entity <= MaxClients || !IsValidEntity(entity))
+		return;
 
-	if(!npc.m_bGib)
-		npc.PlayDeathSound();
-	
-	if(IsValidEntity(npc.m_iWearable1))
-		RemoveEntity(npc.m_iWearable1);
-	
-	if(IsValidEntity(npc.m_iWearable2))
-		RemoveEntity(npc.m_iWearable2);
-	
-	if(IsValidEntity(npc.m_iWearable3))
-		RemoveEntity(npc.m_iWearable3);
-	
-	if(IsValidEntity(npc.m_iWearable4))
-		RemoveEntity(npc.m_iWearable4);
-	
-	if(IsValidEntity(npc.m_iWearable5))
-		RemoveEntity(npc.m_iWearable5);
+	OshimunoTaishimo npc = view_as<OshimunoTaishimo>(entity);
+	float gameTime = GetGameTime(npc.index);
+	if(!npc.m_flLineAoeFade)
+		return;
 
-	if(IsValidEntity(npc.m_iWearable6))
-		RemoveEntity(npc.m_iWearable6);
+	if(npc.m_flLineAoeFade <= gameTime)
+	{
+		npc.m_flLineAoeFade = 0.0;
+		return;
+	}
+
+	if(gameTime >= npc.m_flLineAoeFadeDraw)
+	{
+		npc.m_flLineAoeFadeDraw = gameTime + TAISHIMO_LINE_FADE_STEP;
+
+		float frac = 1.0 - ((npc.m_flLineAoeFade - gameTime) / TAISHIMO_LINE_FADE_TIME);
+		if(frac < 0.0)
+			frac = 0.0;
+
+		int color[4];
+		color[0] = RoundToNearest(255.0 * (1.0 - frac));
+		color[1] = 0;
+		color[2] = 0;
+		color[3] = RoundToNearest(255.0 * (1.0 - frac));
+		OshimunoTaishimoLineDrawShape(npc, TAISHIMO_LINE_SPREAD * frac, color, 0.1);
+	}
+	RequestFrame(OshimunoTaishimoLineFadeFrame, ref);
 }
