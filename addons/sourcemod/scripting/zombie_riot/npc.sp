@@ -1267,6 +1267,7 @@ void NPC_ConfigSetup()
 	if(HasNTOnServer())
 		NPC_GetByPlugin("npc_nothing_there");
 	
+	OshimunoMuhonoFollowerOnMapStart();
 	OshimunoTaishimoOnMapStart();
 	OshimunoAntayotoOnMapStart();
 	OshimunoTrashManOnMapStart();
@@ -2838,6 +2839,7 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/construction/construction2/npc_starship_beacon.sp"
 #include "npc/construction/npc_dungeon_loot.sp"
 
+#include "npc/oshimuno/npc_oshimuno_muhono_follower.sp"
 #include "npc/oshimuno/npc_oshimuno_taishimo.sp"
 #include "npc/oshimuno/npc_oshimuno_antayoto.sp"
 #include "npc/oshimuno/npc_oshimuno_bouncer.sp"

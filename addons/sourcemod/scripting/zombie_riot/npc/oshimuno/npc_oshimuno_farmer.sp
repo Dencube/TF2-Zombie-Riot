@@ -50,11 +50,11 @@ static const char g_WindUpEndSounds[][] =
 #define INITIAL_TREE_SPAWN_COOLDOWN 10.0
 #define TREE_SPAWN_COOLDOWN 25.0
 
-#define FARMER_LINE_WIDTH 180.0
+#define FARMER_LINE_WIDTH 60.0
 #define FARMER_LINE_LENGTH 900.0
-#define FARMER_LINE_GAP 125.0
-#define FARMER_LINE_START 30.0
-#define FARMER_LINE_TIME 1.2
+#define FARMER_LINE_GAP 75.0
+#define FARMER_LINE_START -10.0
+#define FARMER_LINE_TIME 1.4
 #define FARMER_LINE_SWING_LEAD 0.75
 #define FARMER_LINE_SWING_DELAY 0.1953
 #define FARMER_LINE_IMPACT_DELAY (-0.04)
@@ -62,7 +62,7 @@ static const char g_WindUpEndSounds[][] =
 #define FARMER_LINE_SPREAD 75.0
 #define FARMER_LINE_FADE_STEP 0.045
 #define FARMER_LINE_DAMAGE 30.0
-#define FARMER_LINE_SWINGS 5
+#define FARMER_LINE_SWINGS 3
 
 static int g_FarmerLineLaser = -1;
 static const char g_FarmerLineWindUpSound[] = "misc/halloween/strongman_fast_swing_01.wav";
@@ -417,10 +417,12 @@ static void ClotThink(int iNPC)
 			case 1:
 			{
 				fl_TotalArmor[npc.index] = 0.825;
+				npc.m_flSpeed = 345.0;
 			}
 			case 2:
 			{
 				fl_TotalArmor[npc.index] = 0.70;
+				npc.m_flSpeed = 345.0;
 			}
 			case 3:
 			{
@@ -446,7 +448,6 @@ static void ClotThink(int iNPC)
 	}
 	if(!BlockLoseSay && RaidModeTime < GetGameTime()) // time out
 	{
-		
 		RaidModeTime = FAR_FUTURE;
 		RaidModeScaling *= 1.5;
 		/*TreeCount = TreeCount + 20;*/
@@ -481,16 +482,16 @@ void OshimunoFarmerSelfDefense(OshimunoFarmer npc, float distance, float vecTarg
 							Custom_Knockback(npc.index, target, 700.0, true);
 							if(!NpcStats_IsEnemySilenced(npc.index))
 							{
-								TF2_AddCondition(target, TFCond_LostFooting, 0.5);
-								TF2_AddCondition(target, TFCond_AirCurrent, 0.5);
+								TF2_AddCondition(target, TFCond_LostFooting, 0.3);
+								TF2_AddCondition(target, TFCond_AirCurrent, 0.3);
 							}
 						}
 						else
 						{
 							if(!NpcStats_IsEnemySilenced(npc.index))
 							{
-								TF2_AddCondition(target, TFCond_LostFooting, 0.5);
-								TF2_AddCondition(target, TFCond_AirCurrent, 0.5);
+								TF2_AddCondition(target, TFCond_LostFooting, 0.3);
+								TF2_AddCondition(target, TFCond_AirCurrent, 0.3);
 							}
 						}
 					}
@@ -601,7 +602,7 @@ static void OshimunoFarmerLineAoeDrawRects(OshimunoFarmer npc, float expand, con
 
 	float length = FARMER_LINE_LENGTH + (expand * 2.0);
 	float halfWidth = (FARMER_LINE_WIDTH * 0.5) + expand;
-	for(int line = -1; line <= 1; line++)
+	for(int line = -2; line <= 2; line++)
 	{
 		float off = float(line) * (FARMER_LINE_GAP + FARMER_LINE_WIDTH);
 		float c1[3], c2[3], c3[3], c4[3];
@@ -709,8 +710,8 @@ static void OshimunoFarmerLineAoeDetonate(OshimunoFarmer npc)
 		float AngleVec[3];
 		MakeVectorFromPoints(VecMe, VecEnemy, AngleVec);
 		GetVectorAngles(AngleVec, AngleVec);
-		AngleVec[0] = -90.0;
-		Custom_Knockback(npc.index, client, 900.0, true, true, true, .OverrideLookAng = AngleVec);
+		AngleVec[0] = -60.0;
+		Custom_Knockback(npc.index, client, 1000.0, true, true, true, .OverrideLookAng = AngleVec);
 		ApplyStatusEffect(npc.index, client, "Ragdolled", 1.5);	
 		FreezeNpcInTime(client, 1.5);
 	}
@@ -740,6 +741,7 @@ static Action OshimunoFarmerOnTakeDamage(int victim, int &attacker, int &inflict
 
 	return Plugin_Changed;
 }
+
 bool OshimunoFarmerTransform(OshimunoFarmer npc)
 {
 	if(!npc.m_flTransformIn)

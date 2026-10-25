@@ -14,6 +14,7 @@
 #define TAISHIMO_LINE_FADE_TIME 0.15
 #define TAISHIMO_LINE_FADE_STEP 0.045
 #define TAISHIMO_LINE_DETONATE_TIME 1.0
+#define TAISHIMO_LINE_COUNT 8
 
 static const char g_DeathSounds[][] =
 {
@@ -128,7 +129,7 @@ methodmap OshimunoTaishimo < CClotBody
 		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
-	property float m_flCongaFastDo
+	property float m_flMassAoeSlashes
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
@@ -408,7 +409,37 @@ static void OshimunoTaishimo_Think(int iNPC)
 	{
 		return;
 	}
-	
+	if(OshimunoTaishimo_MassAoeSlashes(npc, gameTime))
+	{
+		return;
+	}
+
+	if(npc.m_flLineAoeDetonate)
+	{
+		if(npc.m_flLineAoeDetonate > gameTime)
+		{
+			OshimunoTaishimoLineAoeDraw(npc, gameTime);
+		}
+		else
+		{
+			OshimunoTaishimoLineAoeDetonate(npc);
+			npc.PlayWindUpEndSounds();
+			npc.m_flLineAoeDetonate = 0.0;
+			npc.m_flLineAoeFade = gameTime + TAISHIMO_LINE_FADE_TIME;
+			npc.m_flLineAoeFadeDraw = gameTime + TAISHIMO_LINE_FADE_STEP;
+			int color[4];
+			color[0] = 255;
+			color[1] = 0;
+			color[2] = 0;
+			color[3] = 255;
+			OshimunoTaishimoLineAoeDrawRects(npc, 0.0, color, 0.1);
+			RequestFrame(TaishimoLineFadeFrame, EntIndexToEntRef(npc.index));
+			npc.StartPathing();
+			npc.m_bisWalking = true;
+		}
+		return;
+	}
+
 	if(!BlockLoseSay && RaidModeTime < gameTime)
 	{
 		ApplyStatusEffect(npc.index, npc.index, "Perfected Instinct", 999999.9);
@@ -678,6 +709,7 @@ bool OshimunoTaishimoSlash_Do(OshimunoTaishimo npc, float gameTime)
 	{
 		npc.m_iWhatAbilityDo = 0;
 		npc.m_flDoingAnimation = 0.0;
+		OshimunoTaishimoLineAoeStart(npc, gameTime);
 		return false;
 	}
 	if(npc.m_flDoingAnimation < gameTime)
@@ -730,78 +762,80 @@ bool OshimunoTaishimoSlash_Do(OshimunoTaishimo npc, float gameTime)
 	}
 	return true;
 }
-
-
-//300 offset
-static bool OshimunoTaishimo_LinePhase(OshimunoTaishimo npc, float gameTime)
+bool OshimunoTaishimo_MassAoeSlashes(OshimunoTaishimo npc, float gameTime)
 {
-	if(npc.m_flLineAoeDetonate)
+	if(npc.m_iWhatAbilityDo != 2 && npc.m_iWhatAbilityDo != 0)
+		return false;
+	if(npc.m_flDoingAnimation < gameTime)
 	{
-		if(npc.m_flLineAoeDetonate > gameTime)
+		if(npc.m_flMassAoeSlashes < gameTime)
 		{
-			OshimunoTaishimoLineDraw(npc, gameTime);
+			if(!IsValidEnemy(npc.index, npc.m_iTarget))
+				return false;
+			if(!Can_I_See_Enemy_Only(npc.index, npc.m_iTarget))
+				return false;
+
+			npc.m_flSpeed = 720.0;
+			npc.m_flMassAoeSlashes = gameTime + 35.0;
+			npc.m_flDoingAnimation = gameTime + 2.0;
+			npc.m_bisWalking = false;
+			npc.StopPathing();
+			npc.m_iChanged_WalkCycle = 300;
+			npc.AddActivityViaSequence("taunt05");
+			npc.m_iWhatAbilityDo = 2;
 		}
-		else
-		{
-			OshimunoTaishimoLineDetonate(npc);
-			EmitSoundToAll(g_TaishimoLineWindUpSound, _, _, _, _, 1.0);
-			npc.m_flLineAoeDetonate = 0.0;
-			npc.m_flLineAoeFade = gameTime + TAISHIMO_LINE_FADE_TIME;
-			npc.m_flLineAoeFadeDraw = 0.0;
-			int color[4];
-			color[0] = 255;
-			color[1] = 0;
-			color[2] = 0;
-			color[3] = 255;
-			OshimunoTaishimoLineDrawShape(npc, 0.0, color, 0.1);
-			RequestFrame(OshimunoTaishimoLineFadeFrame, EntIndexToEntRef(npc.index));
-			npc.m_flDoingAnimation = gameTime + (TAISHIMO_LINE_FADE_TIME * 2.0);
-		}
-		return true;
 	}
-	if(npc.m_flDoingAnimation > gameTime)
-		return true;
+	if(npc.m_iWhatAbilityDo != 2)
+		return false;
+}
+static void OshimunoTaishimoLineAoeStart(OshimunoTaishimo npc, float gameTime)
+{
+	npc.m_flAttackHappens = 0.0;
+	npc.StopPathing();
+	npc.m_bisWalking = false;
+	npc.m_flLineAoeDetonate = gameTime + TAISHIMO_LINE_TIME;
+	CreateTimer(TAISHIMO_LINE_TIME - TAISHIMO_LINE_SWING_LEAD + TAISHIMO_LINE_SWING_DELAY, Timer_TaishimoLineSwing, EntIndexToEntRef(npc.index), TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(TAISHIMO_LINE_TIME + TAISHIMO_LINE_IMPACT_DELAY, Timer_TaishimoLineImpact, EntIndexToEntRef(npc.index), TIMER_FLAG_NO_MAPCHANGE);
 
-	float pos[3];
-	GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
-	f3_NpcSavePos[npc.index] = pos;
-
-	float at[3];
-	GetClientAbsOrigin(npc.m_iTarget, at);
-	float dx = at[0] - pos[0];
-	float dy = at[1] - pos[1];
-	float length = SquareRoot((dx * dx) + (dy * dy)) + TAISHIMO_LINE_PADDING;
-
-	float yawDeg;
-	if(((dx * dx) + (dy * dy)) >= 1.0)
+	float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+	float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
+	for(int i=0 ; i < TAISHIMO_LINE_COUNT ; i++)
 	{
-		yawDeg = ArcTangent2(dy, dx) * 180.0 / FLOAT_PI;
+		float yawRad = ang[1] * FLOAT_PI / 180.0;
+		pos[0] += Cosine(yawRad) * TAISHIMO_LINE_START;
+		pos[1] += Sine(yawRad) * TAISHIMO_LINE_START;
+		f3_NpcSavePos[npc.index] = pos;
+		npc.m_flLineAoeYaw = ang[1] + 360.0/TAISHIMO_LINE_COUNT*i;
+		OshimunoTaishimoLineAoeDraw(npc, gameTime);
 	}
-	else
-	{
-		float ang[3];
-		GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-		yawDeg = ang[1];
-	}
-
-	npc.m_flLineAoeDetonate = gameTime + TAISHIMO_LINE_DETONATE_TIME;
-	OshimunoTaishimoLineDraw(npc, gameTime);
-	return true;
 }
 
-static void OshimunoTaishimo_LinePhaseEnd(OshimunoTaishimo npc, float gameTime)
+static Action Timer_TaishimoLineSwing(Handle timer, any ref)
 {
-	RemoveSpecificBuff(npc.index, "Intangible");
-	f_CheckIfStuckPlayerDelay[npc.index] = 1.0;
-	b_ThisEntityIgnoredBeingCarried[npc.index] = false;
-	npc.m_iWhatAbilityDo = 0;
-	npc.m_iChanged_WalkCycle = 0;
-	npc.m_flDoingAnimation = 0.0;
-	npc.StartPathing();
-	npc.m_bisWalking = true;
+	int entity = EntRefToEntIndex(ref);
+	if(entity <= MaxClients || !IsValidEntity(entity))
+		return Plugin_Handled;
+
+	OshimunoTaishimo npc = view_as<OshimunoTaishimo>(entity);
+	if(!npc.m_flLineAoeDetonate)
+		return Plugin_Handled;
+
+	npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 0.85);
+	EmitSoundToAll(g_TaishimoLineWindUpSound, npc.index, SNDCHAN_STATIC, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
+	return Plugin_Handled;
 }
 
-static void OshimunoTaishimoLineDraw(OshimunoTaishimo npc, float gameTime)
+static Action Timer_TaishimoLineImpact(Handle timer, any ref)
+{
+	int entity = EntRefToEntIndex(ref);
+	if(entity <= MaxClients || !IsValidEntity(entity))
+		return Plugin_Handled;
+
+	EmitSoundToAll(g_TaishimoLineImpactSound, entity, SNDCHAN_STATIC, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
+	return Plugin_Handled;
+}
+
+static void OshimunoTaishimoLineAoeDraw(OshimunoTaishimo npc, float gameTime)
 {
 	float remaining = npc.m_flLineAoeDetonate - gameTime;
 	if(remaining < 0.0)
@@ -809,13 +843,14 @@ static void OshimunoTaishimoLineDraw(OshimunoTaishimo npc, float gameTime)
 
 	int color[4];
 	color[0] = 255;
-	color[1] = RoundToNearest(255.0 * (remaining / TAISHIMO_LINE_DETONATE_TIME));
+	color[1] = RoundToNearest(255.0 * (remaining / TAISHIMO_LINE_TIME));
 	color[2] = 0;
 	color[3] = 255;
-	OshimunoTaishimoLineDrawShape(npc, 0.0, color, 0.15);
+
+	OshimunoTaishimoLineAoeDrawRects(npc, 0.0, color, 0.15);
 }
 
-static void OshimunoTaishimoLineDrawShape(OshimunoTaishimo npc, float expand, const int color[4], float life)
+static void OshimunoTaishimoLineAoeDrawRects(OshimunoTaishimo npc, float expand, const int color[4], float life)
 {
 	float yawRad = npc.m_flLineAoeYaw * FLOAT_PI / 180.0;
 	float fwdX = Cosine(yawRad);
@@ -835,8 +870,8 @@ static void OshimunoTaishimoLineDrawShape(OshimunoTaishimo npc, float expand, co
 	c1[0] = anchor[0] + (leftX * halfWidth);
 	c1[1] = anchor[1] + (leftY * halfWidth);
 	c1[2] = anchor[2];
-	c2[0] = anchor[0] - (leftX * halfWidth);
-	c2[1] = anchor[1] - (leftY * halfWidth);
+	c2[0] = anchor[0] + (leftX * halfWidth);
+	c2[1] = anchor[1] + (leftY * halfWidth);
 	c2[2] = anchor[2];
 	c3[0] = c1[0] + (fwdX * length);
 	c3[1] = c1[1] + (fwdY * length);
@@ -855,7 +890,43 @@ static void OshimunoTaishimoLineDrawShape(OshimunoTaishimo npc, float expand, co
 	TE_SendToAll();
 }
 
-static void OshimunoTaishimoLineDetonate(OshimunoTaishimo npc)
+static void TaishimoLineFadeFrame(any ref)
+{
+	int entity = EntRefToEntIndex(ref);
+	if(entity <= MaxClients || !IsValidEntity(entity))
+		return;
+
+	OshimunoTaishimo npc = view_as<OshimunoTaishimo>(entity);
+	float gameTime = GetGameTime(npc.index);
+	if(!npc.m_flLineAoeFade)
+		return;
+
+	if(npc.m_flLineAoeFade <= gameTime)
+	{
+		npc.m_flLineAoeFade = 0.0;
+		return;
+	}
+
+	if(gameTime >= npc.m_flLineAoeFadeDraw)
+	{
+		npc.m_flLineAoeFadeDraw = gameTime + TAISHIMO_LINE_FADE_STEP;
+
+		float frac = 1.0 - ((npc.m_flLineAoeFade - gameTime) / TAISHIMO_LINE_FADE_TIME);
+		if(frac < 0.0)
+			frac = 0.0;
+
+		int color[4];
+		color[0] = 255;
+		color[1] = 0;
+		color[2] = 0;
+		color[3] = RoundToNearest(255.0 * (1.0 - frac));
+
+		OshimunoTaishimoLineAoeDrawRects(npc, TAISHIMO_LINE_SPREAD * frac, color, 0.1);
+	}
+	RequestFrame(TaishimoLineFadeFrame, ref);
+}
+
+static void OshimunoTaishimoLineAoeDetonate(OshimunoTaishimo npc)
 {
 	float yawRad = npc.m_flLineAoeYaw * FLOAT_PI / 180.0;
 	float fwdX = Cosine(yawRad);
@@ -885,47 +956,22 @@ static void OshimunoTaishimoLineDetonate(OshimunoTaishimo npc)
 			continue;
 
 		float leftDist = (dx * leftX) + (dy * leftY);
-		if(FloatAbs(leftDist) > halfWidth)
+		if(FloatAbs(leftDist) > halfWidth && FloatAbs(leftDist) > halfWidth && FloatAbs(leftDist) > halfWidth)
 			continue;
 
 		float at[3];
 		WorldSpaceCenter(client, at);
-		npc.PlayMeleeHitSound();
+		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], client, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
 		SDKHooks_TakeDamage(client, npc.index, npc.index, TAISHIMO_LINE_DAMAGE * RaidModeScaling, DMG_CLUB, -1, _, at);
+		float VecMe[3]; WorldSpaceCenter(npc.index, VecMe);
+		float VecEnemy[3]; WorldSpaceCenter(client, VecEnemy);
+
+		float AngleVec[3];
+		MakeVectorFromPoints(VecMe, VecEnemy, AngleVec);
+		GetVectorAngles(AngleVec, AngleVec);
+		AngleVec[0] = -60.0;
+		Custom_Knockback(npc.index, client, 1000.0, true, true, true, .OverrideLookAng = AngleVec);
+		ApplyStatusEffect(npc.index, client, "Ragdolled", 1.5);	
+		FreezeNpcInTime(client, 1.5);
 	}
-}
-
-static void OshimunoTaishimoLineFadeFrame(any ref)
-{
-	int entity = EntRefToEntIndex(ref);
-	if(entity <= MaxClients || !IsValidEntity(entity))
-		return;
-
-	OshimunoTaishimo npc = view_as<OshimunoTaishimo>(entity);
-	float gameTime = GetGameTime(npc.index);
-	if(!npc.m_flLineAoeFade)
-		return;
-
-	if(npc.m_flLineAoeFade <= gameTime)
-	{
-		npc.m_flLineAoeFade = 0.0;
-		return;
-	}
-
-	if(gameTime >= npc.m_flLineAoeFadeDraw)
-	{
-		npc.m_flLineAoeFadeDraw = gameTime + TAISHIMO_LINE_FADE_STEP;
-
-		float frac = 1.0 - ((npc.m_flLineAoeFade - gameTime) / TAISHIMO_LINE_FADE_TIME);
-		if(frac < 0.0)
-			frac = 0.0;
-
-		int color[4];
-		color[0] = RoundToNearest(255.0 * (1.0 - frac));
-		color[1] = 0;
-		color[2] = 0;
-		color[3] = RoundToNearest(255.0 * (1.0 - frac));
-		OshimunoTaishimoLineDrawShape(npc, TAISHIMO_LINE_SPREAD * frac, color, 0.1);
-	}
-	RequestFrame(OshimunoTaishimoLineFadeFrame, ref);
 }

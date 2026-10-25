@@ -8202,7 +8202,7 @@
 	}
 	"Tarakeno Grunt Desc"
 	{
-		"en"	"-When low on health stops to take a drink and restore his health."
+		"en"	"The low level enforcers of Tarakeno.-When low on health stops to take a drink and restore his health."
 	}
 	"Tarakeno Elite Grunt"
 	{
@@ -8274,7 +8274,7 @@
 	}
 	"Tarakeno Smokebomb Desc"
 	{
-		"en" 	"Hinders the sight and causes confusion on the frontlines.\n-On death explodes into a cloud of smoke impairing vision.\n-Also applies a buff to enemies giving them a movement speed increase and chacne to dodge."
+		"en" 	"Hinders and causes confusion on the frontlines.\n-On death explodes into a cloud of smoke impairing vision.\n-Also applies a buff to enemies giving them a movement speed increase and chacne to dodge."
 	}
 	"Tarakeno Ninja"
 	{
