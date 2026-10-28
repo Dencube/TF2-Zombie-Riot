@@ -1019,6 +1019,14 @@
 	{
 		"en"	"We need you back in the fight, Mercenary."
 	}
+	"Muhono_Revive_Talk-4"
+	{
+		"en"	"The fight is still ongoing."
+	}
+	"Muhono_Revive_Talk-5"
+	{
+		"en"	"Your resilience is a blessing to have."
+	}
 	"Muhono_Revive_Talk-1"
 	{
 		"en"	"I'm wearing a disguise ok? I don't wear these types of clothes."
@@ -1059,36 +1067,40 @@
 	{
 		"en"	"It's {crimson}classified{default}? Oh well..."
 	}
- "Muhono_Standard_Talk-8"
+ 	"Muhono_Standard_Talk-8"
 	{
-		"en"	"Sometimes I forget how"
+		"en"	"Sometimes I forget how beautiful the land is at night."
 	}
-	"Muhono_Standard_Talk-3-1"
+	"Muhono_Standard_Talk-9"
 	{
-		"en"	"Getting in contact with you was quite a pain."
+		"en"	"With every skirmish we get closer to our objective."
 	}
-	"Muhono_Standard_Talk-3-2"
+	"Muhono_Standard_Talk-10"
 	{
-		"en"	"Thankfully that {purple}Queen{default} was able to deliver my message."
+		"en"	"Today's the day the people will look up and see hope."
 	}
-	"Muhono_Standard_Talk-4"
+	"Muhono_Standard_Talk-11-1"
 	{
-		"en"	"The flora of Oshimuno is unlike anything else on Irln."
+		"en"	"Don't touch the trees."
 	}
-	"Muhono_Standard_Talk-5"
+	"Muhono_Standard_Talk-11-2"
 	{
-		"en"	"Once we're done here you should comeback for some of the street food. It's delicious."
+		"en"	"{crimson}You never know what they could do to you.{default}"
 	}
-	"Muhono_Standard_Talk-6"
+	"Muhono_Standard_Talk-12-1"
 	{
-		"en"	"Follow me. I know ways past their patrols."
+		"en"	"Your weapons fascinate me."
 	}
-	"Muhono_Standard_Talk-7-1"
+	"Muhono_Standard_Talk-12-2"
 	{
-		"en"	"Can you tell us more about this {purple}Curtain{default} you guys went through? Our intel on it is very limited."
+		"en"	"Just how large your arsenal must be to wield them so carelessly?"
 	}
-	"Muhono_Standard_Talk-7-2"
+	"Muhono_W10_Talk-1-1"
 	{
-		"en"	"It's {crimson}classified{default}? Oh well..."
+		"en"	"Keep your eyes out for any suspicious activity."
+	}
+	"Muhono_W10_Talk-1-2"
+	{
+		"en"	"Anyone could be a secret agent working for Tarakeno."
 	}
 }
