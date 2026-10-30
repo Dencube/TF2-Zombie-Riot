@@ -1111,13 +1111,40 @@
 	{
 		"en"	"Just remember that the house always wins in the end"
 	}
-
-"Muhono_W30_Talk-1-1"
-	{
-		"en"	"Don't touch the trees."
-	}
 "Muhono_W30_Talk-1-2"
 	{
 		"en"	"{crimson}You never know what they could do to you.{default}"
+	}
+  "Muhono_W30_Talk-1-1"
+	{
+		"en"	"Don't touch the trees."
+	}
+ "Muhono_W30_Talk-2"
+	{
+		"en"	"Stay vigilant. He could strike again at any moment"
+	}
+ "Muhono_W30_Talk-3"
+	{
+		"en"	"The Spirits seen irritated today."
+	}
+  "Muhono_W30_Talk-4"
+	{
+		"en"	"We need to infiltrate the HQ through the forest despite the danger."
+	}
+ "Muhono_W30_Talk-5"
+	{
+		"en"	"Every Spirit here is a soul twisted by the map nature of this land."
+	}
+ "Muhono_W30_Talk-6"
+	{
+		"en"	"The hardest part of our journey has yet to come."
+	}
+  "Muhono_W30_Talk-7-1"
+	{
+		"en"	"Encountering Antayoto in the club was NOT part of the plan."
+	}
+ "Muhono_W30_Talk-7-2"
+	{
+		"en" "Why the HELL was he napping there!?"
 	}
 }
