@@ -1079,14 +1079,6 @@
 	{
 		"en"	"Today's the day the people will look up and see hope."
 	}
-	"Muhono_Standard_Talk-11-1"
-	{
-		"en"	"Don't touch the trees."
-	}
-	"Muhono_Standard_Talk-11-2"
-	{
-		"en"	"{crimson}You never know what they could do to you.{default}"
-	}
 	"Muhono_Standard_Talk-12-1"
 	{
 		"en"	"Your weapons fascinate me."
@@ -1102,5 +1094,30 @@
 	"Muhono_W10_Talk-1-2"
 	{
 		"en"	"Anyone could be a secret agent working for Tarakeno."
+	}
+	"Muhono_W20_Talk-1"
+	{
+		"en"	"The music in (club name) is always so loud..."
+	}
+ "Muhono_W20_Talk-2"
+	{
+		"en"	"Do you think I could order a drink in the middle of all this chaos?."
+	}
+	"Muhono_W20_Talk-3-1"
+	{
+		"en"	"This club has every game imaginable."
+	}
+	"Muhono_W20_Talk-3-2"
+	{
+		"en"	"Just remember that the house always wins in the end"
+	}
+
+"Muhono_W30_Talk-1-1"
+	{
+		"en"	"Don't touch the trees."
+	}
+"Muhono_W30_Talk-1-2"
+	{
+		"en"	"{crimson}You never know what they could do to you.{default}"
 	}
 }
