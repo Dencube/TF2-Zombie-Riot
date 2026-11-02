@@ -1027,25 +1027,25 @@
 	{
 		"en"	"Your resilience is a blessing to have."
 	}
-	"Muhono_Revive_Talk-1"
+	"Muhono_Standard_Talk-1-1"
 	{
-		"en"	"I'm wearing a disguise ok? I don't wear these types of clothes."
+		"en"	"I'm wearing a disguise ok?"
 	}
-	"Muhono_Revive_Talk-2-1"
+	"Muhono_Standard_Talk-1-2"
 	{
-		"en"	"Don't forget that our goal is the Dance club."
+		"en"	"I don't typically wear these types of clothes."
 	}
-	"Muhono_Standard_Talk-2-2"
+	"Muhono_Standard_Talk-2"
 	{
-		"en"	"We'll move onto the HQ afterwards."
+		"en"	"You're welcome to join me after this mission is done y'know."
 	}
 	"Muhono_Standard_Talk-3-1"
 	{
-		"en"	"Getting in contact with you was quite a pain."
+		"en"	"I need to study your constructs."
 	}
 	"Muhono_Standard_Talk-3-2"
 	{
-		"en"	"Thankfully that {purple}Queen{default} was able to deliver my message."
+		"en"	"They're so innovative."
 	}
 	"Muhono_Standard_Talk-4"
 	{
@@ -1057,7 +1057,7 @@
 	}
 	"Muhono_Standard_Talk-6"
 	{
-		"en"	"Follow me. I know ways past their patrols."
+		"en"	"Keep following me. I know ways past their patrols."
 	}
 	"Muhono_Standard_Talk-7-1"
 	{
@@ -1079,6 +1079,10 @@
 	{
 		"en"	"Today's the day the people will look up and see hope."
 	}
+	"Muhono_Standard_Talk-11"
+	{
+		"en"	"This is the only method to change the fate of Oshimuno."
+	}
 	"Muhono_Standard_Talk-12-1"
 	{
 		"en"	"Your weapons fascinate me."
@@ -1086,6 +1090,50 @@
 	"Muhono_Standard_Talk-12-2"
 	{
 		"en"	"Just how large your arsenal must be to wield them so carelessly?"
+	}
+	"Muhono_Standard_Talk-13"
+	{
+		"en"	"I have hundreds of stories to tell about this place but now is not the time."
+	}
+	"Muhono_Standard_Talk-14"
+	{
+		"en"	"Why do you dance like that?"
+	}
+	"Muhono_Standard_Talk-15"
+	{
+		"en"	"Your level of cooperation is truly unmatched."
+	}
+	"Muhono_Standard_Talk-16"
+	{
+		"en"	"{crimson}HEY!{default} Don't touch my tail like that."
+	}
+	"Muhono_Standard_Talk-17-1"
+	{
+		"en"	"This island is naturally resistant to influences of outside energies like {darkblue}Chaos.{default}"
+	}
+	"Muhono_Standard_Talk-17-2"
+	{
+		"en"	"We still to this day don't know how or why this happens."
+	}
+	"Muhono_Standard_Talk-18"
+	{
+		"en"	""
+	}
+	"Muhono_Standard_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_Standard_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_Standard_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_Standard_Talk-7"
+	{
+		"en"	""
 	}
 	"Muhono_W10_Talk-1-1"
 	{
@@ -1095,13 +1143,81 @@
 	{
 		"en"	"Anyone could be a secret agent working for Tarakeno."
 	}
+	"Muhono_W10_Talk-2"
+	{
+		"en"	"Don't forget that our goal is the Dance club."
+	}
+	"Muhono_W10_Talk-3-1"
+	{
+		"en"	"Getting in contact with you was quite a pain."
+	}
+	"Muhono_W10_Talk-3-2"
+	{
+		"en"	"Thankfully that {purple}Queen{default} was able to deliver my message."
+	}
+	"Muhono_W10_Talk-4"
+	{
+		"en"	"We'll move onto the HQ afterwards."
+	}
+	"Muhono_W10_Talk-5"
+	{
+		"en"	"There's a large stockpile of weapons in a nearby outpost in the (club name)."
+	}
+	"Muhono_W10_Talk-6"
+	{
+		"en"	"Years of waiting and planning went into today's rebellion."
+	}
+	"Muhono_W10_Talk-7-1"
+	{
+		"en"	"We should hurry."
+	}
+	"Muhono_W10_Talk-7-2"
+	{
+		"en"	"We don't know when the main Tarakeno forces will notice our presence."
+	}
+	"Muhono_W10_Talk-8"
+	{
+		"en"	"We don't know when the main Tarakeno forces will notice our presence."
+	}
+	"Muhono_W10_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W10_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W10_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W10_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W10_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W10_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W10_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W10_Talk-7"
+	{
+		"en"	""
+	}
 	"Muhono_W20_Talk-1"
 	{
 		"en"	"The music in (club name) is always so loud..."
 	}
- "Muhono_W20_Talk-2"
+	"Muhono_W20_Talk-2"
 	{
-		"en"	"Do you think I could order a drink in the middle of all this chaos?."
+		"en"	"Do you think I could order a drink in the middle of all this chaos?"
 	}
 	"Muhono_W20_Talk-3-1"
 	{
@@ -1109,42 +1225,142 @@
 	}
 	"Muhono_W20_Talk-3-2"
 	{
-		"en"	"Just remember that the house always wins in the end"
+		"en"	"Just remember that the house always wins in the end."
 	}
-"Muhono_W30_Talk-1-2"
+	"Muhono_W20_Talk-4"
 	{
-		"en"	"{crimson}You never know what they could do to you.{default}"
+		"en"	"Sometimes you're just forced to live with the hand you've been dealt."
 	}
-  "Muhono_W30_Talk-1-1"
+	"Muhono_W20_Talk-5"
+	{
+		"en"	"We just need to reach the other side of the club."
+	}
+	"Muhono_W20_Talk-6"
+	{
+		"en"	"I don't know how they built those boomboxes nor how they're seemingly invincible."
+	}
+	"Muhono_W20_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W20_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W20_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W20_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W20_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W20_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W20_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W20_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-1-1"
 	{
 		"en"	"Don't touch the trees."
 	}
- "Muhono_W30_Talk-2"
+	"Muhono_W30_Talk-1-2"
+	{
+		"en"	"{crimson}You never know what they could do to you.{default}"
+	}
+	"Muhono_W30_Talk-2"
 	{
 		"en"	"Stay vigilant. He could strike again at any moment"
 	}
- "Muhono_W30_Talk-3"
+	"Muhono_W30_Talk-3"
 	{
 		"en"	"The Spirits seen irritated today."
 	}
-  "Muhono_W30_Talk-4"
+	"Muhono_W30_Talk-4"
 	{
 		"en"	"We need to infiltrate the HQ through the forest despite the danger."
 	}
- "Muhono_W30_Talk-5"
+	"Muhono_W30_Talk-5"
 	{
 		"en"	"Every Spirit here is a soul twisted by the map nature of this land."
 	}
- "Muhono_W30_Talk-6"
+	"Muhono_W30_Talk-6"
 	{
 		"en"	"The hardest part of our journey has yet to come."
 	}
-  "Muhono_W30_Talk-7-1"
+	"Muhono_W30_Talk-7-1"
 	{
 		"en"	"Encountering Antayoto in the club was NOT part of the plan."
 	}
- "Muhono_W30_Talk-7-2"
+	"Muhono_W30_Talk-7-2"
 	{
-		"en" "Why the HELL was he napping there!?"
+		"en"	"Why the HELL was he napping there!?"
+	}
+	"Muhono_W30_Talk-8-1"
+	{
+		"en"	"Please don't damage any of the shrines here."
+	}
+	"Muhono_W30_Talk-8-2"
+	{
+		"en"	"I don't want to piss off more people than necessary."
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
+	}
+	"Muhono_W30_Talk-7"
+	{
+		"en"	""
 	}
 }
