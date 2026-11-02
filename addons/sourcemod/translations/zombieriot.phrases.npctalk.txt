@@ -1069,7 +1069,7 @@
 	}
  	"Muhono_Standard_Talk-8"
 	{
-		"en"	"Sometimes I forget how beautiful the land is at night."
+		"en"	"Sometimes I forget how beautiful this land is at night."
 	}
 	"Muhono_Standard_Talk-9"
 	{
@@ -1115,25 +1115,37 @@
 	{
 		"en"	"We still to this day don't know how or why this happens."
 	}
-	"Muhono_Standard_Talk-18"
+	"Muhono_Standard_Talk-18-1"
 	{
-		"en"	""
+		"en"	"Come on now. You've interfered in entire wars before."
 	}
-	"Muhono_Standard_Talk-7"
+	"Muhono_Standard_Talk-18-2"
 	{
-		"en"	""
+		"en"	"Surely you can handle overthrowing a government."
 	}
-	"Muhono_Standard_Talk-7"
+	"Muhono_Standard_Talk-19"
 	{
-		"en"	""
+		"en"	"I should have enough syringes for all of you."
 	}
-	"Muhono_Standard_Talk-7"
+	"Muhono_Standard_Talk-20"
 	{
-		"en"	""
+		"en"	"There's never been a recorded case of a {cyan}Dweller{default} or {cyan}Abyssal{default} appearing on Oshimuno."
 	}
-	"Muhono_Standard_Talk-7"
+	"Muhono_Standard_Talk-21-1"
 	{
-		"en"	""
+		"en"	"The Xeno{green} infection did once ravage this place."
+	}
+	"Muhono_Standard_Talk-21-2"
+	{
+		"en"	"Yet it seemingly died out after some time."
+	}
+	"Muhono_Standard_Talk-22-1"
+	{
+		"en"	"No need to look after me."
+	}
+	"Muhono_Standard_Talk-22-2"
+	{
+		"en"	"I'm more than capable of fighting for myself."
 	}
 	"Muhono_W10_Talk-1-1"
 	{
@@ -1175,25 +1187,29 @@
 	{
 		"en"	"We don't know when the main Tarakeno forces will notice our presence."
 	}
-	"Muhono_W10_Talk-8"
+	"Muhono_W10_Talk-8-1"
 	{
-		"en"	"We don't know when the main Tarakeno forces will notice our presence."
+		"en"	"Most civilians are currently tending to the fallen at the Central Hakaba."
 	}
-	"Muhono_W10_Talk-7"
+	"Muhono_W10_Talk-8-2"
 	{
-		"en"	""
+		"en"	"So we don't have to worry that much about colleteral damage."
 	}
-	"Muhono_W10_Talk-7"
+	"Muhono_W10_Talk-9-1"
 	{
-		"en"	""
+		"en"	"Don't feel guilty about killing them."
 	}
-	"Muhono_W10_Talk-7"
+	"Muhono_W10_Talk-9-2"
 	{
-		"en"	""
+		"en"	"Loyalty is Tarakeno's most sought after virtue."
 	}
-	"Muhono_W10_Talk-7"
+	"Muhono_W10_Talk-10-1"
 	{
-		"en"	""
+		"en"	"Not ready for the fight? That's fine."
+	}
+	"Muhono_W10_Talk-10-2"
+	{
+		"en"	"I will leave you to prepare thoroughly."
 	}
 	"Muhono_W10_Talk-7"
 	{
@@ -1315,51 +1331,51 @@
 	{
 		"en"	"I don't want to piss off more people than necessary."
 	}
-	"Muhono_W30_Talk-7"
+	"Muhono_W30_Talk-9-1"
+	{
+		"en"	"These Spirit Rituals always creep me out."
+	}
+	"Muhono_W30_Talk-9-2"
+	{
+		"en"	"How can people dedicate their whole lives to practicing such things?"
+	}
+	"Muhono_W30_Talk-11"
 	{
 		"en"	""
 	}
-	"Muhono_W30_Talk-7"
+	"Muhono_W30_Talk-12"
 	{
 		"en"	""
 	}
-	"Muhono_W30_Talk-7"
+	"Muhono_W30_Talk-13"
 	{
 		"en"	""
 	}
-	"Muhono_W30_Talk-7"
+	"Muhono_W30_Talk-14"
 	{
 		"en"	""
 	}
-	"Muhono_W30_Talk-7"
+	"Muhono_W30_Talk-15"
 	{
 		"en"	""
 	}
-	"Muhono_W30_Talk-7"
+	"Muhono_W35_Talk-1"
 	{
 		"en"	""
 	}
-	"Muhono_W30_Talk-7"
+	"Muhono_W35_Talk-2"
 	{
 		"en"	""
 	}
-	"Muhono_W30_Talk-7"
+	"Muhono_W35_Talk-3"
 	{
 		"en"	""
 	}
-	"Muhono_W30_Talk-7"
+	"Muhono_W35_Talk-4"
 	{
 		"en"	""
 	}
-	"Muhono_W30_Talk-7"
-	{
-		"en"	""
-	}
-	"Muhono_W30_Talk-7"
-	{
-		"en"	""
-	}
-	"Muhono_W30_Talk-7"
+	"Muhono_W35_Talk-5"
 	{
 		"en"	""
 	}
