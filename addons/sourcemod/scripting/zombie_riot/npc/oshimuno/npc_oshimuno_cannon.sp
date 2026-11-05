@@ -1,0 +1,219 @@
+#pragma semicolon 1
+#pragma newdecls required
+
+static const char g_ExplosionSounds[] = "weapons/explode1.wav";
+
+#define BOOMBOX_RANGE 245.0
+#define BOOMBOX_RANGE_TRACE 275.0 //trace is larger than the explosion so it feels more intuitive
+#define KNOCKBACK_COOLDOWN 1.5
+
+void OshimunoCannonOnMapStart() // USE `npc_oshimuno_break_boombox` TO KILL THIS NPC AT THE VERY END OF A WAVE
+{
+	PrecacheModel("models/props_hydro/barrel_crate_half.mdl"); //TODO: temporary
+	PrecacheSound(g_ExplosionSounds);
+	PrecacheModel(LASERBEAM);
+	NPCData data;
+	strcopy(data.Name, sizeof(data.Name), "Saigai Cannon");
+	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_cannon");
+	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
+	data.IconCustom = true;
+	data.Flags = 0;
+	data.Category = Type_Oshimuno;
+	data.Func = ClotSummon;
+	NPC_Add(data);
+}
+
+static any ClotSummon(int client, float vecPos[3], float vecAng[3], int team, const char[] data)
+{
+	return OshimunoCannon(vecPos, vecAng, team, data);
+}
+
+methodmap OshimunoCannon < CClotBody
+{
+	public void PlayExplosionSound() 
+	{
+		EmitSoundToAll(g_ExplosionSounds, this.index, SNDCHAN_VOICE, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME, GetRandomInt(80,125));
+	}
+	property float m_flKnockbackCooldown
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
+	}
+	property float m_flFiringWindup
+	{
+		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
+		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
+	}
+	public OshimunoCannon(float vecPos[3], float vecAng[3], int ally, const char[] data)
+	{	
+		OshimunoCannon npc = view_as<OshimunoCannon>(CClotBody(vecPos, vecAng, "models/props_hydro/barrel_crate_half.mdl", "1.0", "1000", ally));
+		SetEntProp(npc.index, Prop_Send, "m_nSkin", 1);
+
+		float gameTime = GetGameTime(npc.index);
+		i_NpcWeight[npc.index] = 2;
+		npc.SetActivity("ACT_MP_RUN_MELEE");
+		KillFeed_SetKillIcon(npc.index, "megaton");
+
+		npc.m_iBleedType = BLEEDTYPE_METAL;
+		npc.m_iStepNoiseType = STEPSOUND_NORMAL;
+		npc.m_iNpcStepVariation = STEPTYPE_NORMAL;
+		
+
+		func_NPCDeath[npc.index] = ClotDeath;
+		func_NPCOnTakeDamage[npc.index] = BoomboxOnTakeDamage;
+		func_NPCThink[npc.index] = ClotThink;
+		
+		npc.m_flSpeed = 0.0;
+		npc.m_flNextMeleeAttack = gameTime + 4.0;
+		//b_NoHealthbar[npc.index] = 1;
+		npc.m_bDissapearOnDeath = true;
+		npc.m_bStaticNPC = true;
+   		AddNpcToAliveList(npc.index, 1);
+		b_ThisEntityIgnoredByOtherNpcsAggro[npc.index] = true;
+		if(StrContains(data, "spawn_notif") != -1)
+		{
+			if(ally != TFTeam_Red)
+			{
+				if(LastSpawnDiversio < GetGameTime())
+				{
+					EmitSoundToAll("weapons/sniper_railgun_world_reload.wav", _, _, _, _, 1.0);	
+					EmitSoundToAll("weapons/sniper_railgun_world_reload.wav", _, _, _, _, 1.0);	
+					for(int client_check=1; client_check<=MaxClients; client_check++)
+					{
+						if(IsClientInGame(client_check) && !IsFakeClient(client_check))
+						{
+							SetGlobalTransTarget(client_check);
+							ShowGameText(client_check, "voice_player", 1, "%t", "A boombox has been setup!");
+						}
+					}
+				}
+				LastSpawnDiversio = GetGameTime() + 10.0;
+			}
+		}
+
+		npc.StopPathing();
+		return npc;
+	}
+}
+
+static void ClotThink(int iNPC)
+{
+	OshimunoCannon npc = view_as<OshimunoCannon>(iNPC);
+
+	float gameTime = GetGameTime(npc.index);
+	if(npc.m_flNextDelayTime > gameTime)
+		return;
+	
+	npc.m_flNextDelayTime = gameTime + DEFAULT_UPDATE_DELAY_FLOAT;
+	npc.Update();
+
+	
+	if(npc.m_flNextThinkTime > gameTime)
+		return;
+	
+	npc.m_flNextThinkTime = gameTime + 0.1;
+
+	float VecSelfNpc[3]; WorldSpaceCenter(npc.index, VecSelfNpc);
+	if(npc.m_flNextMeleeAttack < gameTime)
+	{
+		npc.m_flNextMeleeAttack = gameTime + 4.0;
+
+		spawnRing_Vectors(VecSelfNpc, BOOMBOX_RANGE, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 50, 225, 225, 175, 1, 0.5, 6.0, 0.1, 1, 640.0);
+		Explode_Logic_Custom(150.0, -1, npc.index, -1, VecSelfNpc, BOOMBOX_RANGE, _, 0.75, false, _, false);
+		ExpidonsaGroupHeal(npc.index, BOOMBOX_RANGE, 5000, 500.0, 1.0, false, OshimunoCannonStatusEffectApply);
+		npc.PlayExplosionSound();
+	}
+	
+	float VecSelfNpcabs[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", VecSelfNpcabs);
+	spawnRing_Vectors(VecSelfNpcabs, BOOMBOX_RANGE_TRACE * 2.0, 0.0, 0.0, 15.0, "materials/sprites/laserbeam.vmt", 15, 15, 225, 200, 1, /*duration*/ 0.11, 5.0, 2.0, 1);
+	if(!npc.Anger)
+	{
+		int highestHp, targetHp, picked;
+		for(int i; i < i_MaxcountNpcTotal; i++)
+		{
+			int target = EntRefToEntIndexFast(i_ObjectsNpcsTotal[i]); 
+			if(IsValidEntity(target))
+			{
+				if(target != INVALID_ENT_REFERENCE && target != npc.index && GetTeam(target) == GetTeam(npc.index) && IsEntityAlive(target))
+				{
+					targetHp = GetEntProp(target, Prop_Data, "m_iHealth");
+					if(targetHp > highestHp)
+					{
+						highestHp = targetHp;
+						picked = target;
+					}
+				}
+			}
+		}
+		npc.m_iTarget = picked;
+		npc.m_flFiringWindup = gameTime + 5.0;
+	}
+	if(npc.m_iTarget > 0)
+	{
+		if(npc.m_flFiringWindup)
+		{
+			if(npc.m_flFiringWindup > gameTime)
+			{
+				float vecTarget[3]; WorldSpaceCenter(npc.m_iTarget, vecTarget);
+				f3_NpcSavePos[npc.index] = vecTarget;
+				spawnRing_Vectors(f3_NpcSavePos[npc.index], (1000.0 - ((npc.m_flFiringWindup/5.0)*1000.0)), 0.0, 0.0, 0.0, LASERBEAM, 255, 255, 255, 150, 1, 0.1, 3.0, 0.1, 3);
+			}
+			if(npc.m_flFiringWindup < gameTime)
+			{
+				SmiteNpcToDeath(npc.m_iTarget);
+				ParticleEffectAt(f3_NpcSavePos[npc.index], "grenade_smoke", 2.0);
+				npc.m_iTarget = -1;
+				npc.m_flFiringWindup = 0.0;
+			}
+		}
+	}
+}
+
+void OshimunoCannonStatusEffectApply(int entity, int victim)
+{
+	if(i_NpcIsABuilding[victim])
+		return;
+	if(GetTeam(entity) != GetTeam(victim))
+		return;
+
+	ApplyStatusEffect(entity, victim, "Adoration", 5.0);
+}
+
+static Action BoomboxOnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{	
+	OshimunoCannon npc = view_as<OshimunoCannon>(victim);
+	float gameTime = GetGameTime(npc.index);
+	if(npc.m_flKnockbackCooldown < gameTime)
+	{
+		if(attacker <= MaxClients)
+		{
+			//counters too hard, no fun.
+			if(TeutonType[attacker] != TEUTON_NONE)
+			{
+				damage = 0.0;
+				return Plugin_Changed;
+			}
+			if(dieingstate[attacker] != 0)
+			{
+				damage = 0.0;
+				return Plugin_Changed;
+			}
+		}
+		if((damagetype & (DMG_CLUB)) &&! (i_HexCustomDamageTypes[victim] & ZR_DAMAGE_DO_NOT_APPLY_BURN_OR_BLEED)) // take knockback from direct melee hits
+		{
+			Custom_Knockback(attacker, npc.index, 460.0, true, true);
+			npc.m_flKnockbackCooldown = gameTime + KNOCKBACK_COOLDOWN;
+		}
+	}
+	damage = 0.0; // THIS MAKES IT SO THE BOOMBOX CANNOT DIE BY NORMAL MEANS || USE `npc_oshimuno_break_boombox` TO KILL THIS NPC
+	return Plugin_Changed;
+}
+
+static void ClotDeath(int entity)
+{
+	OshimunoCannon npc = view_as<OshimunoCannon>(entity);
+	
+	if(IsValidEntity(npc.m_iWearable1))
+		RemoveEntity(npc.m_iWearable1);
+	
+}

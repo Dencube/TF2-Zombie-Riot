@@ -1317,7 +1317,7 @@ void NPC_ConfigSetup()
 	OshimunoVesselOnMapStart();
 	OshimunoRicochetOnMapStart();
 	OshimunoRockMasterOnMapStart();
-	
+	OshimunoCannnonOnMapStart();
 }
 
 void NPC_MapEnd()
@@ -2885,6 +2885,7 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_essence_harvester.sp"
 #include "npc/oshimuno/npc_oshimuno_vessel.sp"
 #include "npc/oshimuno/npc_oshimuno_rockmaster.sp"
+#include "npc/oshimuno/npc_oshimuno_cannon.sp"
 
 //unused for now
 #include "npc/oshimuno/npc_oshimuno_flogger.sp"

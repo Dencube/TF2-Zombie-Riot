@@ -6,9 +6,10 @@ static const char g_ExplosionSounds[] = "weapons/explode1.wav";
 #define BOOMBOX_RANGE 245.0
 #define BOOMBOX_RANGE_TRACE 275.0 //trace is larger than the explosion so it feels more intuitive
 #define KNOCKBACK_COOLDOWN 1.5
+
 void OshimunoBoomboxOnMapStart() // USE `npc_oshimuno_break_boombox` TO KILL THIS NPC AT THE VERY END OF A WAVE
 {
-	PrecacheModel("models/buildables/dispenser_light.mdl");
+	PrecacheModel("models/buildables/dispenser_lvl3_light.mdl");
 	PrecacheSound(g_ExplosionSounds);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Shibuya Boombox");
@@ -16,7 +17,7 @@ void OshimunoBoomboxOnMapStart() // USE `npc_oshimuno_break_boombox` TO KILL THI
 	strcopy(data.Icon, sizeof(data.Icon), "victoria_basebreaker");
 	data.IconCustom = true;
 	data.Flags = 0;
-	data.Category = Type_Outlaws;
+	data.Category = Type_Oshimuno;
 	data.Func = ClotSummon;
 	NPC_Add(data);
 }
