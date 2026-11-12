@@ -52,7 +52,7 @@ static const char g_ChargeSounds[][] =
 	"weapons/demo_charge_windup3.wav",
 };
 
-#define CHARGE_STATE_DURATION 5.0
+#define ELITE_CHARGE_STATE_DURATION 5.0
 
 void OshimunoForerunnerEliteOnMapStart()
 {
@@ -276,7 +276,7 @@ void OshimunoForerunnerEliteSelfDefense(OshimunoForerunnerElite npc, float dista
 		{	
 			npc.PlayChargeSound();
 			npc.m_flSpeed = 390.0;
-			npc.m_flChargeDuration = gameTime + CHARGE_STATE_DURATION;
+			npc.m_flChargeDuration = gameTime + ELITE_CHARGE_STATE_DURATION;
 			npc.m_iState = 1;
 			npc.m_iOverlordComboAttack--;
 
@@ -292,7 +292,7 @@ void OshimunoForerunnerEliteSelfDefense(OshimunoForerunnerElite npc, float dista
 				float pos[3];
 				GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 				pos[2] += 70.0;
-				npc.m_iWearable6 = ParticleEffectAt(pos, "scout_dodge_blue", CHARGE_STATE_DURATION);
+				npc.m_iWearable6 = ParticleEffectAt(pos, "scout_dodge_blue", ELITE_CHARGE_STATE_DURATION);
 				SetParent(npc.index, npc.m_iWearable6);
 			}
 		}

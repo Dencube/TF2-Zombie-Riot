@@ -12,27 +12,22 @@ static int NPCID;
 static char gExplosive1;
 static char gLaser1;
 
-static int TCONE_COLOR[3] = { 245, 180, 255 };
-static bool g_TreeConeFillOk = false;
+static int STCONE_COLOR[3] = { 245, 180, 255 };
 static int g_TreeConeLaser = -1;
 
-#define TCONE_FILL_MAT "laststand/fill_cone45_v2.vmt"
-#define TCONE_RADIUS 160.0
-#define TCONE_MELEE_ARC 90.0			// punch hit radius
-#define TCONE_HALFANGLE 60.0	    	// angle based on relative north, 22.5 = a 45 degree cone
-#define TCONE_LIFESPAN 0.75	    	// how long the cone lasts before disappearing
-#define TCONE_OUTLINE_ALPHA 200
-#define TCONE_FILL_ALPHA 90			// 0 disables the pie sheet entirely
-#define TCONE_FILL_FWD 0.7071
-#define TCONE_FILL_LEFT 0.0
-#define TCONE_INTERVAL 2.5
-#define TCONE_MELEE_DAMAGE 100.0
-#define TCONE_DAMAGE 100.0
-#define TCONE_LOG_MODEL "models/props_forest/tree_pine_singlelog.mdl"
-#define TCONE_LOG_RISE 200.0
-#define TCONE_LOG_TIME 0.75
-#define TCONE_LOG_SINK 110.0
-#define TCONE_LOG_ALPHA 128
+#define STCONE_RADIUS 160.0
+#define STCONE_MELEE_ARC 90.0			// punch hit radius
+#define STCONE_HALFANGLE 60.0	    	// angle based on relative north, 22.5 = a 45 degree cone
+#define STCONE_LIFESPAN 0.75	    	// how long the cone lasts before disappearing
+#define STCONE_OUTLINE_ALPHA 200
+#define STCONE_INTERVAL 2.5
+#define STCONE_MELEE_DAMAGE 100.0
+#define STCONE_DAMAGE 100.0
+#define STCONE_LOG_MODEL "models/props_forest/tree_pine_singlelog.mdl"
+#define STCONE_LOG_RISE 200.0
+#define STCONE_LOG_TIME 0.75
+#define STCONE_LOG_SINK 110.0
+#define STCONE_LOG_ALPHA 128
 
 #define INITIAL_ORB_SPAWN_COOLDOWN 10.0
 #define ORB_SPAWN_COOLDOWN 20.0
@@ -43,17 +38,7 @@ void OshimunoSpiritTreeOnMapStart()
 	PrecacheModel("models/props_japan/sakura_tree01.mdl");
 	gLaser1 = PrecacheModel("materials/sprites/laser.vmt");
 	g_TreeConeLaser = PrecacheModel("sprites/laserbeam.vmt");
-	PrecacheModel(TCONE_LOG_MODEL);
-	char path[PLATFORM_MAX_PATH];
-	FormatEx(path, sizeof(path), "materials/%s", TCONE_FILL_MAT);
-	g_TreeConeFillOk = FileExists(path, true);
-	if(g_TreeConeFillOk)
-	{
-		AddFileToDownloadsTable(path);
-		ReplaceString(path, sizeof(path), ".vmt", ".vtf");
-		AddFileToDownloadsTable(path);
-		PrecacheModel(TCONE_FILL_MAT);
-	}
+	PrecacheModel(STCONE_LOG_MODEL);
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Spirit Cherry Blossom");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_spirit_tree");
@@ -65,7 +50,7 @@ void OshimunoSpiritTreeOnMapStart()
 	NPCID = NPC_Add(data);
 }
 
-int OshimunoSpiritTree_ID()
+stock int OshimunoSpiritTree_ID()
 {
 	return NPCID;
 }
@@ -402,7 +387,7 @@ void OshimunoSpiritTreeConeAttack(OshimunoSpiritTree npc, float distance, float 
 		return;
 
 	npc.m_iTarget = target;
-	npc.m_flNextConeAttack = gameTime + TCONE_INTERVAL;
+	npc.m_flNextConeAttack = gameTime + STCONE_INTERVAL;
 
 	float bossPos[3];
 	GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", bossPos);
@@ -425,7 +410,7 @@ void OshimunoSpiritTreeConeAttack(OshimunoSpiritTree npc, float distance, float 
 		}
 	}
 	float yawRad = yawDeg * FLOAT_PI / 180.0;
-	float arcRad = TCONE_MELEE_ARC * FLOAT_PI / 180.0;
+	float arcRad = STCONE_MELEE_ARC * FLOAT_PI / 180.0;
 	bool hit[MAXPLAYERS + 1];
 	for(int client = 1; client <= MaxClients; client++)
 	{
@@ -440,7 +425,7 @@ void OshimunoSpiritTreeConeAttack(OshimunoSpiritTree npc, float distance, float 
 		if(((dx * dx) + (dy * dy)) > (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) || dz > 120.0 || dz < -120.0)
 			continue;
 
-		if(TCONE_MELEE_ARC < 180.0)
+		if(STCONE_MELEE_ARC < 180.0)
 		{
 			float diff = ArcTangent2(dy, dx) - yawRad;
 			while(diff > FLOAT_PI) diff -= FLOAT_PI * 2.0;
@@ -451,7 +436,7 @@ void OshimunoSpiritTreeConeAttack(OshimunoSpiritTree npc, float distance, float 
 		hit[client] = true;
 		float at[3];
 		WorldSpaceCenter(client, at);
-		SDKHooks_TakeDamage(client, npc.index, npc.index, TCONE_MELEE_DAMAGE, DMG_CLUB, -1, _, at);
+		SDKHooks_TakeDamage(client, npc.index, npc.index, STCONE_MELEE_DAMAGE, DMG_CLUB, -1, _, at);
 		OshimunoSpiritTreeSpawnLog(pos);
 	}
 	OshimunoSpiritTreeResolveCone(npc, bossPos, yawDeg, hit);
@@ -461,8 +446,8 @@ void OshimunoSpiritTreeConeAttack(OshimunoSpiritTree npc, float distance, float 
 static void OshimunoSpiritTreeResolveCone(OshimunoSpiritTree npc, const float apex[3], float yawDeg, const bool exclude[MAXPLAYERS + 1])
 {
 	float yawRad = yawDeg * FLOAT_PI / 180.0;
-	float halfAngle = (TCONE_HALFANGLE + 6.0) * FLOAT_PI / 180.0;
-	float radiusPad = TCONE_RADIUS + 24.0;
+	float halfAngle = (STCONE_HALFANGLE + 6.0) * FLOAT_PI / 180.0;
+	float radiusPad = STCONE_RADIUS + 24.0;
 
 	for(int client = 1; client <= MaxClients; client++)
 	{
@@ -485,7 +470,7 @@ static void OshimunoSpiritTreeResolveCone(OshimunoSpiritTree npc, const float ap
 
 		float at[3];
 		WorldSpaceCenter(client, at);
-		SDKHooks_TakeDamage(client, npc.index, npc.index, TCONE_DAMAGE, DMG_CLUB, -1, _, at);
+		SDKHooks_TakeDamage(client, npc.index, npc.index, STCONE_DAMAGE, DMG_CLUB, -1, _, at);
 		OshimunoSpiritTreeSpawnLog(pos);
 	}
 }
@@ -493,73 +478,38 @@ static void OshimunoSpiritTreeResolveCone(OshimunoSpiritTree npc, const float ap
 static void OshimunoSpiritTreeDrawCone(const float apex[3], float yawDeg)
 {
 	int color[4];
-	color[0] = TCONE_COLOR[0];
-	color[1] = TCONE_COLOR[1];
-	color[2] = TCONE_COLOR[2];
-	color[3] = TCONE_OUTLINE_ALPHA;
+	color[0] = STCONE_COLOR[0];
+	color[1] = STCONE_COLOR[1];
+	color[2] = STCONE_COLOR[2];
+	color[3] = STCONE_OUTLINE_ALPHA;
 
 	float from[3];
 	from = apex;
 	from[2] += 5.0;
 
-	float halfAngle = TCONE_HALFANGLE * FLOAT_PI / 180.0;
+	float halfAngle = STCONE_HALFANGLE * FLOAT_PI / 180.0;
 	float yawRad = yawDeg * FLOAT_PI / 180.0;
 	float prev[3];
 	for(int step; step <= 6; step++)
 	{
 		float ang = yawRad - halfAngle + ((halfAngle * 2.0) * (float(step) / 6.0));
 		float at[3];
-		at[0] = from[0] + (Cosine(ang) * TCONE_RADIUS);
-		at[1] = from[1] + (Sine(ang) * TCONE_RADIUS);
+		at[0] = from[0] + (Cosine(ang) * STCONE_RADIUS);
+		at[1] = from[1] + (Sine(ang) * STCONE_RADIUS);
 		at[2] = from[2];
 
 		if(step == 0 || step == 6)
 		{
-			TE_SetupBeamPoints(from, at, g_TreeConeLaser, -1, 0, 0, TCONE_LIFESPAN, 4.0, 4.0, 0, 0.0, color, 0);
+			TE_SetupBeamPoints(from, at, g_TreeConeLaser, -1, 0, 0, STCONE_LIFESPAN, 4.0, 4.0, 0, 0.0, color, 0);
 			TE_SendToAll();
 		}
 		if(step)
 		{
-			TE_SetupBeamPoints(prev, at, g_TreeConeLaser, -1, 0, 0, TCONE_LIFESPAN, 4.0, 4.0, 0, 0.0, color, 0);
+			TE_SetupBeamPoints(prev, at, g_TreeConeLaser, -1, 0, 0, STCONE_LIFESPAN, 4.0, 4.0, 0, 0.0, color, 0);
 			TE_SendToAll();
 		}
 		prev = at;
 	}
-	if(TCONE_FILL_ALPHA <= 0 || !g_TreeConeFillOk)
-		return;
-
-	int spr = CreateEntityByName("env_sprite_oriented");
-	if(spr <= MaxClients || !IsValidEntity(spr))
-		return;
-
-	char buffer[48];
-	DispatchKeyValue(spr, "model", TCONE_FILL_MAT);
-	FormatEx(buffer, sizeof(buffer), "%.3f", (TCONE_RADIUS * 0.5) / 32.0);
-	DispatchKeyValue(spr, "scale", buffer);
-	DispatchKeyValue(spr, "rendermode", "1");	
-	FormatEx(buffer, sizeof(buffer), "%d %d %d", TCONE_COLOR[0], TCONE_COLOR[1], TCONE_COLOR[2]);
-	DispatchKeyValue(spr, "rendercolor", buffer);
-	IntToString(TCONE_FILL_ALPHA, buffer, sizeof(buffer));
-	DispatchKeyValue(spr, "renderamt", buffer);
-	DispatchKeyValue(spr, "spawnflags", "1");	
-	float ang[3];
-	ang[0] = 90.0;
-	ang[1] = yawDeg + 45.0;
-	FormatEx(buffer, sizeof(buffer), "%.0f %.0f 0", ang[0], ang[1]);
-	DispatchKeyValue(spr, "angles", buffer);
-	DispatchSpawn(spr);
-	float fwdRad = yawDeg * FLOAT_PI / 180.0;
-	float leftRad = (yawDeg + 90.0) * FLOAT_PI / 180.0;
-	float at[3];
-	at[0] = apex[0] + (Cosine(fwdRad) * TCONE_RADIUS * TCONE_FILL_FWD)
-		+ (Cosine(leftRad) * TCONE_RADIUS * TCONE_FILL_LEFT);
-	at[1] = apex[1] + (Sine(fwdRad) * TCONE_RADIUS * TCONE_FILL_FWD)
-		+ (Sine(leftRad) * TCONE_RADIUS * TCONE_FILL_LEFT);
-	at[2] = apex[2] + 4.0;
-	TeleportEntity(spr, at, ang, NULL_VECTOR);
-	SetEdictFlags(spr, (GetEdictFlags(spr) & ~(FL_EDICT_DONTSEND | FL_EDICT_PVSCHECK)) | FL_EDICT_ALWAYS);
-
-	CreateTimer(TCONE_LIFESPAN, Timer_RemoveEntity, EntIndexToEntRef(spr), TIMER_FLAG_NO_MAPCHANGE);
 }
 
 static void OshimunoSpiritTreeSpawnLog(const float playerPos[3])
@@ -584,12 +534,12 @@ static void OshimunoSpiritTreeSpawnLog(const float playerPos[3])
 
 	float at[3];
 	at = ground;
-	at[2] -= TCONE_LOG_SINK;
+	at[2] -= STCONE_LOG_SINK;
 
 	float ang[3];
 	ang[1] = GetRandomFloat(-180.0, 180.0);
 
-	DispatchKeyValue(prop, "model", TCONE_LOG_MODEL);
+	DispatchKeyValue(prop, "model", STCONE_LOG_MODEL);
 	DispatchKeyValue(prop, "physicsmode", "2");
 	DispatchKeyValue(prop, "solid", "0");
 	DispatchKeyValue(prop, "massScale", "1.0");
@@ -622,18 +572,18 @@ static void OshimunoSpiritTreeSpawnLog(const float playerPos[3])
 		at[2] = ground[2] - up - 4.0;
 
 	float vel[3];
-	vel[2] = (TCONE_LOG_RISE / TCONE_LOG_TIME) + (0.5 * 800.0 * TCONE_LOG_TIME);
+	vel[2] = (STCONE_LOG_RISE / STCONE_LOG_TIME) + (0.5 * 800.0 * STCONE_LOG_TIME);
 	TeleportEntity(prop, at, ang, vel);
 
 	SetEntityRenderMode(prop, RENDER_TRANSCOLOR);
-	SetEntityRenderColor(prop, 255, 255, 255, TCONE_LOG_ALPHA);
+	SetEntityRenderColor(prop, 255, 255, 255, STCONE_LOG_ALPHA);
 
 	SetEntityCollisionGroup(prop, 1);
 	SetEntProp(prop, Prop_Send, "m_usSolidFlags", 12);
 	SetEntProp(prop, Prop_Data, "m_nSolidType", 6);
 	SetEdictFlags(prop, (GetEdictFlags(prop) & ~(FL_EDICT_DONTSEND | FL_EDICT_PVSCHECK)) | FL_EDICT_ALWAYS);
 
-	CreateTimer(TCONE_LOG_TIME, Timer_RemoveEntity, EntIndexToEntRef(prop), TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(STCONE_LOG_TIME, Timer_RemoveEntity, EntIndexToEntRef(prop), TIMER_FLAG_NO_MAPCHANGE);
 }
 
 static void ClotDeath(int entity)

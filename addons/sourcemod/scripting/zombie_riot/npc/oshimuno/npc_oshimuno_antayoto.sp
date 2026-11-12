@@ -44,7 +44,7 @@ static const char g_RangedAttackSounds[][] =
 };
 
 int OshimunoAntayotoId;
-int OshimunoAntayotoIDReturn()
+stock int OshimunoAntayotoIDReturn()
 {
 	return OshimunoAntayotoId;
 }

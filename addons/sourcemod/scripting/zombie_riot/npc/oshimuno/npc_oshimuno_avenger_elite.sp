@@ -30,7 +30,7 @@ static const char g_RangedAttackSounds[][] =
 	"weapons/family_business_shoot.wav"
 }; 
 
-#define STACKDRAIN_COOLDOWN 4.0
+#define ELITE_STACKDRAIN_COOLDOWN 4.0
 
 void OshimunoAvengerEliteOnMapStart()
 {
@@ -111,7 +111,7 @@ methodmap OshimunoAvengerElite < CClotBody
 		func_NPCDeathForward[npc.index] = OshimunoAvengerEliteAllyDeath;
 		
 		npc.m_flSpeed = 250.0;
-		npc.m_flTimerCooldown = gameTime + STACKDRAIN_COOLDOWN;
+		npc.m_flTimerCooldown = gameTime + ELITE_STACKDRAIN_COOLDOWN;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop/weapons/c_models/c_russian_riot/c_russian_riot.mdl");
 
@@ -181,7 +181,7 @@ static void ClotThink(int iNPC)
 		{
 			npc.m_iAlliesDeadTemp = 0;
 		}
-		npc.m_flTimerCooldown = gameTime + STACKDRAIN_COOLDOWN;
+		npc.m_flTimerCooldown = gameTime + ELITE_STACKDRAIN_COOLDOWN;
 	}
 	int TotalStackAmount = npc.m_iAlliesDeadTemp + npc.m_iAlliesDeadPerm;
 	if(TotalStackAmount >= 70) // above 70  combined anger

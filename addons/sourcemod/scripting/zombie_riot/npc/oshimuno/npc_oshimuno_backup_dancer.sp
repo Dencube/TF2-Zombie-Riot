@@ -1,7 +1,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define REVIVE_DURATION 12.0
+#define DANCER_REVIVE_DURATION 12.0
 
 static const char g_DeathSounds[][] =
 {
@@ -294,7 +294,7 @@ static Action OshimunoBackupDancerOnTakeDamage(int victim, int &attacker, int &i
 {	
 	OshimunoBackupDancer npc = view_as<OshimunoBackupDancer>(victim);
 	float gameTime = GetGameTime(npc.index);
-	if(GetEntProp(npc.index, Prop_Data, "m_iHealth") <= 1) //enrage below 50% hp
+	if(GetEntProp(npc.index, Prop_Data, "m_iHealth") <= 1)
 	{
 		if(GetPopstarAlive(npc.index) > 0) // start reviving if popstar is alive
 		{
@@ -302,10 +302,10 @@ static Action OshimunoBackupDancerOnTakeDamage(int victim, int &attacker, int &i
 			npc.StopPathing();
 			npc.m_bisWalking = false;
 			float healing = float(ReturnEntityMaxHealth(npc.index)); // heal to max hp over 12s
-			HealEntityGlobal(npc.index, npc.index, healing, 1.0, REVIVE_DURATION, HEAL_ABSOLUTE);
+			HealEntityGlobal(npc.index, npc.index, healing, 1.0, DANCER_REVIVE_DURATION, HEAL_ABSOLUTE);
 			NPCStats_RemoveAllDebuffs(npc.index, 1.0);
-			npc.m_flInvulDuration = gameTime + REVIVE_DURATION;
-			npc.m_flNextMeleeAttack = gameTime + REVIVE_DURATION;
+			npc.m_flInvulDuration = gameTime + DANCER_REVIVE_DURATION;
+			npc.m_flNextMeleeAttack = gameTime + DANCER_REVIVE_DURATION;
 		}
 		else if(GetPopstarAlive(npc.index) <= 0)
 		{

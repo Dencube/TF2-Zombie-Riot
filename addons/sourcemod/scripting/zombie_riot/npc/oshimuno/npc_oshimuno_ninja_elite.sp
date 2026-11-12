@@ -42,11 +42,11 @@ static const char g_RangedAttackSounds[][] =
 	"weapons/cleaver_throw.wav",
 };
 
-#define JUMP_COOLDOWN 12.0
-#define INITIAL_JUMP_COOLDOWN 7.5
-#define THROW_STATE_DURATION 2.0
-#define INITIAL_THROW 0.5
-#define KUNAI_THROW_COOLDOWN 0.3
+#define ELITE_JUMP_COOLDOWN 12.0
+#define ELITE_INITIAL_JUMP_COOLDOWN 7.5
+#define ELITE_THROW_STATE_DURATION 2.0
+#define ELITE_INITIAL_THROW 0.5
+#define ELITE_KUNAI_THROW_COOLDOWN 0.3
 
 void OshimunoNinjaEliteOnMapStart()
 {
@@ -126,7 +126,7 @@ methodmap OshimunoNinjaElite < CClotBody
 		func_NPCThink[npc.index] = ClotThink;
 		
 		npc.m_flSpeed = 300.0;
-		npc.m_flJumpKunaiThrow = gameTime + INITIAL_JUMP_COOLDOWN;
+		npc.m_flJumpKunaiThrow = gameTime + ELITE_INITIAL_JUMP_COOLDOWN;
 
 		npc.m_iWearable1 = npc.EquipItem("head", "models/workshop_partner/weapons/c_models/c_shogun_kunai/c_shogun_kunai.mdl");
 
@@ -249,10 +249,10 @@ void OshimunoNinjaEliteSelfDefense(OshimunoNinjaElite npc, float distance, float
 	{
 		vecTarget[2] += 275.0;
 		PluginBot_Jump(npc.index, vecTarget);
-		npc.m_flNextMeleeAttack = gameTime + THROW_STATE_DURATION; //prevent cheese melees
-		npc.m_flJumpKunaiThrow = gameTime + THROW_STATE_DURATION;
-		npc.m_flNextRangedAttack = gameTime + INITIAL_THROW;
-		npc.m_flJumpCooldown = gameTime + JUMP_COOLDOWN;
+		npc.m_flNextMeleeAttack = gameTime + ELITE_THROW_STATE_DURATION; //prevent cheese melees
+		npc.m_flJumpKunaiThrow = gameTime + ELITE_THROW_STATE_DURATION;
+		npc.m_flNextRangedAttack = gameTime + ELITE_INITIAL_THROW;
+		npc.m_flJumpCooldown = gameTime + ELITE_JUMP_COOLDOWN;
 	}
 	if(npc.m_flJumpKunaiThrow > gameTime && npc.m_flNextRangedAttack < gameTime && distance < (NORMAL_ENEMY_MELEE_RANGE_FLOAT_SQUARED) * 11) // distance check to prevent throwing cross map
 	{
@@ -264,7 +264,7 @@ void OshimunoNinjaEliteSelfDefense(OshimunoNinjaElite npc, float distance, float
 		i_WandParticle[projectile] = EntIndexToEntRef(trail);
 		CreateTimer(6.0, Timer_RemoveEntity, EntIndexToEntRef(trail), TIMER_FLAG_NO_MAPCHANGE);
 		SetParent(projectile, trail);
-		npc.m_flNextRangedAttack = gameTime + KUNAI_THROW_COOLDOWN;
+		npc.m_flNextRangedAttack = gameTime + ELITE_KUNAI_THROW_COOLDOWN;
 		npc.PlayRangedSound();
 	}
 }

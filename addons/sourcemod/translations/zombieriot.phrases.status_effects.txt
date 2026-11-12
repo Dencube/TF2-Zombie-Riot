@@ -4142,4 +4142,12 @@
 		"en"	"Becomes a new host for The Mercenary on death."
 		"ko"	"사망 시 ''용병''의 새로운 숙주가 됩니다."
 	}
+	"Grand Master's Blessing"
+	{
+		"en" 	"Grand Master's Blessing"
+	}
+	"Grand Master's Blessing Desc"
+	{
+		"en" 	"Only one who can identify when he is in checkmate can break the chains of fate"
+	}
 }

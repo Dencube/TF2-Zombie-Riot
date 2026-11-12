@@ -277,6 +277,7 @@ void OshimunoTrashManSelfDefense(OshimunoTrashMan npc, float distance, float vec
 				ParticleEffectAt(pos, "hightower_explosion", 2.0);
 				EmitSoundToAll("items/cart_explode.wav", npc.index);
 				Explode_Logic_Custom(200.0, 0, npc.index, -1, pos , TRASHMAN_RING_RANGE, 1.0, _, true, _, false, _, _, InsaneKnockbackDoExplode);
+				CreateEarthquake(pos, 1.0, 2000.0, 16.0, 255.0);
 				b_NpcIsTeamkiller[npc.index] = true;
 				SmiteNpcToDeath(npc.index);
 			}

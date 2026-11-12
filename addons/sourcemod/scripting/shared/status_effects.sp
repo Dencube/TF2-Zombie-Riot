@@ -245,8 +245,9 @@ void InitStatusEffects()
 	StatusEffects_Aperture();
 	StatusEffects_SmokeScreen();
 	StatusEffects_Adoration();
-	StatusEffects_Extreme_Adoration();
+	StatusEffects_ExtremeAdoration();
 	StatusEffects_SpiritFire(); //combine all new effects into one like aperture and put them here
+	StatusEffects_GrandMastersBlessing()
 	StatusEffects_Ruiania();
 	StatusEffects_BrickWeapon();
 #endif
@@ -12509,7 +12510,7 @@ void StatusEffects_Adoration()
 	data.SlotPriority				= 1; //if its higher, then the lower version is entirely ignored.
 	StatusEffect_AddGlobal(data);
 }
-void StatusEffects_Extreme_Adoration()
+void StatusEffects_ExtremeAdoration()
 {
 	StatusEffect data;
 
@@ -12524,5 +12525,21 @@ void StatusEffects_Extreme_Adoration()
 	data.ShouldScaleWithPlayerCount = false;
 	data.Slot						= 21; //0 means ignored
 	data.SlotPriority				= 2; //if its higher, then the lower version is entirely ignored.
+	StatusEffect_AddGlobal(data);
+}
+void StatusEffects_GrandMastersBlessing()
+{
+	StatusEffect data;
+
+	strcopy(data.BuffName, sizeof(data.BuffName), "Grand Master's Blessing");
+	strcopy(data.HudDisplay, sizeof(data.HudDisplay), "♔");
+	strcopy(data.AboveEnemyDisplay, sizeof(data.AboveEnemyDisplay), "");
+	data.DamageTakenMulti 			= -1.0;
+	data.DamageDealMulti			= -1.0;
+	data.MovementspeedModif			= -1.0;
+	data.Positive 					= true;
+	data.ShouldScaleWithPlayerCount = false;
+	data.Slot						= 0;
+	data.SlotPriority				= 0;
 	StatusEffect_AddGlobal(data);
 }

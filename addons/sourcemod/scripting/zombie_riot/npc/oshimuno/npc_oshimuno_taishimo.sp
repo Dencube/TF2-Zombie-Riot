@@ -3,7 +3,7 @@
 
 #define TAISHIMO_LINE_WIDTH 180.0
 #define TAISHIMO_LINE_LENGTH 900.0
-#define TAISHIMO_LINE_PADDING 350.0
+#define TAISHIMO_LINE_GAP 125.0
 #define TAISHIMO_LINE_START 30.0
 #define TAISHIMO_LINE_TIME 1.2
 #define TAISHIMO_LINE_SWING_LEAD 0.75
@@ -13,8 +13,6 @@
 #define TAISHIMO_LINE_DAMAGE 30.0
 #define TAISHIMO_LINE_FADE_TIME 0.15
 #define TAISHIMO_LINE_FADE_STEP 0.045
-#define TAISHIMO_LINE_DETONATE_TIME 1.0
-#define TAISHIMO_LINE_COUNT 8
 
 static const char g_DeathSounds[][] =
 {
@@ -78,7 +76,7 @@ static int g_TaishimoLineLaser = -1;
 static const char g_TaishimoLineWindUpSound[] = "misc/halloween/strongman_fast_swing_01.wav";
 static const char g_TaishimoLineImpactSound[] = "misc/halloween/strongman_fast_impact_01.wav";
 int OshimunoTaishimoId;
-int OshimunoTaishimoIDReturn()
+stock int OshimunoTaishimoIDReturn()
 {
 	return OshimunoTaishimoId;
 }
@@ -129,7 +127,7 @@ methodmap OshimunoTaishimo < CClotBody
 		public get()							{ return fl_AbilityOrAttack[this.index][0]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][0] = TempValueForProperty; }
 	}
-	property float m_flMassAoeSlashes
+	property float m_flCongaFastDo
 	{
 		public get()							{ return fl_AbilityOrAttack[this.index][1]; }
 		public set(float TempValueForProperty) 	{ fl_AbilityOrAttack[this.index][1] = TempValueForProperty; }
@@ -404,16 +402,6 @@ static void OshimunoTaishimo_Think(int iNPC)
 		npc.m_iTarget = target;
 		npc.m_flGetClosestTargetTime = gameTime + GetRandomRetargetTime();
 	}
-
-	if(OshimunoTaishimoSlash_Do(npc, gameTime))
-	{
-		return;
-	}
-	if(OshimunoTaishimo_MassAoeSlashes(npc, gameTime))
-	{
-		return;
-	}
-
 	if(npc.m_flLineAoeDetonate)
 	{
 		if(npc.m_flLineAoeDetonate > gameTime)
@@ -439,7 +427,11 @@ static void OshimunoTaishimo_Think(int iNPC)
 		}
 		return;
 	}
-
+	if(OshimunoTaishimoSlash_Do(npc, gameTime))
+	{
+		return;
+	}
+	
 	if(!BlockLoseSay && RaidModeTime < gameTime)
 	{
 		ApplyStatusEffect(npc.index, npc.index, "Perfected Instinct", 999999.9);
@@ -604,9 +596,9 @@ int OshimunoTaishimo_SelfDefense(OshimunoTaishimo npc, float gameTime, int targe
 				npc.DoSwingTrace(swingTrace, npc.m_iTarget,_,_,_,1,_,HowManyEnemeisAoeMelee);
 				delete swingTrace;
 				bool PlaySound = false;
-				for(int counter = 1; counter <= HowManyEnemeisAoeMelee; counter++)
+				for (int counter = 1; counter <= HowManyEnemeisAoeMelee; counter++)
 				{
-					if(i_EntitiesHitAoeSwing_NpcSwing[counter] > 0)
+					if (i_EntitiesHitAoeSwing_NpcSwing[counter] > 0)
 					{
 						if(IsValidEntity(i_EntitiesHitAoeSwing_NpcSwing[counter]))
 						{
@@ -615,13 +607,21 @@ int OshimunoTaishimo_SelfDefense(OshimunoTaishimo npc, float gameTime, int targe
 							float vecHit[3];
 							
 							WorldSpaceCenter(targetTrace, vecHit);
+
 							float damage = 15.0;
+
 							SDKHooks_TakeDamage(targetTrace, npc.index, npc.index, damage * RaidModeScaling, DMG_CLUB, -1, _, vecHit);								
+								
+							
+							// Hit particle
+							
+						
+							
 							bool Knocked = false;
 										
 							if(IsValidClient(targetTrace))
 							{
-								if(IsInvuln(targetTrace))
+								if (IsInvuln(targetTrace))
 								{
 									Knocked = true;
 									Custom_Knockback(npc.index, targetTrace, 900.0, true);
@@ -632,9 +632,10 @@ int OshimunoTaishimo_SelfDefense(OshimunoTaishimo npc, float gameTime, int targe
 									}
 								}
 							}
+										
 							if(!Knocked)
 								Custom_Knockback(npc.index, targetTrace, 250.0, true); 
-						}
+						} 
 					}
 				}
 				if(PlaySound)
@@ -660,11 +661,11 @@ int OshimunoTaishimo_SelfDefense(OshimunoTaishimo npc, float gameTime, int targe
 					target = Enemy_I_See;
 
 					npc.PlayMeleeSound();
-					npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_, 2.0);
+					npc.AddGesture("ACT_MP_ATTACK_STAND_MELEE",_,_,_,3.0);
 							
 					npc.m_flAttackHappens = gameTime + 0.1;
-					npc.m_flNextMeleeAttack = gameTime + 0.5;
-					npc.m_flDoingAnimation = gameTime + 0.6;
+					npc.m_flNextMeleeAttack = gameTime + 0.15;
+					npc.m_flDoingAnimation = gameTime + 0.1;
 				}
 			}
 		}
@@ -676,6 +677,133 @@ int OshimunoTaishimo_SelfDefense(OshimunoTaishimo npc, float gameTime, int targe
 	}
 	return 0;
 }
+
+/*
+bool BlackHeavy_Transform(OshimunoTaishimo npc)
+{
+	if(!npc.m_flTransformIn)
+		return false;
+
+	if(npc.m_flTransformIn < GetGameTime())
+	{			
+		b_CannotBeHeadshot[npc.index] = false;
+		b_CannotBeBackstabbed[npc.index] = false;
+		b_NpcIsInvulnerable[npc.index] = false; //Special huds for invul targets
+		npc.m_bisWalking = true;
+		npc.StartPathing();
+		npc.m_flTransformIn = 0.0;
+		return false;
+	}
+	if(npc.m_flTransformIn < GetGameTime() + 1.75)
+	{
+		if(npc.m_iChanged_WalkCycle != 101)
+		{
+			npc.m_iSaiyanState = 1;
+			HealEntityGlobal(npc.index, npc.index, ReturnEntityMaxHealth(npc.index) / 2.0, _, 4.0, HEAL_ABSOLUTE);
+			RaidModeScaling *= 1.05;
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			NPCTalkMessage(npc.index, "{crimson}AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			fl_Extra_Speed[npc.index] *= 1.05;
+			SetVariantColor(view_as<int>({255, 255, 0, 200}));
+			AcceptEntityInput(npc.m_iTeamGlow, "SetGlowColor");
+			strcopy(c_NpcName[npc.index], sizeof(c_NpcName[]), "Super Saiyan Black Heavy Soul");
+			float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
+			pos[2] += 10.0;
+			TE_Particle("Explosion_ShockWave_01", pos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
+			TE_Particle("grenade_smoke_cycle", pos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
+			TE_Particle("hammer_bell_ring_shockwave", pos, NULL_VECTOR, NULL_VECTOR, _, _, _, _, _, _, _, _, _, _, 0.0);
+			CreateEarthquake(pos, 1.0, 2000.0, 16.0, 255.0);
+			if(IsValidEntity(npc.m_iWearable2))
+				RemoveEntity(npc.m_iWearable2);
+			npc.m_iWearable2 = npc.EquipItem("head", "models/workshop/player/items/medic/hwn2023_power_spike/hwn2023_power_spike.mdl",_,_, 1.5);
+			SetEntityRenderColor(npc.m_iWearable2, 255, 255, 0, 255);
+			NpcColourCosmetic_ViaPaint(npc.m_iWearable2, 15185211);
+			Explode_Logic_Custom(50.0, 0, npc.index, -1, pos ,1000.0, 1.0, _, true, .FunctionToCallOnHit = SsjBlackHeavy_KnockbackDo);
+		
+			float flPos[3]; // original
+			npc.GetAttachment("", flPos, NULL_VECTOR);
+			npc.m_iWearable7 = ParticleEffectAt_Parent(flPos, "utaunt_poweraura_yellow_parent", npc.index, "", {0.0,0.0,0.0});
+			f_AttackSpeedNpcIncrease[npc.index] *= 0.65;
+			fl_TotalArmor[npc.index] *= 0.65;
+			npc.SetPlaybackRate(1.35);
+
+			npc.m_iChanged_WalkCycle = 101;
+		}
+		return true;
+	}
+	if(npc.m_iChanged_WalkCycle != 100)
+	{
+		MusicEnum music;
+		strcopy(music.Path, sizeof(music.Path), "#zombiesurvival/aprilfools/black_heavy_2.mp3");
+		music.Time = 213;
+		music.Volume = 1.1;
+		music.Custom = true;
+		strcopy(music.Name, sizeof(music.Name), "Flow Hero Song of Hope");
+		strcopy(music.Artist, sizeof(music.Artist), "Dragon Ball Z: Battle Of Gods ED");
+		Music_SetRaidMusic(music);
+		for(int client=1; client<=MaxClients; client++)
+		{
+			if(IsClientInGame(client))
+			{
+				SetMusicTimer(client, GetTime() + 5);
+			}
+		}
+
+		npc.m_bisWalking = false;
+		npc.m_iChanged_WalkCycle = 100;
+		npc.StopPathing();
+		b_NpcIsInvulnerable[npc.index] = true; //Special huds for invul targets
+		b_CannotBeHeadshot[npc.index] = true;
+		b_CannotBeBackstabbed[npc.index] = true;
+		ApplyStatusEffect(npc.index, npc.index, "Clear Head", 6.0);	
+		ApplyStatusEffect(npc.index, npc.index, "Solid Stance", 6.0);	
+		ApplyStatusEffect(npc.index, npc.index, "Fluid Movement", 6.0);	
+		npc.AddActivityViaSequence("taunt_mourning_mercs_heavy");
+		npc.SetPlaybackRate(0.8);
+		npc.SetCycle(0.05);
+		npc.m_flAttackHappens = 0.0;
+	}	
+	return true;
+}
+
+void SsjBlackHeavy_KnockbackDo(int entity, int victim, float damage, int weapon)
+{
+	float VecMe[3]; WorldSpaceCenter(entity, VecMe);
+	float VecEnemy[3]; WorldSpaceCenter(victim, VecEnemy);
+
+	float AngleVec[3];
+	MakeVectorFromPoints(VecMe, VecEnemy, AngleVec);
+	GetVectorAngles(AngleVec, AngleVec);
+
+	AngleVec[0] = -45.0;
+	Custom_Knockback(entity, victim, 800.0, true, true, true, .OverrideLookAng = AngleVec);
+	if(IsValidClient(victim))
+	{
+		ApplyStatusEffect(entity, victim, "Ragdolled", 4.0);	
+		FreezeNpcInTime(victim, 4.0);
+	}
+}
+
+*/
+
 
 //200 offset
 bool OshimunoTaishimoSlash_Do(OshimunoTaishimo npc, float gameTime)
@@ -730,8 +858,8 @@ bool OshimunoTaishimoSlash_Do(OshimunoTaishimo npc, float gameTime)
 			{
 				case 0:
 				{
-					Min = -12.0;
-					Max = 12.0;
+					Min = -10.0;
+					Max = 10.0;
 					slicers = 3;
 					for(int i=0 ; i < slicers ; i++)
 					{
@@ -744,8 +872,8 @@ bool OshimunoTaishimoSlash_Do(OshimunoTaishimo npc, float gameTime)
 				}
 				case 1:
 				{
-					Min = -18.0;
-					Max = 18.0;
+					Min = -15.0;
+					Max = 15.0;
 					slicers = 4;
 					for(int i=0 ; i < slicers ; i++)
 					{
@@ -758,56 +886,31 @@ bool OshimunoTaishimoSlash_Do(OshimunoTaishimo npc, float gameTime)
 				}
 			}
         }
-		npc.m_flDoingAnimation = gameTime + 0.7;
+		npc.m_flDoingAnimation = gameTime + 0.6;
 	}
 	return true;
 }
-bool OshimunoTaishimo_MassAoeSlashes(OshimunoTaishimo npc, float gameTime)
-{
-	if(npc.m_iWhatAbilityDo != 2 && npc.m_iWhatAbilityDo != 0)
-		return false;
-	if(npc.m_flDoingAnimation < gameTime)
-	{
-		if(npc.m_flMassAoeSlashes < gameTime)
-		{
-			if(!IsValidEnemy(npc.index, npc.m_iTarget))
-				return false;
-			if(!Can_I_See_Enemy_Only(npc.index, npc.m_iTarget))
-				return false;
 
-			npc.m_flSpeed = 720.0;
-			npc.m_flMassAoeSlashes = gameTime + 35.0;
-			npc.m_flDoingAnimation = gameTime + 2.0;
-			npc.m_bisWalking = false;
-			npc.StopPathing();
-			npc.m_iChanged_WalkCycle = 300;
-			npc.AddActivityViaSequence("taunt05");
-			npc.m_iWhatAbilityDo = 2;
-		}
-	}
-	if(npc.m_iWhatAbilityDo != 2)
-		return false;
-}
+
+//300 offset
 static void OshimunoTaishimoLineAoeStart(OshimunoTaishimo npc, float gameTime)
 {
 	npc.m_flAttackHappens = 0.0;
-	npc.StopPathing();
-	npc.m_bisWalking = false;
 	npc.m_flLineAoeDetonate = gameTime + TAISHIMO_LINE_TIME;
 	CreateTimer(TAISHIMO_LINE_TIME - TAISHIMO_LINE_SWING_LEAD + TAISHIMO_LINE_SWING_DELAY, Timer_TaishimoLineSwing, EntIndexToEntRef(npc.index), TIMER_FLAG_NO_MAPCHANGE);
 	CreateTimer(TAISHIMO_LINE_TIME + TAISHIMO_LINE_IMPACT_DELAY, Timer_TaishimoLineImpact, EntIndexToEntRef(npc.index), TIMER_FLAG_NO_MAPCHANGE);
 
 	float pos[3]; GetEntPropVector(npc.index, Prop_Data, "m_vecAbsOrigin", pos);
 	float ang[3]; GetEntPropVector(npc.index, Prop_Data, "m_angRotation", ang);
-	for(int i=0 ; i < TAISHIMO_LINE_COUNT ; i++)
-	{
-		float yawRad = ang[1] * FLOAT_PI / 180.0;
-		pos[0] += Cosine(yawRad) * TAISHIMO_LINE_START;
-		pos[1] += Sine(yawRad) * TAISHIMO_LINE_START;
-		f3_NpcSavePos[npc.index] = pos;
-		npc.m_flLineAoeYaw = ang[1] + 360.0/TAISHIMO_LINE_COUNT*i;
-		OshimunoTaishimoLineAoeDraw(npc, gameTime);
-	}
+	float yawRad = ang[1] * FLOAT_PI / 180.0;
+	pos[0] += Cosine(yawRad) * TAISHIMO_LINE_START;
+	pos[1] += Sine(yawRad) * TAISHIMO_LINE_START;
+	f3_NpcSavePos[npc.index] = pos;
+	npc.m_flLineAoeYaw = ang[1];
+
+	npc.StopPathing();
+	npc.m_bisWalking = false;
+	OshimunoTaishimoLineAoeDraw(npc, gameTime);
 }
 
 static Action Timer_TaishimoLineSwing(Handle timer, any ref)
@@ -866,6 +969,7 @@ static void OshimunoTaishimoLineAoeDrawRects(OshimunoTaishimo npc, float expand,
 
 	float length = TAISHIMO_LINE_LENGTH + (expand * 2.0);
 	float halfWidth = (TAISHIMO_LINE_WIDTH * 0.5) + expand;
+
 	float c1[3], c2[3], c3[3], c4[3];
 	c1[0] = anchor[0] + (leftX * halfWidth);
 	c1[1] = anchor[1] + (leftY * halfWidth);
@@ -956,22 +1060,12 @@ static void OshimunoTaishimoLineAoeDetonate(OshimunoTaishimo npc)
 			continue;
 
 		float leftDist = (dx * leftX) + (dy * leftY);
-		if(FloatAbs(leftDist) > halfWidth && FloatAbs(leftDist) > halfWidth && FloatAbs(leftDist) > halfWidth)
+		if(FloatAbs(leftDist) > halfWidth)
 			continue;
 
 		float at[3];
 		WorldSpaceCenter(client, at);
-		EmitSoundToAll(g_MeleeAttackSounds[GetRandomInt(0, sizeof(g_MeleeAttackSounds) - 1)], client, SNDCHAN_AUTO, NORMAL_ZOMBIE_SOUNDLEVEL, _, NORMAL_ZOMBIE_VOLUME);
+		npc.PlayMeleeHitSound();
 		SDKHooks_TakeDamage(client, npc.index, npc.index, TAISHIMO_LINE_DAMAGE * RaidModeScaling, DMG_CLUB, -1, _, at);
-		float VecMe[3]; WorldSpaceCenter(npc.index, VecMe);
-		float VecEnemy[3]; WorldSpaceCenter(client, VecEnemy);
-
-		float AngleVec[3];
-		MakeVectorFromPoints(VecMe, VecEnemy, AngleVec);
-		GetVectorAngles(AngleVec, AngleVec);
-		AngleVec[0] = -60.0;
-		Custom_Knockback(npc.index, client, 1000.0, true, true, true, .OverrideLookAng = AngleVec);
-		ApplyStatusEffect(npc.index, client, "Ragdolled", 1.5);	
-		FreezeNpcInTime(client, 1.5);
 	}
 }

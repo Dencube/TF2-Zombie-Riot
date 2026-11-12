@@ -1318,6 +1318,11 @@ void NPC_ConfigSetup()
 	OshimunoRicochetOnMapStart();
 	OshimunoRockMasterOnMapStart();
 	OshimunoCannnonOnMapStart();
+	OshimunoKingOnMapStart();
+	OshimunoRookOnMapStart();
+	OshimunoBishopOnMapStart();
+	OshimunoFallenPieceOnMapStart();
+	
 }
 
 void NPC_MapEnd()
@@ -2886,6 +2891,11 @@ Action NpcSpecificOnTakeDamage(int victim, int &attacker, int &inflictor, float 
 #include "npc/oshimuno/npc_oshimuno_vessel.sp"
 #include "npc/oshimuno/npc_oshimuno_rockmaster.sp"
 #include "npc/oshimuno/npc_oshimuno_cannon.sp"
+#include "npc/oshimuno/npc_oshimuno_chess_shared.sp"
+#include "npc/oshimuno/npc_oshimuno_king.sp"
+#include "npc/oshimuno/npc_oshimuno_rook.sp"
+#include "npc/oshimuno/npc_oshimuno_bishop.sp"
+#include "npc/oshimuno/npc_oshimuno_fallen_piece.sp"
 
 //unused for now
 #include "npc/oshimuno/npc_oshimuno_flogger.sp"

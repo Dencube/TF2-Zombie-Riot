@@ -13,18 +13,13 @@ static char gExplosive1;
 static char gLaser1;
 
 static int TCONE_COLOR[3] = { 245, 180, 255 };
-static bool g_TreeConeFillOk = false;
 static int g_TreeConeLaser = -1;
 
-#define TCONE_FILL_MAT "laststand/fill_cone45_v2.vmt"
 #define TCONE_RADIUS 160.0
 #define TCONE_MELEE_ARC 90.0			// punch hit radius
 #define TCONE_HALFANGLE 60.0	    	// angle based on relative north, 22.5 = a 45 degree cone
 #define TCONE_LIFESPAN 0.75	    	// how long the cone lasts before disappearing
 #define TCONE_OUTLINE_ALPHA 200
-#define TCONE_FILL_ALPHA 90			// 0 disables the pie sheet entirely
-#define TCONE_FILL_FWD 0.7071
-#define TCONE_FILL_LEFT 0.0
 #define TCONE_INTERVAL 2.5
 #define TCONE_MELEE_DAMAGE 100.0
 #define TCONE_DAMAGE 100.0
@@ -41,16 +36,6 @@ void OshimunoTreeOnMapStart()
 	gLaser1 = PrecacheModel("materials/sprites/laser.vmt");
 	g_TreeConeLaser = PrecacheModel("sprites/laserbeam.vmt");
 	PrecacheModel(TCONE_LOG_MODEL);
-	char path[PLATFORM_MAX_PATH];
-	FormatEx(path, sizeof(path), "materials/%s", TCONE_FILL_MAT);
-	g_TreeConeFillOk = FileExists(path, true);
-	if(g_TreeConeFillOk)
-	{
-		AddFileToDownloadsTable(path);
-		ReplaceString(path, sizeof(path), ".vmt", ".vtf");
-		AddFileToDownloadsTable(path);
-		PrecacheModel(TCONE_FILL_MAT);
-	}
 	NPCData data;
 	strcopy(data.Name, sizeof(data.Name), "Cherry Blossom");
 	strcopy(data.Plugin, sizeof(data.Plugin), "npc_oshimuno_tree");
@@ -502,41 +487,6 @@ static void OshimunoTreeDrawCone(const float apex[3], float yawDeg)
 		}
 		prev = at;
 	}
-	if(TCONE_FILL_ALPHA <= 0 || !g_TreeConeFillOk)
-		return;
-
-	int spr = CreateEntityByName("env_sprite_oriented");
-	if(spr <= MaxClients || !IsValidEntity(spr))
-		return;
-
-	char buffer[48];
-	DispatchKeyValue(spr, "model", TCONE_FILL_MAT);
-	FormatEx(buffer, sizeof(buffer), "%.3f", (TCONE_RADIUS * 0.5) / 32.0);
-	DispatchKeyValue(spr, "scale", buffer);
-	DispatchKeyValue(spr, "rendermode", "1");	
-	FormatEx(buffer, sizeof(buffer), "%d %d %d", TCONE_COLOR[0], TCONE_COLOR[1], TCONE_COLOR[2]);
-	DispatchKeyValue(spr, "rendercolor", buffer);
-	IntToString(TCONE_FILL_ALPHA, buffer, sizeof(buffer));
-	DispatchKeyValue(spr, "renderamt", buffer);
-	DispatchKeyValue(spr, "spawnflags", "1");	
-	float ang[3];
-	ang[0] = 90.0;
-	ang[1] = yawDeg + 45.0;
-	FormatEx(buffer, sizeof(buffer), "%.0f %.0f 0", ang[0], ang[1]);
-	DispatchKeyValue(spr, "angles", buffer);
-	DispatchSpawn(spr);
-	float fwdRad = yawDeg * FLOAT_PI / 180.0;
-	float leftRad = (yawDeg + 90.0) * FLOAT_PI / 180.0;
-	float at[3];
-	at[0] = apex[0] + (Cosine(fwdRad) * TCONE_RADIUS * TCONE_FILL_FWD)
-		+ (Cosine(leftRad) * TCONE_RADIUS * TCONE_FILL_LEFT);
-	at[1] = apex[1] + (Sine(fwdRad) * TCONE_RADIUS * TCONE_FILL_FWD)
-		+ (Sine(leftRad) * TCONE_RADIUS * TCONE_FILL_LEFT);
-	at[2] = apex[2] + 4.0;
-	TeleportEntity(spr, at, ang, NULL_VECTOR);
-	SetEdictFlags(spr, (GetEdictFlags(spr) & ~(FL_EDICT_DONTSEND | FL_EDICT_PVSCHECK)) | FL_EDICT_ALWAYS);
-
-	CreateTimer(TCONE_LIFESPAN, Timer_RemoveEntity, EntIndexToEntRef(spr), TIMER_FLAG_NO_MAPCHANGE);
 }
 
 static void OshimunoTreeSpawnLog(const float playerPos[3])

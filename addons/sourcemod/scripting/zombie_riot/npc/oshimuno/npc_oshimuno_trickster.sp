@@ -43,20 +43,15 @@ static const char g_MeleeAttackSounds[][] =
 };
 
 static int CONE_COLOR[3] = { 0, 255, 255 };
-static bool g_ConeFillOk = false;
 static int g_ConeLaser = -1;
 
-#define CONE_FILL_MAT "laststand/fill_cone.vmt"
 #define CONE_RADIUS 250.0
 #define CONE_MELEE_ARC 90.0			// punch hit radius
 #define CONE_HALFANGLE 80.0	    	// angle based on relative north, 22.5 = a 45 degree cone
 #define CONE_LIFESPAN 0.3	    	// how long the cone lasts before disappearing
 #define CONE_OUTLINE_ALPHA 200
-#define CONE_FILL_ALPHA 90			// 0 disables the pie sheet entirely
 #define CONE_ANIM_MIN_RATE 1.0
 #define CONE_ANIM_STILL_SPEED 40.0  // HU/S under which the floor applies
-#define CONE_FILL_FWD 0.7071
-#define CONE_FILL_LEFT 0.0
 
 void OshimunoTricksterOnMapStart()
 {
@@ -388,49 +383,6 @@ static void OshimunoTricksterDrawCone(const float apex[3], float yawDeg)
 		}
 		prev = at;
 	}
-	if(CONE_FILL_ALPHA <= 0 || !g_ConeFillOk)
-		return;
-
-	int spr = CreateEntityByName("env_sprite_oriented");
-	if(spr <= MaxClients || !IsValidEntity(spr))
-		return;
-
-	char buffer[48];
-	DispatchKeyValue(spr, "model", CONE_FILL_MAT);
-	FormatEx(buffer, sizeof(buffer), "%.3f", (CONE_RADIUS * 0.5) / 32.0);
-	DispatchKeyValue(spr, "scale", buffer);
-	DispatchKeyValue(spr, "rendermode", "1");	
-	FormatEx(buffer, sizeof(buffer), "%d %d %d", CONE_COLOR[0], CONE_COLOR[1], CONE_COLOR[2]);
-	DispatchKeyValue(spr, "rendercolor", buffer);
-	IntToString(CONE_FILL_ALPHA, buffer, sizeof(buffer));
-	DispatchKeyValue(spr, "renderamt", buffer);
-	DispatchKeyValue(spr, "spawnflags", "1");	
-	float ang[3];
-	ang[0] = 90.0;
-	ang[1] = yawDeg + 45.0;
-	FormatEx(buffer, sizeof(buffer), "%.0f %.0f 0", ang[0], ang[1]);
-	DispatchKeyValue(spr, "angles", buffer);
-	DispatchSpawn(spr);
-	float fwdRad = yawDeg * FLOAT_PI / 180.0;
-	float leftRad = (yawDeg + 90.0) * FLOAT_PI / 180.0;
-	float at[3];
-	at[0] = apex[0] + (Cosine(fwdRad) * CONE_RADIUS * CONE_FILL_FWD)
-		+ (Cosine(leftRad) * CONE_RADIUS * CONE_FILL_LEFT);
-	at[1] = apex[1] + (Sine(fwdRad) * CONE_RADIUS * CONE_FILL_FWD)
-		+ (Sine(leftRad) * CONE_RADIUS * CONE_FILL_LEFT);
-	at[2] = apex[2] + 4.0;
-	TeleportEntity(spr, at, ang, NULL_VECTOR);
-	SetEdictFlags(spr, (GetEdictFlags(spr) & ~(FL_EDICT_DONTSEND | FL_EDICT_PVSCHECK)) | FL_EDICT_ALWAYS);
-
-	CreateTimer(CONE_LIFESPAN, Timer_ConeKillFill, EntIndexToEntRef(spr));
-}
-
-public Action Timer_ConeKillFill(Handle timer, any ref)
-{
-	int spr = EntRefToEntIndex(view_as<int>(ref));
-	if(spr > MaxClients && IsValidEntity(spr))
-		RemoveEntity(spr);
-	return Plugin_Stop;
 }
 
 stock void ConeKeepAnimSpeed(int iNPC)

@@ -759,22 +759,26 @@
 	}
 	"Sakurawa arrives"
 	{
-		"en" 		 "Sakurawa arrives"
+		"en"		"Sakurawa arrives"
 	}
 	"The trees surround you"
 	{
-		"en"	"The trees surround you"
+		"en"		"The trees surround you"
 	}
 	"A boombox has been setup!"
 	{
-		"en"	"A boombox has been setup!"
+		"en"		"A boombox has been setup!"
+	}
+	"A cannon has been setup!"
+	{
+		"en"		"A cannon has been setup!"
 	}
 	"Antayoto arrives"
 	{
-		"en" 		 "Antayoto arrives"
+		"en"		"Antayoto arrives"
 	}
 	"Taishimo has arrived"
 	{
-		"en" 		"Taishimo has arrived"
+		"en"		"Taishimo has arrived"
 	}
 }
