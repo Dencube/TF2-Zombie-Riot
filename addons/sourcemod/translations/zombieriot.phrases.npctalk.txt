@@ -1361,11 +1361,11 @@
 	}
 	"Muhono_W35_Talk-1"
 	{
-		"en"	""
+		"en"	"We're so close to the end."
 	}
 	"Muhono_W35_Talk-2"
 	{
-		"en"	""
+		"en"	"Focus on moving forward. Don't look back."
 	}
 	"Muhono_W35_Talk-3"
 	{
