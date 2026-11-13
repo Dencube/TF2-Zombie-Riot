@@ -8202,7 +8202,7 @@
 	}
 	"Tarakeno Grunt Desc"
 	{
-		"en"	"-When low on health stops to take a drink and restore his health."
+		"en"	"The low level enforcers of Tarakeno.\n-When low on health stops to take a drink and restore his health."
 	}
 	"Tarakeno Elite Grunt"
 	{
@@ -8210,7 +8210,7 @@
 	}
 	"Tarakeno Elite Grunt Desc"
 	{
-		"en" 	"-When low on health jumps backwards to take a drink and restore his health."
+		"en" 	"The slightly more experienced enforcers of Tarakeno.\n-When low on health jumps backwards to take a drink and restore his health."
 	}
 	"Tarakeno Agent"
 	{
@@ -8274,7 +8274,7 @@
 	}
 	"Tarakeno Smokebomb Desc"
 	{
-		"en" 	"Hinders the sight and causes confusion on the frontlines.\n-On death explodes into a cloud of smoke impairing vision.\n-Also applies a buff to enemies giving them a movement speed increase and chacne to dodge."
+		"en" 	"Hinders and causes confusion on the frontlines.\n-On death explodes into a cloud of smoke impairing vision.\n-Also applies a buff to enemies giving them a movement speed increase and chacne to dodge."
 	}
 	"Tarakeno Ninja"
 	{
@@ -8322,7 +8322,7 @@
 	}
 	"Crippling Gambler Desc"
 	{
-		"en" 	"Just needs one more win to finally stop for good.\n-Switches between 6 revolvers with different effects."
+		"en" 	"Just needs one more win to finally stop for good.\n-Switches between 6 revolvers, each one with different effects."
 	}
 	"Cherry Blossom"
 	{
@@ -8330,7 +8330,7 @@
 	}
 	"Cherry Blossom Desc"
 	{
-		"en" 	"A ''peaceful'' tree.\n-Creates a healing aura to allies when killed.\n-Enrages if left alive for last."
+		"en" 	"A ''peaceful'' tree.\n-Creates a healing aura for players when killed.\n-Enrages if left alive for last."
 	}
 	"Spirit Cherry Blossom"
 	{
@@ -8338,7 +8338,7 @@
 	}
 	"Spirit Cherry Blossom Desc"
 	{
-		"en" 	"A less ''peaceful'' tree.\n-Creates a healing aura to allies when killed.\n-Occasionally summmons new Spirit Orbs.\n-Enrages if left alive for last."
+		"en" 	"A less ''peaceful'' tree.\n-Creates a healing aura for players when killed.\n-Occasionally summmons new Spirit Orbs.\n-Enrages if left alive for last."
 	}
 	"Shibuya Dancer"
 	{
