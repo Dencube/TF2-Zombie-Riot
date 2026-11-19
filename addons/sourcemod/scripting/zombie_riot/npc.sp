@@ -1317,7 +1317,7 @@ void NPC_ConfigSetup()
 	OshimunoVesselOnMapStart();
 	OshimunoRicochetOnMapStart();
 	OshimunoRockMasterOnMapStart();
-	OshimunoCannnonOnMapStart();
+	OshimunoCannonOnMapStart();
 	OshimunoKingOnMapStart();
 	OshimunoRookOnMapStart();
 	OshimunoBishopOnMapStart();

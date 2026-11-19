@@ -326,25 +326,23 @@ static void OshimunoKing_SummonSet(OshimunoKing npc, int stage, int which)
 			{
 				case 0:
 				{
-					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_grunt", 20000, 6); // npcname,hp,amount
-					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_ninja", 15000, 4);
-					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_trash_man", 300000, 1, true); // npcname,hp,amount,boss?yes/no
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_grunt", 20000, 6);
 				}
 				case 1:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_grunt", 20000, 6);
 				}
 				case 2:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_grunt", 20000, 6);
 				}
 				case 3:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_grunt", 20000, 6);
 				}
 				case 4:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_grunt", 20000, 6);
 				}
 			}
 		}
@@ -354,23 +352,23 @@ static void OshimunoKing_SummonSet(OshimunoKing npc, int stage, int which)
 			{
 				case 0:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_ninja", 15000, 4);
 				}
 				case 1:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_ninja", 15000, 4);
 				}
 				case 2:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_ninja", 15000, 4);
 				}
 				case 3:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_ninja", 15000, 4);
 				}
 				case 4:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_ninja", 15000, 4);
 				}
 			}
 		}
@@ -380,23 +378,23 @@ static void OshimunoKing_SummonSet(OshimunoKing npc, int stage, int which)
 			{
 				case 0:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_vessel", 15000, 4);
 				}
 				case 1:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_vessel", 15000, 4);
 				}
 				case 2:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_vessel", 15000, 4);
 				}
 				case 3:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_vessel", 15000, 4);
 				}
 				case 4:
 				{
-
+					OshimunoKingSpawnEnemy(npc.index, "npc_oshimuno_trash_man", 300000, 1, true);
 				}
 			}
 		}
